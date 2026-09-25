@@ -9,7 +9,9 @@ catalog:
   "@eslint/js": ^10.0.1
   "@types/node": ^26.6.2
   "@vitest/eslint-plugin": ^1.6.27
+  drizzle-orm: 1.0.0-rc.4
   eslint: ^10.11.0
+  fumadb: ^0.6.0
   eslint-config-prettier: ^10.1.8
   eslint-plugin-import-x: ^4.17.1
   eslint-plugin-n: ^18.3.0

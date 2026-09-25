@@ -19,7 +19,7 @@ pnpm + Turbo. From the root: `pnpm lint`, `pnpm check-types`, `pnpm test`.
 - `draftJson` is the editor copy. `publishedJson` is what new responses clone. Saving a draft must not change `publishedJson` or any existing `response.definition`.
 - Submit validation runs on `response.definition`, never on the live draft or the latest publish. `validateResult` is required. `survey-core` belongs in `server` when that check is implemented, not in `core`.
 - Partial save replaces `survey.data`. It is not a key patch.
-- Auth lives in the consumer `guard`. Persistence is the `database` adapter. `memoryAdapter()` is for tests. No ORM inside `server`. No `@dimah-survey/db` until the memory snapshot test is the template for SQL.
+- Auth lives in the consumer `guard`. Persistence is the `database` adapter. `memoryAdapter()` is the store. `@dimah-survey/db` is the SQL shape only — no ORM inside `server`, and `db` does not implement `SurveyStore` yet.
 - Do not wrap or re-export the SurveyJS renderer. The React fill hook, when it exists, only hydrates a Model from the snapshot.
 - Packages stay `"private": true` until submit validation uses `survey-core` and the snapshot test still passes. Build output is still `dist` via tsup, same as the other dimah libraries.
 - Pre-v1: breaking changes are allowed. Do not keep a second API for compatibility.

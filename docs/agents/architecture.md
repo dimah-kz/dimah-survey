@@ -8,9 +8,11 @@ Server-authoritative response lifecycle for SurveyJS JSON. Consumers own auth, S
 @dimah-survey/core
         ↓
 @dimah-survey/server | @dimah-survey/react
+        ↑
+@dimah-survey/db
 ```
 
-`@dimah-survey/db` does not exist yet. Add it only after `packages/server/src/lifecycle.test.ts` is the template: a new publish must not change `response.definition`.
+`@dimah-survey/db` owns the SQL shape only. It does not implement `SurveyStore` yet. `server` must not import it.
 
 ## Placement
 
@@ -21,6 +23,7 @@ Edit the **smallest package that owns the behavior**.
 | `core`   | Routes, Zod payloads, errors, `createSurveyClient`, store types       |
 | `server` | `dimahSurvey()`, HTTP handler, `memoryAdapter()`, `survey-core` check |
 | `react`  | Fill session that hydrates a Model. No renderer.                      |
+| `db`     | FumaDB schema and the Drizzle, Prisma, and SQL copies. No store yet.  |
 
 Shared protocol changes start in `core`, then wire `server` and the fetch client. Do not copy a route string into another package.
 
