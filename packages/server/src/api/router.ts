@@ -5,7 +5,7 @@ import {
 } from "@dimah-survey/core";
 import { createRouter, toResponse, type Endpoint } from "better-call";
 
-import type { DimahSurveyConfig } from "@/dimah-survey";
+import type { ResolvedDimahSurveyConfig } from "@/dimah-survey";
 import { errors } from "@/errors";
 import { bindEndpoints } from "./bind-endpoints";
 
@@ -28,7 +28,7 @@ function withUnmatchedRouteJson(
 
 export function createSurveyRouter<E extends Record<string, Endpoint>>(
   endpoints: E,
-  env: { config: DimahSurveyConfig },
+  env: { config: ResolvedDimahSurveyConfig },
 ) {
   const router = createRouter(endpoints, {
     basePath: normalizeSurveyApiBasePath(

@@ -25,6 +25,7 @@
   "dependencies": {
     "@dimah-survey/core": "workspace:*",
     "better-call": "catalog:",
+    "survey-core": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {

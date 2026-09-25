@@ -2,7 +2,7 @@
   "name": "@dimah-survey/react",
   "version": "0.0.0",
   "private": true,
-  "description": "Browser client for the dimah-survey protocol. The fill hook is not implemented yet.",
+  "description": "React session hook that binds a survey-core Model to the dimah-survey lifecycle",
   "license": "MIT",
   "author": "dimah",
   "sideEffects": false,
@@ -25,13 +25,20 @@
     "@dimah-survey/core": "workspace:*"
   },
   "devDependencies": {
+    "@types/react": "catalog:",
     "@workspace/eslint-config": "workspace:*",
     "@workspace/tsup-config": "workspace:*",
     "@workspace/typescript-config": "workspace:*",
     "eslint": "catalog:",
+    "react": "catalog:",
+    "survey-core": "catalog:",
     "tsc-alias": "catalog:",
     "tsup": "catalog:",
     "typescript": "catalog:"
+  },
+  "peerDependencies": {
+    "react": "^19.0.0",
+    "survey-core": "^2.0.0 || ^3.0.0"
   },
   "publishConfig": {
     "access": "public"

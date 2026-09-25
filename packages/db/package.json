@@ -23,6 +23,7 @@
     "lint": "eslint --max-warnings 0 --cache"
   },
   "dependencies": {
+    "@dimah-survey/core": "workspace:*",
     "fumadb": "catalog:"
   },
   "devDependencies": {

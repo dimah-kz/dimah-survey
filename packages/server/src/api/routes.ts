@@ -68,18 +68,20 @@ export const surveyEndpoints = {
       if (!current) throw errors.responseNotFound();
       if (current.status !== "draft") throw errors.responseClosed();
       const data = ctx.body.data ?? current.data;
+      let stored = data;
       try {
-        await ctx.context.config.validateResult({
+        const checked = await ctx.context.config.validateResult({
           definition: current.definition,
           data,
         });
+        if (checked) stored = checked;
       } catch (error) {
         if (isAPIError(error)) throw error;
         const message =
           error instanceof Error ? error.message : "Survey result is invalid.";
         throw errors.validationFailed(message);
       }
-      return database.submitResponse({ ...ctx.body, data });
+      return database.submitResponse({ ...ctx.body, data: stored });
     },
   ),
   abandonResponse: createSurveyEndpoint(

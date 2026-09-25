@@ -12,7 +12,7 @@ Server-authoritative response lifecycle for SurveyJS JSON. Consumers own auth, S
 @dimah-survey/db
 ```
 
-`@dimah-survey/db` owns the SQL shape only. It does not implement `SurveyStore` yet. `server` must not import it.
+`@dimah-survey/db` owns the SQL shape and `db(client)`. `server` must not import it.
 
 ## Placement
 
@@ -23,7 +23,7 @@ Edit the **smallest package that owns the behavior**.
 | `core`   | Routes, Zod payloads, errors, `createSurveyClient`, store types       |
 | `server` | `dimahSurvey()`, HTTP handler, `memoryAdapter()`, `survey-core` check |
 | `react`  | Fill session that hydrates a Model. No renderer.                      |
-| `db`     | FumaDB schema and the Drizzle, Prisma, and SQL copies. No store yet.  |
+| `db`     | FumaDB schema, SQL copies, and `db(client)` as `SurveyStore`.         |
 
 Shared protocol changes start in `core`, then wire `server` and the fetch client. Do not copy a route string into another package.
 
@@ -31,8 +31,8 @@ Shared protocol changes start in `core`, then wire `server` and the fetch client
 
 - Two survey documents: editor `draftJson`, and `publishedJson` cloned onto each new response as `definition`.
 - Response status is `draft` | `submitted` | `abandoned`. Reopen returns to draft and does not rewrite `definition`.
-- `validateResult` runs inside `dimahSurvey().submitResponse` on the stored definition. Adapters persist; they do not interpret SurveyJS JSON.
-- `survey-core` is a future `server` dependency (`new Model(definition)`, assign `data`, `clearIncorrectValues(true)`). Do not depend on it from `core` or `react` before the hook needs a Model.
+- `validateResult` runs inside submit on the stored definition. The default is `checkSurveyResult`: `clearIncorrectValues(true)`, then `validate`, then persist `survey.data`. Adapters do not interpret SurveyJS JSON.
+- `survey-core` is a server dependency and a React peer. `core` stays free of it. `bindSurveyModel` / `useSurveyResponse` attach save and submit to a Model. They do not render `<Survey>`.
 - File upload, dashboards, PDF, and Creator are out of this repo. SurveyJS Analytics and PDF read the snapshot plus `data`; do not flatten results against the live survey.
 - Optional `expectedUpdatedAt` is compare-and-swap against `updatedAt`. SQL adapters must enforce it in the write, not only in memory.
 - HTTP is a better-call router. The browser client is better-fetch. `survey.api` takes `{ body }` or `{ query }`; the fetch client takes flat objects.

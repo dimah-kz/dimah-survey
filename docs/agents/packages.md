@@ -25,7 +25,7 @@ Consumer servers import `@dimah-survey/server`. Browsers import `@dimah-survey/r
 - reject stale `expectedUpdatedAt` in the write
 - refuse start unless status is `active` and `publishedJson` is present
 
-`@dimah-survey/db` schema copies stay in lockstep: `src/schema/v1.ts`, `examples/tables.sql`, `examples/drizzle.ts`, and `examples/schema.prisma`. `response.definition` is insert-only. Do not add a survey version table. FumaDB does not emit the secondary indexes; those live in `examples/indexes.sql`.
+`@dimah-survey/db` schema copies stay in lockstep: `src/schema/v1.ts`, `examples/tables.sql`, `examples/drizzle.ts`, and `examples/schema.prisma`. `db()` must not update `response.definition` after insert. Do not add a survey version table. FumaDB does not emit the secondary indexes; those live in `examples/indexes.sql`.
 
 Partial save replaces `data`. Submit persists the object `validateResult` already accepted. Abandon and reopen do not change `definition` or `data`.
 

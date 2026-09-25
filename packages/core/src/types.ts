@@ -93,6 +93,11 @@ export type ValidateResultInput = {
   data: SurveyResult;
 };
 
+/** Return the cleaned `survey.data` to persist it. Omit the return to keep `data`. */
+export type ValidateResult = (
+  input: ValidateResultInput,
+) => SurveyResult | void | Promise<SurveyResult | void>;
+
 export type SurveyStore = {
   saveSurvey(input: SaveSurveyInput): Promise<SurveyRecord>;
   publishSurvey(input: PublishSurveyInput): Promise<SurveyRecord>;

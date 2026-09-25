@@ -43,5 +43,6 @@ export type {
   SurveyResult,
   SurveyStatus,
   SurveyStore,
+  ValidateResult,
   ValidateResultInput,
 } from "./types";

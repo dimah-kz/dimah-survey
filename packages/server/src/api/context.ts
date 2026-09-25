@@ -1,6 +1,6 @@
-import type { DimahSurveyConfig } from "@/dimah-survey";
+import type { ResolvedDimahSurveyConfig } from "@/dimah-survey";
 
 export type SurveyEndpointContext = {
-  config: DimahSurveyConfig;
+  config: ResolvedDimahSurveyConfig;
   request: Request;
 };

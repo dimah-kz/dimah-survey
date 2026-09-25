@@ -8,7 +8,7 @@ It is not a form renderer, not a hosted survey product, and not a plugin for dim
 
 ## Status
 
-Skeleton. Packages are private. They build to `dist` the same way as dimah-form. Submit validation is a required `validateResult` hook so the snapshot path can be tested before `survey-core` is wired in.
+The lifecycle is usable. Submit validation defaults to `survey-core` (`clearIncorrectValues(true)` then `validate`) against the response snapshot. `@dimah-survey/react` binds that same `Model` for partial save and complete. It does not render the survey. `@dimah-survey/db` is the SQL schema and `db(client)` store.
 
 ## Packages
 
