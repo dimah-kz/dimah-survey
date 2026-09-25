@@ -16,3 +16,4 @@ Until the first `1.0.0` **and until [architecture.md](./architecture.md) Pre-v1 
 | ------------------------------------ | ----------------------------------------------------- |
 | [architecture.md](./architecture.md) | New package, or moving behavior across packages       |
 | [packages.md](./packages.md)         | Routes, payloads, store methods, guard, or validation |
+| [release.md](./release.md)           | Tegami changelog or npm publish                       |

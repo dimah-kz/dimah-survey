@@ -1,8 +1,24 @@
 {
   "name": "@dimah-survey/core",
   "version": "0.0.0",
-  "private": true,
   "description": "Protocol for a server-authoritative SurveyJS response lifecycle",
+  "keywords": [
+    "survey",
+    "surveyjs",
+    "protocol",
+    "better-call",
+    "zod",
+    "typescript"
+  ],
+  "homepage": "https://github.com/dimah-kz/dimah-survey",
+  "bugs": {
+    "url": "https://github.com/dimah-kz/dimah-survey/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dimah-kz/dimah-survey.git",
+    "directory": "packages/core"
+  },
   "license": "MIT",
   "author": "dimah",
   "sideEffects": false,

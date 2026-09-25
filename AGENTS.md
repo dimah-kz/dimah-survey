@@ -21,7 +21,7 @@ pnpm + Turbo. From the root: `pnpm lint`, `pnpm check-types`, `pnpm test`.
 - Partial save replaces `survey.data`. It is not a key patch.
 - Auth lives in the consumer `guard`. Persistence is the `database` adapter. `memoryAdapter()` is in `server`. `db(client)` from `@dimah-survey/db` is the SQL store. No ORM inside `server`.
 - Do not wrap or re-export the SurveyJS renderer. The React fill hook, when it exists, only hydrates a Model from the snapshot.
-- Packages stay `"private": true` until submit validation uses `survey-core` and the snapshot test still passes. Build output is still `dist` via tsup, same as the other dimah libraries.
+- Published packages are `@dimah-survey/core`, `server`, `react`, and `db`. They version together through Tegami (`docs/agents/release.md`). Build output is `dist` via tsup. Do not hand-edit `CHANGELOG.md` or `.tegami/publish-lock.yaml`.
 - Pre-v1: breaking changes are allowed. Do not keep a second API for compatibility.
 - Commit when asked. Never `git push` unless the human explicitly asks.
 
@@ -35,3 +35,4 @@ Read the matching file **when changing the protocol**. Skip it for a local fix â
 | ---------------------------------------------- | ----------------------------------------------------- |
 | [architecture.md](docs/agents/architecture.md) | New package, or moving behavior across packages       |
 | [packages.md](docs/agents/packages.md)         | Routes, payloads, store methods, guard, or validation |
+| [release.md](docs/agents/release.md)           | Tegami changelog or npm publish                       |

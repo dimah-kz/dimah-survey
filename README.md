@@ -16,7 +16,8 @@ The lifecycle is usable. Submit validation defaults to `survey-core` (`clearInco
 | ---------------------- | ------------------------------------------------- |
 | `@dimah-survey/core`   | Routes, payloads, errors, fetch client            |
 | `@dimah-survey/server` | `dimahSurvey()`, Fetch handler, `memoryAdapter()` |
-| `@dimah-survey/react`  | Client re-export. Fill hook is not implemented    |
+| `@dimah-survey/react`  | Binds a survey-core Model. Does not render        |
+| `@dimah-survey/db`     | SQL schema and `db(client)` store                 |
 
 ## Workspace
 
@@ -26,7 +27,7 @@ pnpm check-types
 pnpm test
 ```
 
-Node 22 or newer.
+Node 24 or newer. Versions are cut with Tegami; see [docs/agents/release.md](./docs/agents/release.md).
 
 ## License
 

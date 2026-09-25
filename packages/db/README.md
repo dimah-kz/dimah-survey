@@ -1,7 +1,38 @@
 # @dimah-survey/db
 
-SQL shape for the survey lifecycle. `draft_json` and `published_json` are separate columns. Each response stores a copy of the published document in `definition`.
+SQL shape and `db(client)` store for the dimah-survey lifecycle. `draft_json` and `published_json` are separate columns. Each response stores a copy of the published document in `definition`.
 
-`db(client)` implements `SurveyStore`. `client` is `DimahSurveyDB.client(adapter)`. Do not import this package from `@dimah-survey/server`.
+Do not import this package from `@dimah-survey/server`. Pass `db(client)` as the `database` option.
 
-The FumaDB schema is `v1`. Copy-paste Drizzle, Prisma, and SQL live in `src/schema/examples` and are not imported at runtime. FumaDB does not emit the secondary indexes; apply `indexes.sql` after the tables exist.
+## Install
+
+```bash
+pnpm add @dimah-survey/db fumadb
+```
+
+```ts
+import { DimahSurveyDB, db } from "@dimah-survey/db";
+import { dimahSurvey } from "@dimah-survey/server";
+import { drizzleAdapter } from "fumadb/adapters/drizzle";
+
+const survey = dimahSurvey({
+  database: db(
+    DimahSurveyDB.client(
+      drizzleAdapter({ db: drizzleOrm, provider: "sqlite" }),
+    ),
+  ),
+});
+```
+
+Copy or generate the schema for your ORM, then retain the published secondary indexes:
+
+[`drizzle.ts`](./src/schema/examples/drizzle.ts) ·
+[`schema.prisma`](./src/schema/examples/schema.prisma) ·
+[`tables.sql`](./src/schema/examples/tables.sql) ·
+[`indexes.sql`](./src/schema/examples/indexes.sql)
+
+The FumaDB schema is `v1`. Those copies are not imported at runtime. FumaDB does not emit the secondary indexes; apply `indexes.sql` after the tables exist.
+
+## License
+
+MIT

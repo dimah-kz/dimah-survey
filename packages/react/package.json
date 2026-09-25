@@ -1,8 +1,23 @@
 {
   "name": "@dimah-survey/react",
   "version": "0.0.0",
-  "private": true,
   "description": "React session hook that binds a survey-core Model to the dimah-survey lifecycle",
+  "keywords": [
+    "survey",
+    "surveyjs",
+    "react",
+    "react-hooks",
+    "typescript"
+  ],
+  "homepage": "https://github.com/dimah-kz/dimah-survey",
+  "bugs": {
+    "url": "https://github.com/dimah-kz/dimah-survey/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dimah-kz/dimah-survey.git",
+    "directory": "packages/react"
+  },
   "license": "MIT",
   "author": "dimah",
   "sideEffects": false,

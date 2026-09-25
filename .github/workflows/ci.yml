@@ -1,0 +1,78 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+# Remote cache needs a Vercel `TURBO_TOKEN` Actions secret. Until one is set,
+# jobs share a local .turbo cache via actions/cache.
+env:
+  TURBO_TEAM: ${{ vars.TURBO_TEAM }}
+
+jobs:
+  quality:
+    name: Lint & Format
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Setup
+        uses: ./.github/actions/setup
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Format
+        run: pnpm format:check
+
+      - name: Workspace consistency
+        run: pnpm sherif
+
+      - name: Unused files and dependencies
+        run: pnpm knip
+
+  packages:
+    name: Build, Test & Types
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: dorny/paths-filter@v4
+        id: filter
+        with:
+          filters: |
+            packages:
+              - 'packages/**'
+              - 'tooling/**'
+              - 'pnpm-lock.yaml'
+              - 'pnpm-workspace.yaml'
+              - 'turbo.json'
+              - 'package.json'
+
+      - name: Resolve Turbo affected range
+        if: steps.filter.outputs.packages == 'true'
+        uses: ./.github/actions/turbo-affected-range
+
+      - name: Setup
+        if: steps.filter.outputs.packages == 'true'
+        uses: ./.github/actions/setup
+
+      - name: Build, test, and typecheck packages
+        if: steps.filter.outputs.packages == 'true'
+        run: pnpm turbo run build test check-types --affected --filter="./packages/*"

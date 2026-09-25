@@ -1,0 +1,27 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+.turbo/
+
+# Lock files
+pnpm-lock.yaml
+
+# Coverage
+coverage/
+
+# Linter / formatter caches
+.eslintcache
+.prettiercache
+
+# Misc
+*.tsbuildinfo
+
+# GitHub (no Prettier parser)
+.github/CODEOWNERS
+*.prisma
+*.sql
+
+# Tegami-generated — do not format or edit
+CHANGELOG.md

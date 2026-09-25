@@ -41,4 +41,4 @@ The fill hook reads the snapshot, constructs a Model, and calls partial save / s
 
 ## Publish boundary
 
-Remove `"private": true` only after the built-in `survey-core` submit check exists and the snapshot test covers it. The tsup + `tsc --emitDeclarationOnly` + `tsc-alias` pipeline stays, and public exports point at `dist`.
+`@dimah-survey/core`, `server`, `react`, and `db` are public npm packages. The tsup + `tsc --emitDeclarationOnly` + `tsc-alias` pipeline stays, and public exports point at `dist`. Version and changelog rules live in [release.md](./release.md).
