@@ -1,0 +1,39 @@
+{
+  "name": "@dimah-survey/react",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Browser client for the dimah-survey protocol. The fill hook is not implemented yet.",
+  "license": "MIT",
+  "author": "dimah",
+  "sideEffects": false,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup --config tsup.config.ts && tsc --emitDeclarationOnly -p tsconfig.build.json && tsc-alias",
+    "check-types": "tsc --noEmit",
+    "lint": "eslint --max-warnings 0 --cache"
+  },
+  "dependencies": {
+    "@dimah-survey/core": "workspace:*"
+  },
+  "devDependencies": {
+    "@workspace/eslint-config": "workspace:*",
+    "@workspace/tsup-config": "workspace:*",
+    "@workspace/typescript-config": "workspace:*",
+    "eslint": "catalog:",
+    "tsc-alias": "catalog:",
+    "tsup": "catalog:",
+    "typescript": "catalog:"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

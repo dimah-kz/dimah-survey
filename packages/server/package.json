@@ -1,0 +1,42 @@
+{
+  "name": "@dimah-survey/server",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Server-authoritative response lifecycle for SurveyJS JSON",
+  "license": "MIT",
+  "author": "dimah",
+  "sideEffects": false,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup --config tsup.config.ts && tsc --emitDeclarationOnly -p tsconfig.build.json && tsc-alias",
+    "check-types": "tsc --noEmit",
+    "lint": "eslint --max-warnings 0 --cache",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@dimah-survey/core": "workspace:*"
+  },
+  "devDependencies": {
+    "@workspace/eslint-config": "workspace:*",
+    "@workspace/tsup-config": "workspace:*",
+    "@workspace/typescript-config": "workspace:*",
+    "@workspace/vitest-config": "workspace:*",
+    "eslint": "catalog:",
+    "tsc-alias": "catalog:",
+    "tsup": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

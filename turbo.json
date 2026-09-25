@@ -1,0 +1,26 @@
+{
+  "$schema": "https://turborepo.dev/schema.json",
+  "ui": "tui",
+  "tasks": {
+    "build": {
+      "dependsOn": ["^build"],
+      "inputs": ["$TURBO_DEFAULT$", "../../tooling/tsup-config/**"],
+      "outputs": ["dist/**"]
+    },
+    "lint": {
+      "inputs": ["$TURBO_DEFAULT$", "../../tooling/eslint-config/**"]
+    },
+    "check-types": {
+      "dependsOn": ["^build"],
+      "inputs": ["$TURBO_DEFAULT$", "../../tooling/typescript-config/**"]
+    },
+    "test": {
+      "dependsOn": ["^build"],
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "vitest.config.*",
+        "../../tooling/vitest-config/**"
+      ]
+    }
+  }
+}

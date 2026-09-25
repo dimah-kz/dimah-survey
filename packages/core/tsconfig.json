@@ -1,0 +1,12 @@
+{
+  "extends": "@workspace/typescript-config/node-library.json",
+  "compilerOptions": {
+    "lib": ["es2025", "DOM", "DOM.Iterable"],
+    "outDir": "dist",
+    "rootDir": "src",
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  },
+  "include": ["src"]
+}
