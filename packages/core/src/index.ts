@@ -1,3 +1,8 @@
+export {
+  normalizeListPage,
+  pageFromOverfetch,
+  toResponseSummary,
+} from "./list";
 export { createSurveyClient } from "./client";
 export type { SurveyClient } from "./client";
 export { APIError, isAPIError } from "./error";
@@ -15,7 +20,11 @@ export {
 } from "./routes";
 export type { SurveyApiOperation } from "./routes";
 export {
+  LIST_DEFAULT_LIMIT,
+  LIST_MAX_LIMIT,
   idQuerySchema,
+  listResponsesQuerySchema,
+  listSurveysQuerySchema,
   publishSurveyBodySchema,
   responseMutationBodySchema,
   savePartialBodySchema,
@@ -29,16 +38,21 @@ export { surveyFetchErrorSchema } from "./schema/error";
 export type {
   ArchiveSurveyInput,
   GuardContext,
+  ListResponsesQuery,
+  ListSurveysQuery,
   Operation,
   PublishSurveyInput,
+  ResponseList,
   ResponseMutationInput,
   ResponseRecord,
   ResponseStatus,
+  ResponseSummary,
   SavePartialInput,
   SaveSurveyInput,
   StartResponseInput,
   SubmitResponseInput,
   SurveyJson,
+  SurveyList,
   SurveyRecord,
   SurveyResult,
   SurveyStatus,

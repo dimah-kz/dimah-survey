@@ -8,7 +8,9 @@ alwaysApply: false
 
 Edit the smallest package that owns the behavior. Shared protocol starts in `core`, then `server` and `react` — no duplicate route strings or schemas.
 
-SurveyJS JSON stays opaque. Do not import `@dimah-form/*`. Auth stays in consumer `guard`. No ORM in `server`. Persistence is `database` (`memoryAdapter()` or `db(client)` from `@dimah-survey/db`). Published packages version together; changelog rules are in `docs/agents/release.md`.
+SurveyJS JSON stays opaque. Do not import `@dimah-form/*`. Auth stays in consumer `guard`. No ORM in `server`. Persistence is `database` (`memoryAdapter()` or `db(client)` from `@dimah-survey/db`).
+
+The library is still under construction and not on npm. Ship the current design; do not keep a previous API beside it. Policy: [docs/agents/architecture.md](docs/agents/architecture.md) **Pre-release**. Changelog rules are in `docs/agents/release.md`.
 
 `draftJson` and `publishedJson` are different documents. A response stores `definition` copied at start. Submit validates that snapshot.
 

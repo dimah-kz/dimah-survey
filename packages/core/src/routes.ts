@@ -11,10 +11,12 @@ export function normalizeSurveyApiBasePath(basePath = SURVEY_API_BASE_PATH) {
 
 export const SURVEY_API_ROUTES = {
   survey: "/survey",
+  surveys: "/surveys",
   publishSurvey: "/survey/publish",
   archiveSurvey: "/survey/archive",
   startResponse: "/response/start",
   response: "/response",
+  responses: "/responses",
   savePartial: "/response/partial",
   submitResponse: "/response/submit",
   abandonResponse: "/response/abandon",
@@ -24,10 +26,12 @@ export const SURVEY_API_ROUTES = {
 export const SURVEY_API_OPERATIONS = {
   getSurvey: { method: "GET", path: SURVEY_API_ROUTES.survey },
   saveSurvey: { method: "POST", path: SURVEY_API_ROUTES.survey },
+  listSurveys: { method: "GET", path: SURVEY_API_ROUTES.surveys },
   publishSurvey: { method: "POST", path: SURVEY_API_ROUTES.publishSurvey },
   archiveSurvey: { method: "POST", path: SURVEY_API_ROUTES.archiveSurvey },
   startResponse: { method: "POST", path: SURVEY_API_ROUTES.startResponse },
   getResponse: { method: "GET", path: SURVEY_API_ROUTES.response },
+  listResponses: { method: "GET", path: SURVEY_API_ROUTES.responses },
   savePartial: { method: "POST", path: SURVEY_API_ROUTES.savePartial },
   submitResponse: { method: "POST", path: SURVEY_API_ROUTES.submitResponse },
   abandonResponse: { method: "POST", path: SURVEY_API_ROUTES.abandonResponse },

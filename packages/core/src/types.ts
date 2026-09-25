@@ -52,6 +52,60 @@ export type ArchiveSurveyInput = {
 export type StartResponseInput = {
   surveyId: string;
   respondentId?: string;
+  /**
+   * When true, return the latest draft for this survey and respondent.
+   * Requires `respondentId`.
+   */
+  resume?: boolean;
+};
+
+export type ListPageQuery = {
+  limit?: number;
+  offset?: number;
+};
+
+export type ListSurveysQuery = ListPageQuery & {
+  status?: SurveyStatus;
+};
+
+export type ListResponsesQuery = ListPageQuery & {
+  surveyId?: string;
+  respondentId?: string;
+  status?: ResponseStatus;
+  /** Inclusive lower bound on `submittedAt`. Rows with no submit time are excluded. */
+  submittedFrom?: string;
+  /** Inclusive upper bound on `submittedAt`. Rows with no submit time are excluded. */
+  submittedTo?: string;
+  /** Exclusive lower bound on `updatedAt`. */
+  updatedAfter?: string;
+  /** `"summary"` omits `definition` and `data`. Default is `"summary"`. */
+  include?: "summary" | "full";
+};
+
+/** List row when `include` is `"summary"`. `definition` and `data` are omitted. */
+export type ResponseSummary = {
+  id: string;
+  surveyId: string;
+  respondentId: string | null;
+  status: ResponseStatus;
+  createdAt: string;
+  updatedAt: string;
+  submittedAt: string | null;
+};
+
+export type SurveyList = {
+  surveys: SurveyRecord[];
+  limit: number;
+  offset: number;
+  nextOffset: number | null;
+};
+
+export type ResponseList = {
+  responses: (ResponseRecord | ResponseSummary)[];
+  limit: number;
+  offset: number;
+  nextOffset: number | null;
+  total: number;
 };
 
 export type SavePartialInput = {
@@ -76,7 +130,9 @@ export type Operation =
   | "publishSurvey"
   | "archiveSurvey"
   | "getSurvey"
+  | "listSurveys"
   | "startResponse"
+  | "listResponses"
   | "savePartial"
   | "submitResponse"
   | "abandonResponse"
@@ -86,6 +142,10 @@ export type Operation =
 export type GuardContext = {
   request?: Request;
   operation: Operation;
+  /** Parsed JSON body, when the operation has one. */
+  body?: unknown;
+  /** Parsed query, when the operation has one. */
+  query?: unknown;
 };
 
 export type ValidateResultInput = {
@@ -103,7 +163,21 @@ export type SurveyStore = {
   publishSurvey(input: PublishSurveyInput): Promise<SurveyRecord>;
   archiveSurvey(input: ArchiveSurveyInput): Promise<SurveyRecord>;
   getSurvey(idOrSlug: string): Promise<SurveyRecord | null>;
+  listSurveys(query?: ListSurveysQuery): Promise<SurveyRecord[]>;
+  /**
+   * Newest draft for this survey and respondent (`updatedAt` descending).
+   * `startResponse({ resume: true })` reads this before inserting.
+   */
+  findLatestDraft(query: {
+    surveyId: string;
+    respondentId: string;
+  }): Promise<ResponseRecord | null>;
   startResponse(input: StartResponseInput): Promise<ResponseRecord>;
+  listResponses(
+    query?: ListResponsesQuery,
+  ): Promise<(ResponseRecord | ResponseSummary)[]>;
+  /** Ignores `limit`, `offset`, and `include`. */
+  countResponses(query?: ListResponsesQuery): Promise<number>;
   savePartial(input: SavePartialInput): Promise<ResponseRecord>;
   submitResponse(input: SubmitResponseInput): Promise<ResponseRecord>;
   abandonResponse(input: ResponseMutationInput): Promise<ResponseRecord>;

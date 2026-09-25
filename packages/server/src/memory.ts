@@ -1,7 +1,10 @@
 import {
   isAPIError,
   SURVEY_ERROR_CODES,
+  toResponseSummary,
   type ArchiveSurveyInput,
+  type ListResponsesQuery,
+  type ListSurveysQuery,
   type PublishSurveyInput,
   type ResponseMutationInput,
   type ResponseRecord,
@@ -27,6 +30,45 @@ function now() {
 
 function clone<T>(value: T): T {
   return structuredClone(value);
+}
+
+function sortByUpdatedAtDesc<T extends { updatedAt: string }>(items: T[]) {
+  return items.toSorted((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+}
+
+function slicePage<T>(
+  items: readonly T[],
+  query?: { limit?: number; offset?: number },
+) {
+  const offset = query?.offset ?? 0;
+  if (query?.limit === undefined) return items.slice(offset);
+  return items.slice(offset, offset + query.limit);
+}
+
+function responseMatches(row: ResponseRecord, query?: ListResponsesQuery) {
+  if (!query) return true;
+  if (query.surveyId && row.surveyId !== query.surveyId) return false;
+  if (query.respondentId && row.respondentId !== query.respondentId) {
+    return false;
+  }
+  if (query.status && row.status !== query.status) return false;
+  if (query.submittedFrom || query.submittedTo) {
+    if (!row.submittedAt) return false;
+    const submitted = Date.parse(row.submittedAt);
+    if (query.submittedFrom && submitted < Date.parse(query.submittedFrom)) {
+      return false;
+    }
+    if (query.submittedTo && submitted > Date.parse(query.submittedTo)) {
+      return false;
+    }
+  }
+  if (
+    query.updatedAfter &&
+    !(Date.parse(row.updatedAt) > Date.parse(query.updatedAfter))
+  ) {
+    return false;
+  }
+  return true;
 }
 
 export function memoryAdapter(): SurveyStore {
@@ -140,6 +182,27 @@ export function memoryAdapter(): SurveyStore {
       }
     },
 
+    async listSurveys(query?: ListSurveysQuery) {
+      const filtered = sortByUpdatedAtDesc(
+        [...surveys.values()].filter(
+          (survey) => !query?.status || survey.status === query.status,
+        ),
+      );
+      return slicePage(filtered, query).map(clone);
+    },
+
+    async findLatestDraft(query: { surveyId: string; respondentId: string }) {
+      const open = sortByUpdatedAtDesc(
+        [...responses.values()].filter(
+          (row) =>
+            row.surveyId === query.surveyId &&
+            row.respondentId === query.respondentId &&
+            row.status === "draft",
+        ),
+      );
+      return open[0] ? clone(open[0]) : null;
+    },
+
     async startResponse(input: StartResponseInput) {
       const survey = requireSurvey(input.surveyId);
       if (survey.status !== "active" || survey.publishedJson === null) {
@@ -228,6 +291,23 @@ export function memoryAdapter(): SurveyStore {
     async getResponse(id: string) {
       const response = responses.get(id);
       return response ? clone(response) : null;
+    },
+
+    async listResponses(query?: ListResponsesQuery) {
+      const page = slicePage(
+        sortByUpdatedAtDesc(
+          [...responses.values()].filter((row) => responseMatches(row, query)),
+        ),
+        query,
+      ).map(clone);
+      if (query?.include === "full") return page;
+      return page.map(toResponseSummary);
+    },
+
+    async countResponses(query?: ListResponsesQuery) {
+      return [...responses.values()].filter((row) =>
+        responseMatches(row, query),
+      ).length;
     },
   };
 }

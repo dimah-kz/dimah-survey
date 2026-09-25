@@ -39,7 +39,7 @@ Package references: `"@dimah-survey/core"`, `"npm:@dimah-survey/core"`, or `"gro
 | minor | Backward-compatible feature               |
 | major | Breaking API, types, or consumer contract |
 
-Until the first `1.0.0` **and until [architecture.md](./architecture.md) Pre-v1 is edited**, a breaking change is allowed. Prefer the clean API over a shim. Still use `major` so the changelog names the break.
+Until [architecture.md](./architecture.md) **Pre-release** is replaced, the library is still being built and a bump type does not freeze the API. Record the change. After the first release, a break is `major`.
 
 ## Before opening a PR
 

@@ -1,10 +1,29 @@
 import { z } from "zod";
 
+export const LIST_DEFAULT_LIMIT = 50;
+export const LIST_MAX_LIMIT = 100;
+
 export const surveyJsonSchema = z.record(z.string(), z.unknown());
 export const surveyResultSchema = z.record(z.string(), z.unknown());
 
 const idSchema = z.string().min(1);
 const expectedUpdatedAtSchema = z.string().min(1).optional();
+
+const listPageQueryFields = {
+  limit: z.coerce.number().pipe(z.int().min(1).max(LIST_MAX_LIMIT)).optional(),
+  offset: z.coerce.number().pipe(z.int().nonnegative()).optional(),
+};
+
+const isoDateTimeQuerySchema = z
+  .string()
+  .trim()
+  .min(1)
+  .refine((value) => !Number.isNaN(Date.parse(value)), {
+    error: "Invalid datetime",
+  });
+
+export const surveyStatusSchema = z.enum(["draft", "active", "archived"]);
+export const responseStatusSchema = z.enum(["draft", "submitted", "abandoned"]);
 
 export const idQuerySchema = z.object({
   id: idSchema,
@@ -25,7 +44,32 @@ export const publishSurveyBodySchema = z.object({
 export const startResponseBodySchema = z.object({
   surveyId: idSchema,
   respondentId: z.string().min(1).optional(),
+  /**
+   * When true, return the latest draft for this survey and respondent.
+   * Requires `respondentId`. Otherwise create a new response.
+   */
+  resume: z.boolean().optional(),
 });
+
+export const listSurveysQuerySchema = z
+  .object({
+    status: surveyStatusSchema.optional(),
+    ...listPageQueryFields,
+  })
+  .optional();
+
+export const listResponsesQuerySchema = z
+  .object({
+    surveyId: idSchema.optional(),
+    respondentId: z.string().min(1).optional(),
+    status: responseStatusSchema.optional(),
+    submittedFrom: isoDateTimeQuerySchema.optional(),
+    submittedTo: isoDateTimeQuerySchema.optional(),
+    updatedAfter: isoDateTimeQuerySchema.optional(),
+    include: z.enum(["summary", "full"]).optional(),
+    ...listPageQueryFields,
+  })
+  .optional();
 
 export const savePartialBodySchema = z.object({
   id: idSchema,

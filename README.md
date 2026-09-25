@@ -12,12 +12,12 @@ The lifecycle is usable. Submit validation defaults to `survey-core` (`clearInco
 
 ## Packages
 
-| Package                | Role                                              |
-| ---------------------- | ------------------------------------------------- |
-| `@dimah-survey/core`   | Routes, payloads, errors, fetch client            |
-| `@dimah-survey/server` | `dimahSurvey()`, Fetch handler, `memoryAdapter()` |
-| `@dimah-survey/react`  | Binds a survey-core Model. Does not render        |
-| `@dimah-survey/db`     | SQL schema and `db(client)` store                 |
+| Package                | Role                                                                  |
+| ---------------------- | --------------------------------------------------------------------- |
+| `@dimah-survey/core`   | Routes, payloads, errors, fetch client                                |
+| `@dimah-survey/server` | `dimahSurvey()`, Fetch handler, framework adapters, `memoryAdapter()` |
+| `@dimah-survey/react`  | Binds a survey-core Model. Does not render                            |
+| `@dimah-survey/db`     | SQL schema and `db(client)` store                                     |
 
 ## Workspace
 

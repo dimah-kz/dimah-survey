@@ -1,7 +1,10 @@
 import {
   SURVEY_ERROR_CODES,
   APIError,
+  type ListResponsesQuery,
+  type ListSurveysQuery,
   type ResponseRecord,
+  type ResponseSummary,
   type SurveyRecord,
   type SurveyStore,
 } from "@dimah-survey/core";
@@ -56,6 +59,18 @@ function toSurvey(row: SurveyRow): SurveyRecord {
   };
 }
 
+function toSummary(row: ResponseRow): ResponseSummary {
+  return {
+    id: row.id,
+    surveyId: row.surveyId,
+    respondentId: row.respondentId ?? null,
+    status: row.status as ResponseSummary["status"],
+    createdAt: iso(row.createdAt),
+    updatedAt: iso(row.updatedAt),
+    submittedAt: isoOrNull(row.submittedAt),
+  };
+}
+
 function toResponse(row: ResponseRow): ResponseRecord {
   return {
     id: row.id,
@@ -68,6 +83,58 @@ function toResponse(row: ResponseRow): ResponseRecord {
     updatedAt: iso(row.updatedAt),
     submittedAt: isoOrNull(row.submittedAt),
   };
+}
+
+const RESPONSE_SUMMARY_COLUMNS = [
+  "id",
+  "surveyId",
+  "respondentId",
+  "status",
+  "submittedAt",
+  "createdAt",
+  "updatedAt",
+] as const;
+
+function listResponseWhere<T>(
+  query: ListResponsesQuery,
+  b: {
+    (
+      col: "surveyId" | "respondentId" | "status" | "submittedAt" | "updatedAt",
+      op: "=" | ">=" | "<=" | ">",
+      value: string | Date,
+    ): T;
+    and: (...parts: T[]) => T;
+  },
+): T {
+  const parts: T[] = [];
+  if (query.surveyId) parts.push(b("surveyId", "=", query.surveyId));
+  if (query.respondentId) {
+    parts.push(b("respondentId", "=", query.respondentId));
+  }
+  if (query.status) parts.push(b("status", "=", query.status));
+  if (query.submittedFrom) {
+    parts.push(b("submittedAt", ">=", new Date(query.submittedFrom)));
+  }
+  if (query.submittedTo) {
+    parts.push(b("submittedAt", "<=", new Date(query.submittedTo)));
+  }
+  if (query.updatedAfter) {
+    parts.push(b("updatedAt", ">", new Date(query.updatedAfter)));
+  }
+  const first = parts[0];
+  if (first !== undefined && parts.length === 1) return first;
+  return b.and(...parts);
+}
+
+function hasListResponseFilters(query?: ListResponsesQuery) {
+  return Boolean(
+    query?.surveyId ||
+    query?.respondentId ||
+    query?.status ||
+    query?.submittedFrom ||
+    query?.submittedTo ||
+    query?.updatedAfter,
+  );
 }
 
 function stale() {
@@ -141,6 +208,31 @@ export function db(client: DimahSurveyDbClient): SurveyStore {
   return {
     async getSurvey(idOrSlug) {
       return readSurvey(idOrSlug);
+    },
+    async listSurveys(query?: ListSurveysQuery) {
+      const rows = await orm.findMany("survey", {
+        where: query?.status
+          ? (b) => b("status", "=", query.status as string)
+          : undefined,
+        orderBy: ["updatedAt", "desc"],
+        limit: query?.limit,
+        offset: query?.offset,
+      });
+      return rows.map((row) => toSurvey(row as SurveyRow));
+    },
+    async findLatestDraft(query) {
+      const rows = await orm.findMany("response", {
+        where: (b) =>
+          b.and(
+            b("surveyId", "=", query.surveyId),
+            b("respondentId", "=", query.respondentId),
+            b("status", "=", "draft"),
+          ),
+        orderBy: ["updatedAt", "desc"],
+        limit: 1,
+      });
+      const row = rows[0];
+      return row ? toResponse(row as ResponseRow) : null;
     },
     async saveSurvey(input) {
       const existing = await readSurvey(input.id);
@@ -241,6 +333,38 @@ export function db(client: DimahSurveyDbClient): SurveyStore {
         where: (b) => b("id", "=", id),
       });
       return row ? toResponse(row as ResponseRow) : null;
+    },
+    async listResponses(query?: ListResponsesQuery) {
+      const include = query?.include === "full" ? "full" : "summary";
+      const filtered = hasListResponseFilters(query);
+      if (include === "summary") {
+        const rows = await orm.findMany("response", {
+          select: [...RESPONSE_SUMMARY_COLUMNS],
+          where:
+            filtered && query ? (b) => listResponseWhere(query, b) : undefined,
+          orderBy: ["updatedAt", "desc"],
+          limit: query?.limit,
+          offset: query?.offset,
+        });
+        return rows.map((row) => toSummary(row as ResponseRow));
+      }
+      const rows = await orm.findMany("response", {
+        where:
+          filtered && query ? (b) => listResponseWhere(query, b) : undefined,
+        orderBy: ["updatedAt", "desc"],
+        limit: query?.limit,
+        offset: query?.offset,
+      });
+      return rows.map((row) => toResponse(row as ResponseRow));
+    },
+    async countResponses(query?: ListResponsesQuery) {
+      const filtered = hasListResponseFilters(query);
+      const rows = await orm.findMany("response", {
+        select: ["id"],
+        where:
+          filtered && query ? (b) => listResponseWhere(query, b) : undefined,
+      });
+      return rows.length;
     },
     async savePartial(input) {
       return updateResponse(input.id, input.expectedUpdatedAt, (current) => {

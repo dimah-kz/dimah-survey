@@ -26,6 +26,7 @@ export const SURVEY_ERROR_CODES = defineErrorCodes({
   STALE_UPDATE: "The record changed since it was read.",
   RESPONSE_NOT_FOUND: "Response was not found.",
   RESPONSE_CLOSED: "Response is not open for this operation.",
+  RESUME_REQUIRES_RESPONDENT: "resume requires respondentId",
   VALIDATION_FAILED: "Survey result is invalid.",
 });
 

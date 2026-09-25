@@ -6,6 +6,12 @@
     "survey",
     "surveyjs",
     "better-call",
+    "nextjs",
+    "hono",
+    "express",
+    "fastify",
+    "elysia",
+    "sveltekit",
     "typescript"
   ],
   "homepage": "https://github.com/dimah-kz/dimah-survey",
@@ -25,6 +31,34 @@
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
+    },
+    "./next": {
+      "types": "./dist/adapters/next.d.ts",
+      "default": "./dist/adapters/next.js"
+    },
+    "./node": {
+      "types": "./dist/adapters/node.d.ts",
+      "default": "./dist/adapters/node.js"
+    },
+    "./express": {
+      "types": "./dist/adapters/express.d.ts",
+      "default": "./dist/adapters/express.js"
+    },
+    "./hono": {
+      "types": "./dist/adapters/hono.d.ts",
+      "default": "./dist/adapters/hono.js"
+    },
+    "./fastify": {
+      "types": "./dist/adapters/fastify.d.ts",
+      "default": "./dist/adapters/fastify.js"
+    },
+    "./elysia": {
+      "types": "./dist/adapters/elysia.d.ts",
+      "default": "./dist/adapters/elysia.js"
+    },
+    "./svelte-kit": {
+      "types": "./dist/adapters/svelte-kit.d.ts",
+      "default": "./dist/adapters/svelte-kit.js"
     }
   },
   "files": [
@@ -43,6 +77,7 @@
     "zod": "catalog:"
   },
   "devDependencies": {
+    "@types/node": "catalog:",
     "@workspace/eslint-config": "workspace:*",
     "@workspace/tsup-config": "workspace:*",
     "@workspace/typescript-config": "workspace:*",

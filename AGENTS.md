@@ -22,7 +22,7 @@ pnpm + Turbo. From the root: `pnpm lint`, `pnpm check-types`, `pnpm test`.
 - Auth lives in the consumer `guard`. Persistence is the `database` adapter. `memoryAdapter()` is in `server`. `db(client)` from `@dimah-survey/db` is the SQL store. No ORM inside `server`.
 - Do not wrap or re-export the SurveyJS renderer. The React fill hook, when it exists, only hydrates a Model from the snapshot.
 - Published packages are `@dimah-survey/core`, `server`, `react`, and `db`. They version together through Tegami (`docs/agents/release.md`). Build output is `dist` via tsup. Do not hand-edit `CHANGELOG.md` or `.tegami/publish-lock.yaml`.
-- Pre-v1: breaking changes are allowed. Do not keep a second API for compatibility.
+- Still under construction and not on npm. Ship the current design and delete the previous API in the same change. Policy: [architecture.md](docs/agents/architecture.md) **Pre-release** — replace that section after the first publish.
 - Commit when asked. Never `git push` unless the human explicitly asks.
 
 `examples/` stays empty until a consumer app is worth showing. `docs/agents/` = these checklists. `tooling/` = shared ESLint, TypeScript, tsup, and Vitest config.

@@ -76,6 +76,8 @@ A changelog file is created in `.tegami/` and must be committed with your PR. CI
 
 ## How to choose bump type (SemVer standard)
 
+The packages are still under construction and are not on npm. See [docs/agents/architecture.md](./docs/agents/architecture.md) **Pre-release**. Choose a bump for the changelog; do not keep an old API to avoid `major`.
+
 - Choose `patch` if consumers can upgrade safely without changing their code.
 - Choose `minor` for additive features (new exports, new options with defaults, improved behavior).
 - Choose `major` when existing consumer code may break or output contracts change.

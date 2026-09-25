@@ -53,9 +53,12 @@ export const createSurveyEndpoint: CreateSurveyEndpoint = ((
     path,
     withValidation(options),
     async (ctx) => {
+      const input = ctx as { body?: unknown; query?: unknown };
       await ctx.context.config.guard?.({
         request: ctx.context.request,
         operation,
+        body: input.body,
+        query: input.query,
       });
       return handler(ctx as never);
     },

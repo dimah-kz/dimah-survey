@@ -82,15 +82,158 @@ describe("published snapshot", () => {
   });
 
   it("runs the consumer guard before the store", async () => {
+    const seen: { operation?: string; id?: string }[] = [];
     const survey = dimahSurvey({
       database: memoryAdapter(),
       validateResult: () => undefined,
-      guard: () => {
-        throw APIError.from("FORBIDDEN", SURVEY_ERROR_CODES.FORBIDDEN);
+      guard: (context) => {
+        const body = context.body as { id?: string } | undefined;
+        seen.push({ operation: context.operation, id: body?.id });
+        if (context.operation === "saveSurvey") {
+          throw APIError.from("FORBIDDEN", SURVEY_ERROR_CODES.FORBIDDEN);
+        }
       },
     });
     await expect(
       survey.api.saveSurvey({ body: { id: "x", draftJson: v1 } }),
     ).rejects.toMatchObject({ code: SURVEY_ERROR_CODES.FORBIDDEN.code });
+    expect(seen).toEqual([{ operation: "saveSurvey", id: "x" }]);
+  });
+});
+
+describe("list and resume", () => {
+  it("pages surveys and response summaries", async () => {
+    const { client } = instance();
+    await client.saveSurvey({ id: "a", slug: "pulse", draftJson: v1 });
+    await client.publishSurvey({ id: "a" });
+    await client.saveSurvey({ id: "b", draftJson: v2 });
+    const started = await client.startResponse({
+      surveyId: "a",
+      respondentId: "user-1",
+    });
+    await client.submitResponse({
+      id: started.id,
+      data: { q1: "yes" },
+      expectedUpdatedAt: started.updatedAt,
+    });
+
+    const surveys = await client.listSurveys({ limit: 1 });
+    expect(surveys.surveys).toHaveLength(1);
+    expect(surveys.limit).toBe(1);
+    expect(surveys.nextOffset).toBe(1);
+
+    const listed = await client.listResponses({ surveyId: "pulse" });
+    expect(listed.total).toBe(1);
+    expect(listed.responses[0]).toMatchObject({
+      id: started.id,
+      status: "submitted",
+    });
+    expect(listed.responses[0]).not.toHaveProperty("definition");
+    expect(listed.responses[0]).not.toHaveProperty("data");
+
+    const full = await client.listResponses({
+      surveyId: "a",
+      include: "full",
+    });
+    expect(full.responses[0]).toMatchObject({
+      definition: v1,
+      data: { q1: "yes" },
+    });
+  });
+
+  it("resumes the latest draft for the same respondent", async () => {
+    const { client } = instance();
+    await client.saveSurvey({ id: "onboarding", draftJson: v1 });
+    await client.publishSurvey({ id: "onboarding" });
+    const first = await client.startResponse({
+      surveyId: "onboarding",
+      respondentId: "user-1",
+    });
+    await client.savePartial({
+      id: first.id,
+      data: { q1: "Ada" },
+      expectedUpdatedAt: first.updatedAt,
+    });
+
+    const resumed = await client.startResponse({
+      surveyId: "onboarding",
+      respondentId: "user-1",
+      resume: true,
+    });
+    expect(resumed.id).toBe(first.id);
+    expect(resumed.data).toEqual({ q1: "Ada" });
+
+    const other = await client.startResponse({
+      surveyId: "onboarding",
+      respondentId: "user-2",
+      resume: true,
+    });
+    expect(other.id).not.toBe(first.id);
+  });
+
+  it("rejects resume without respondentId", async () => {
+    const { client } = instance();
+    await client.saveSurvey({ id: "onboarding", draftJson: v1 });
+    await client.publishSurvey({ id: "onboarding" });
+    await expect(
+      client.startResponse({ surveyId: "onboarding", resume: true }),
+    ).rejects.toMatchObject({
+      code: SURVEY_ERROR_CODES.RESUME_REQUIRES_RESPONDENT.code,
+    });
+  });
+
+  it("runs onSubmit before persist and afterSubmit after", async () => {
+    const seen: string[] = [];
+    const survey = dimahSurvey({
+      database: memoryAdapter(),
+      validateResult: () => undefined,
+      hooks: {
+        onSubmit: ({ response }) => {
+          seen.push(`before:${response.status}`);
+        },
+        afterSubmit: ({ response }) => {
+          seen.push(`after:${response.status}`);
+        },
+      },
+    });
+    const client = createSurveyClient({
+      baseURL: "http://survey.local/api/survey",
+      fetch: (input, init) => survey.handler(new Request(input, init)),
+    });
+    await client.saveSurvey({ id: "pulse", draftJson: v1 });
+    await client.publishSurvey({ id: "pulse" });
+    const started = await client.startResponse({ surveyId: "pulse" });
+    await client.submitResponse({
+      id: started.id,
+      expectedUpdatedAt: started.updatedAt,
+    });
+    expect(seen).toEqual(["before:draft", "after:submitted"]);
+  });
+
+  it("does not persist when onSubmit throws", async () => {
+    const survey = dimahSurvey({
+      database: memoryAdapter(),
+      validateResult: () => undefined,
+      hooks: {
+        onSubmit: () => {
+          throw APIError.from("FORBIDDEN", SURVEY_ERROR_CODES.FORBIDDEN);
+        },
+      },
+    });
+    const client = createSurveyClient({
+      baseURL: "http://survey.local/api/survey",
+      fetch: (input, init) => survey.handler(new Request(input, init)),
+    });
+    await client.saveSurvey({ id: "pulse", draftJson: v1 });
+    await client.publishSurvey({ id: "pulse" });
+    const started = await client.startResponse({ surveyId: "pulse" });
+    await expect(
+      client.submitResponse({
+        id: started.id,
+        expectedUpdatedAt: started.updatedAt,
+      }),
+    ).rejects.toMatchObject({ code: SURVEY_ERROR_CODES.FORBIDDEN.code });
+    const current = await client.getResponse(started.id);
+    expect(current.status).toBe("draft");
   });
 });

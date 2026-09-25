@@ -4,6 +4,7 @@ import type { Model } from "survey-core";
 export type SurveyModelActions = {
   savePartial: (data: SurveyResult) => Promise<void>;
   submit: (data: SurveyResult) => Promise<void>;
+  onPartialError?: (error: unknown) => void;
 };
 
 /**
@@ -13,7 +14,9 @@ export type SurveyModelActions = {
 export function bindSurveyModel(model: Model, actions: SurveyModelActions) {
   model.sendResultOnPageNext = true;
   const onPartial = () => {
-    void actions.savePartial({ ...model.data });
+    void actions.savePartial({ ...model.data }).catch((error: unknown) => {
+      actions.onPartialError?.(error);
+    });
   };
   const onComplete = (
     sender: Model,

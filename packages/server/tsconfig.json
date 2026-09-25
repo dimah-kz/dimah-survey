@@ -2,6 +2,7 @@
   "extends": "@workspace/typescript-config/node-library.json",
   "compilerOptions": {
     "lib": ["es2025", "DOM", "DOM.Iterable"],
+    "types": ["node"],
     "outDir": "dist",
     "rootDir": "src",
     "paths": {

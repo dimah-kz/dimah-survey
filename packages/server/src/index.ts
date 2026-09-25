@@ -1,5 +1,9 @@
 export { dimahSurvey } from "./dimah-survey";
-export type { DimahSurveyConfig } from "./dimah-survey";
+export type {
+  DimahSurveyConfig,
+  SurveyHookContext,
+  SurveyHooks,
+} from "./dimah-survey";
 export { checkSurveyResult } from "./validate";
 export { memoryAdapter } from "./memory";
 export {

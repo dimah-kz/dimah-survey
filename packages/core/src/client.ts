@@ -1,10 +1,14 @@
 import { createSurveyFetch, type SurveyClientFetchOptions } from "./fetch";
 import { normalizeSurveyApiBasePath, SURVEY_API_ROUTES } from "./routes";
 import type {
+  ResponseList,
   ResponseRecord,
   SurveyJson,
+  SurveyList,
   SurveyRecord,
   SurveyResult,
+  SurveyStatus,
+  ResponseStatus,
 } from "./types";
 
 export type SurveyClient = {
@@ -23,10 +27,27 @@ export type SurveyClient = {
     expectedUpdatedAt?: string;
   }): Promise<SurveyRecord>;
   getSurvey(id: string): Promise<SurveyRecord>;
+  listSurveys(input?: {
+    status?: SurveyStatus;
+    limit?: number;
+    offset?: number;
+  }): Promise<SurveyList>;
   startResponse(input: {
     surveyId: string;
     respondentId?: string;
+    resume?: boolean;
   }): Promise<ResponseRecord>;
+  listResponses(input?: {
+    surveyId?: string;
+    respondentId?: string;
+    status?: ResponseStatus;
+    submittedFrom?: string;
+    submittedTo?: string;
+    updatedAfter?: string;
+    include?: "summary" | "full";
+    limit?: number;
+    offset?: number;
+  }): Promise<ResponseList>;
   savePartial(input: {
     id: string;
     data: SurveyResult;
@@ -66,8 +87,12 @@ export function createSurveyClient(
       $fetch(SURVEY_API_ROUTES.archiveSurvey, { method: "POST", body }),
     getSurvey: (id) =>
       $fetch(SURVEY_API_ROUTES.survey, { method: "GET", query: { id } }),
+    listSurveys: (query) =>
+      $fetch(SURVEY_API_ROUTES.surveys, { method: "GET", query }),
     startResponse: (body) =>
       $fetch(SURVEY_API_ROUTES.startResponse, { method: "POST", body }),
+    listResponses: (query) =>
+      $fetch(SURVEY_API_ROUTES.responses, { method: "GET", query }),
     savePartial: (body) =>
       $fetch(SURVEY_API_ROUTES.savePartial, { method: "POST", body }),
     submitResponse: (body) =>

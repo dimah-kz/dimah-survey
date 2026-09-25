@@ -2,7 +2,7 @@
 
 Explore the package you are changing. This file is what to **keep in sync**, not an API reference.
 
-Until the first `1.0.0` **and until [architecture.md](./architecture.md) Pre-v1 is edited**, breaking changes are allowed.
+Still under construction. Stability policy: [architecture.md](./architecture.md) **Pre-release**.
 
 ## Protocol
 
@@ -24,6 +24,8 @@ Consumer servers import `@dimah-survey/server`. Browsers import `@dimah-survey/r
 - copy `publishedJson` into `response.definition` at start and never update that column on later publishes
 - reject stale `expectedUpdatedAt` in the write
 - refuse start unless status is `active` and `publishedJson` is present
+- `findLatestDraft` returns the newest draft for `surveyId` + `respondentId`, or null
+- `listSurveys` / `listResponses` honor `limit` and `offset` and sort by `updatedAt` descending. `countResponses` ignores `limit`, `offset`, and `include`. Summary rows omit `definition` and `data`
 
 `@dimah-survey/db` schema copies stay in lockstep: `src/schema/v1.ts`, `examples/tables.sql`, `examples/drizzle.ts`, and `examples/schema.prisma`. `db()` must not update `response.definition` after insert. Do not add a survey version table. FumaDB does not emit the secondary indexes; those live in `examples/indexes.sql`.
 
@@ -37,7 +39,7 @@ Validation failure is `VALIDATION_FAILED`. Do not localize `message`. Callers br
 
 ## React
 
-The fill hook reads the snapshot, constructs a Model, and calls partial save / submit. It does not render questions. Do not add `survey-react-ui` to this package.
+The fill hook reads the snapshot, constructs a Model, and calls partial save / submit with `expectedUpdatedAt` from the last read. It does not render questions. Do not add `survey-react-ui` to this package.
 
 ## Publish boundary
 

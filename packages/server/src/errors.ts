@@ -15,6 +15,8 @@ export const errors = {
   staleUpdate: () => APIError.from("CONFLICT", SURVEY_ERROR_CODES.STALE_UPDATE),
   responseClosed: () =>
     APIError.from("CONFLICT", SURVEY_ERROR_CODES.RESPONSE_CLOSED),
+  resumeRequiresRespondent: () =>
+    APIError.from("BAD_REQUEST", SURVEY_ERROR_CODES.RESUME_REQUIRES_RESPONDENT),
   validationError: (message: string) =>
     APIError.from("BAD_REQUEST", {
       code: SURVEY_ERROR_CODES.VALIDATION_ERROR.code,
