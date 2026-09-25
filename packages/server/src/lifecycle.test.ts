@@ -1,10 +1,11 @@
 import {
-  SurveyError,
+  APIError,
+  SURVEY_ERROR_CODES,
   createSurveyClient,
-  errorCodes,
 } from "@dimah-survey/core";
 import { describe, expect, it } from "vitest";
-import { dimahSurvey } from "./instance";
+
+import { dimahSurvey } from "./dimah-survey";
 import { memoryAdapter } from "./memory";
 
 const v1 = { title: "v1", pages: [{ name: "p" }] };
@@ -19,7 +20,7 @@ function instance() {
     },
   });
   const client = createSurveyClient({
-    baseUrl: "http://survey.local",
+    baseURL: "http://survey.local/api/survey",
     fetch: (input, init) => survey.handler(new Request(input, init)),
   });
   return { client, seen };
@@ -75,7 +76,9 @@ describe("published snapshot", () => {
         data: { q1: "a" },
         expectedUpdatedAt: "2000-01-01T00:00:00.000Z",
       }),
-    ).rejects.toMatchObject({ code: errorCodes.STALE_UPDATE });
+    ).rejects.toMatchObject({
+      code: SURVEY_ERROR_CODES.STALE_UPDATE.code,
+    });
   });
 
   it("runs the consumer guard before the store", async () => {
@@ -83,11 +86,11 @@ describe("published snapshot", () => {
       database: memoryAdapter(),
       validateResult: () => undefined,
       guard: () => {
-        throw new SurveyError(errorCodes.FORBIDDEN, "Sign in required.", 401);
+        throw APIError.from("FORBIDDEN", SURVEY_ERROR_CODES.FORBIDDEN);
       },
     });
     await expect(
-      survey.api.saveSurvey({ id: "x", draftJson: v1 }),
-    ).rejects.toMatchObject({ code: errorCodes.FORBIDDEN });
+      survey.api.saveSurvey({ body: { id: "x", draftJson: v1 } }),
+    ).rejects.toMatchObject({ code: SURVEY_ERROR_CODES.FORBIDDEN.code });
   });
 });

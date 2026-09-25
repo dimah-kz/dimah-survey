@@ -1,16 +1,25 @@
-import { SurveyError, assertFresh, errorCodes } from "@dimah-survey/core";
-import type {
-  ArchiveSurveyInput,
-  PublishSurveyInput,
-  ResponseMutationInput,
-  ResponseRecord,
-  SavePartialInput,
-  SaveSurveyInput,
-  StartResponseInput,
-  SubmitResponseInput,
-  SurveyRecord,
-  SurveyStore,
+import {
+  isAPIError,
+  SURVEY_ERROR_CODES,
+  type ArchiveSurveyInput,
+  type PublishSurveyInput,
+  type ResponseMutationInput,
+  type ResponseRecord,
+  type SavePartialInput,
+  type SaveSurveyInput,
+  type StartResponseInput,
+  type SubmitResponseInput,
+  type SurveyRecord,
+  type SurveyStore,
 } from "@dimah-survey/core";
+
+import { errors } from "./errors";
+
+function assertFresh(updatedAt: string, expectedUpdatedAt?: string) {
+  if (expectedUpdatedAt !== undefined && expectedUpdatedAt !== updatedAt) {
+    throw errors.staleUpdate();
+  }
+}
 
 function now() {
   return new Date().toISOString();
@@ -31,11 +40,7 @@ export function memoryAdapter(): SurveyStore {
     const id = slugToId.get(idOrSlug);
     const bySlug = id ? surveys.get(id) : undefined;
     if (!bySlug) {
-      throw new SurveyError(
-        errorCodes.SURVEY_NOT_FOUND,
-        "Survey was not found.",
-        404,
-      );
+      throw errors.surveyNotFound();
     }
     return bySlug;
   }
@@ -43,11 +48,7 @@ export function memoryAdapter(): SurveyStore {
   function requireResponse(id: string) {
     const response = responses.get(id);
     if (!response) {
-      throw new SurveyError(
-        errorCodes.RESPONSE_NOT_FOUND,
-        "Response was not found.",
-        404,
-      );
+      throw errors.responseNotFound();
     }
     return response;
   }
@@ -56,11 +57,7 @@ export function memoryAdapter(): SurveyStore {
     if (previous && previous !== slug) slugToId.delete(previous);
     const owner = slugToId.get(slug);
     if (owner && owner !== id) {
-      throw new SurveyError(
-        errorCodes.SLUG_TAKEN,
-        "Slug is already used by another survey.",
-        409,
-      );
+      throw errors.slugTaken();
     }
     slugToId.set(slug, id);
   }
@@ -84,11 +81,7 @@ export function memoryAdapter(): SurveyStore {
         return clone(next);
       }
       if (input.expectedUpdatedAt) {
-        throw new SurveyError(
-          errorCodes.STALE_UPDATE,
-          "The record changed since it was read.",
-          409,
-        );
+        throw errors.staleUpdate();
       }
       const slug = input.slug ?? input.id;
       bindSlug(input.id, slug);
@@ -138,8 +131,8 @@ export function memoryAdapter(): SurveyStore {
         return clone(requireSurvey(idOrSlug));
       } catch (error) {
         if (
-          error instanceof SurveyError &&
-          error.code === errorCodes.SURVEY_NOT_FOUND
+          isAPIError(error) &&
+          error.code === SURVEY_ERROR_CODES.SURVEY_NOT_FOUND.code
         ) {
           return null;
         }
@@ -150,11 +143,7 @@ export function memoryAdapter(): SurveyStore {
     async startResponse(input: StartResponseInput) {
       const survey = requireSurvey(input.surveyId);
       if (survey.status !== "active" || survey.publishedJson === null) {
-        throw new SurveyError(
-          errorCodes.NOT_PUBLISHED,
-          "Only an active published survey can be started.",
-          409,
-        );
+        throw errors.notPublished();
       }
       const timestamp = now();
       const response: ResponseRecord = {
@@ -175,11 +164,7 @@ export function memoryAdapter(): SurveyStore {
     async savePartial(input: SavePartialInput) {
       const existing = requireResponse(input.id);
       if (existing.status !== "draft") {
-        throw new SurveyError(
-          errorCodes.RESPONSE_CLOSED,
-          "Only a draft response can be saved.",
-          409,
-        );
+        throw errors.responseClosed();
       }
       assertFresh(existing.updatedAt, input.expectedUpdatedAt);
       const next: ResponseRecord = {
@@ -194,11 +179,7 @@ export function memoryAdapter(): SurveyStore {
     async submitResponse(input: SubmitResponseInput) {
       const existing = requireResponse(input.id);
       if (existing.status !== "draft") {
-        throw new SurveyError(
-          errorCodes.RESPONSE_CLOSED,
-          "Only a draft response can be submitted.",
-          409,
-        );
+        throw errors.responseClosed();
       }
       assertFresh(existing.updatedAt, input.expectedUpdatedAt);
       const timestamp = now();
@@ -216,11 +197,7 @@ export function memoryAdapter(): SurveyStore {
     async abandonResponse(input: ResponseMutationInput) {
       const existing = requireResponse(input.id);
       if (existing.status !== "draft") {
-        throw new SurveyError(
-          errorCodes.RESPONSE_CLOSED,
-          "Only a draft response can be abandoned.",
-          409,
-        );
+        throw errors.responseClosed();
       }
       assertFresh(existing.updatedAt, input.expectedUpdatedAt);
       const next: ResponseRecord = {
@@ -235,11 +212,7 @@ export function memoryAdapter(): SurveyStore {
     async reopenResponse(input: ResponseMutationInput) {
       const existing = requireResponse(input.id);
       if (existing.status === "draft") {
-        throw new SurveyError(
-          errorCodes.RESPONSE_CLOSED,
-          "A draft response is already open.",
-          409,
-        );
+        throw errors.responseClosed();
       }
       assertFresh(existing.updatedAt, input.expectedUpdatedAt);
       const next: ResponseRecord = {

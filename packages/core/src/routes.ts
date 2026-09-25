@@ -1,11 +1,48 @@
-export const routes = {
-  survey: (id: string) => `/surveys/${encodeURIComponent(id)}`,
-  publish: (id: string) => `/surveys/${encodeURIComponent(id)}/publish`,
-  archive: (id: string) => `/surveys/${encodeURIComponent(id)}/archive`,
-  responses: (surveyId: string) =>
-    `/surveys/${encodeURIComponent(surveyId)}/responses`,
-  response: (id: string) => `/responses/${encodeURIComponent(id)}`,
-  submit: (id: string) => `/responses/${encodeURIComponent(id)}/submit`,
-  abandon: (id: string) => `/responses/${encodeURIComponent(id)}/abandon`,
-  reopen: (id: string) => `/responses/${encodeURIComponent(id)}/reopen`,
+export const SURVEY_API_BASE_PATH = "/api/survey";
+
+const ABSOLUTE_URL = /^[a-z][a-z0-9+.-]*:/i;
+
+export function normalizeSurveyApiBasePath(basePath = SURVEY_API_BASE_PATH) {
+  const trimmed = basePath.trim() || SURVEY_API_BASE_PATH;
+  const stripped = trimmed.replace(/\/+$/, "") || SURVEY_API_BASE_PATH;
+  if (ABSOLUTE_URL.test(stripped)) return stripped;
+  return stripped.startsWith("/") ? stripped : `/${stripped}`;
+}
+
+export const SURVEY_API_ROUTES = {
+  survey: "/survey",
+  publishSurvey: "/survey/publish",
+  archiveSurvey: "/survey/archive",
+  startResponse: "/response/start",
+  response: "/response",
+  savePartial: "/response/partial",
+  submitResponse: "/response/submit",
+  abandonResponse: "/response/abandon",
+  reopenResponse: "/response/reopen",
 } as const;
+
+export const SURVEY_API_OPERATIONS = {
+  getSurvey: { method: "GET", path: SURVEY_API_ROUTES.survey },
+  saveSurvey: { method: "POST", path: SURVEY_API_ROUTES.survey },
+  publishSurvey: { method: "POST", path: SURVEY_API_ROUTES.publishSurvey },
+  archiveSurvey: { method: "POST", path: SURVEY_API_ROUTES.archiveSurvey },
+  startResponse: { method: "POST", path: SURVEY_API_ROUTES.startResponse },
+  getResponse: { method: "GET", path: SURVEY_API_ROUTES.response },
+  savePartial: { method: "POST", path: SURVEY_API_ROUTES.savePartial },
+  submitResponse: { method: "POST", path: SURVEY_API_ROUTES.submitResponse },
+  abandonResponse: { method: "POST", path: SURVEY_API_ROUTES.abandonResponse },
+  reopenResponse: { method: "POST", path: SURVEY_API_ROUTES.reopenResponse },
+} as const;
+
+export type SurveyApiOperation = keyof typeof SURVEY_API_OPERATIONS;
+
+export function surveyApiRouteKey(method: string, path: string) {
+  return `${method} ${path}`;
+}
+
+export const SURVEY_API_ROUTE_KEYS = Object.fromEntries(
+  Object.entries(SURVEY_API_OPERATIONS).map(([operation, spec]) => [
+    surveyApiRouteKey(spec.method, spec.path),
+    operation,
+  ]),
+) as Record<string, SurveyApiOperation>;

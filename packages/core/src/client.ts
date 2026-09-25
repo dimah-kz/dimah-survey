@@ -1,5 +1,5 @@
-import { SurveyError, errorCodes } from "./errors";
-import { routes } from "./routes";
+import { createSurveyFetch, type SurveyClientFetchOptions } from "./fetch";
+import { normalizeSurveyApiBasePath, SURVEY_API_ROUTES } from "./routes";
 import type {
   ResponseRecord,
   SurveyJson,
@@ -22,7 +22,7 @@ export type SurveyClient = {
     id: string;
     expectedUpdatedAt?: string;
   }): Promise<SurveyRecord>;
-  getSurvey(idOrSlug: string): Promise<SurveyRecord>;
+  getSurvey(id: string): Promise<SurveyRecord>;
   startResponse(input: {
     surveyId: string;
     respondentId?: string;
@@ -48,58 +48,35 @@ export type SurveyClient = {
   getResponse(id: string): Promise<ResponseRecord>;
 };
 
-export function createSurveyClient(options: {
-  baseUrl: string;
-  fetch?: typeof fetch;
-}): SurveyClient {
-  const base = options.baseUrl.replace(/\/$/, "");
-  const fetchImpl = options.fetch ?? globalThis.fetch;
-
-  async function send<T>(
-    path: string,
-    method: string,
-    body?: unknown,
-  ): Promise<T> {
-    const response = await fetchImpl(base + path, {
-      method,
-      headers:
-        body === undefined ? undefined : { "content-type": "application/json" },
-      body: body === undefined ? undefined : JSON.stringify(body),
-    });
-    const payload = (await response.json()) as {
-      code?: string;
-      message?: string;
-    };
-    if (!response.ok) {
-      const code =
-        payload.code && isErrorCode(payload.code)
-          ? payload.code
-          : errorCodes.REQUEST_FAILED;
-      throw new SurveyError(
-        code,
-        payload.message ?? response.statusText,
-        response.status,
-      );
-    }
-    return payload as T;
-  }
+export function createSurveyClient(
+  options: SurveyClientFetchOptions & { baseURL?: string } = {},
+): SurveyClient {
+  const { baseURL, ...fetchOptions } = options;
+  const $fetch = createSurveyFetch(
+    normalizeSurveyApiBasePath(baseURL),
+    fetchOptions,
+  );
 
   return {
-    saveSurvey: ({ id, ...body }) => send(routes.survey(id), "PUT", body),
-    publishSurvey: ({ id, ...body }) => send(routes.publish(id), "POST", body),
-    archiveSurvey: ({ id, ...body }) => send(routes.archive(id), "POST", body),
-    getSurvey: (idOrSlug) => send(routes.survey(idOrSlug), "GET"),
-    startResponse: ({ surveyId, ...body }) =>
-      send(routes.responses(surveyId), "POST", body),
-    savePartial: ({ id, ...body }) => send(routes.response(id), "PATCH", body),
-    submitResponse: ({ id, ...body }) => send(routes.submit(id), "POST", body),
-    abandonResponse: ({ id, ...body }) =>
-      send(routes.abandon(id), "POST", body),
-    reopenResponse: ({ id, ...body }) => send(routes.reopen(id), "POST", body),
-    getResponse: (id) => send(routes.response(id), "GET"),
+    saveSurvey: (body) =>
+      $fetch(SURVEY_API_ROUTES.survey, { method: "POST", body }),
+    publishSurvey: (body) =>
+      $fetch(SURVEY_API_ROUTES.publishSurvey, { method: "POST", body }),
+    archiveSurvey: (body) =>
+      $fetch(SURVEY_API_ROUTES.archiveSurvey, { method: "POST", body }),
+    getSurvey: (id) =>
+      $fetch(SURVEY_API_ROUTES.survey, { method: "GET", query: { id } }),
+    startResponse: (body) =>
+      $fetch(SURVEY_API_ROUTES.startResponse, { method: "POST", body }),
+    savePartial: (body) =>
+      $fetch(SURVEY_API_ROUTES.savePartial, { method: "POST", body }),
+    submitResponse: (body) =>
+      $fetch(SURVEY_API_ROUTES.submitResponse, { method: "POST", body }),
+    abandonResponse: (body) =>
+      $fetch(SURVEY_API_ROUTES.abandonResponse, { method: "POST", body }),
+    reopenResponse: (body) =>
+      $fetch(SURVEY_API_ROUTES.reopenResponse, { method: "POST", body }),
+    getResponse: (id) =>
+      $fetch(SURVEY_API_ROUTES.response, { method: "GET", query: { id } }),
   };
-}
-
-function isErrorCode(code: string): code is SurveyError["code"] {
-  return Object.values(errorCodes).includes(code as SurveyError["code"]);
 }

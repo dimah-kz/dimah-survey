@@ -22,6 +22,8 @@
     "lint": "eslint --max-warnings 0 --cache"
   },
   "dependencies": {
+    "@better-fetch/fetch": "catalog:",
+    "better-call": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {

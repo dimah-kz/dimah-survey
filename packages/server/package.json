@@ -23,7 +23,9 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@dimah-survey/core": "workspace:*"
+    "@dimah-survey/core": "workspace:*",
+    "better-call": "catalog:",
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@workspace/eslint-config": "workspace:*",

@@ -1,11 +1,11 @@
-export { dimahSurvey } from "./instance";
-export type { DimahSurveyApi, DimahSurveyConfig } from "./instance";
+export { dimahSurvey } from "./dimah-survey";
+export type { DimahSurveyConfig } from "./dimah-survey";
 export { memoryAdapter } from "./memory";
 export {
+  APIError,
+  SURVEY_ERROR_CODES,
   createSurveyClient,
-  SurveyError,
-  errorCodes,
-  routes,
+  isAPIError,
 } from "@dimah-survey/core";
 export type {
   ResponseRecord,

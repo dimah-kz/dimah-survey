@@ -32,12 +32,14 @@ Shared protocol changes start in `core`, then wire `server` and the fetch client
 - `survey-core` is a future `server` dependency (`new Model(definition)`, assign `data`, `clearIncorrectValues(true)`). Do not depend on it from `core` or `react` before the hook needs a Model.
 - File upload, dashboards, PDF, and Creator are out of this repo. SurveyJS Analytics and PDF read the snapshot plus `data`; do not flatten results against the live survey.
 - Optional `expectedUpdatedAt` is compare-and-swap against `updatedAt`. SQL adapters must enforce it in the write, not only in memory.
+- HTTP is a better-call router. The browser client is better-fetch. `survey.api` takes `{ body }` or `{ query }`; the fetch client takes flat objects.
 - Pre-v1: breaking changes are allowed. Do not keep a compatibility shim.
 
 ## Do not
 
 - Import `@dimah-form/*` or map SurveyJS elements onto dimah-form field types.
 - Put question widgets, Creator, or `<Survey>` in any package.
+- Hand-roll a router or a second fetch client beside better-call and better-fetch.
 - Store a response as `surveyId` + result JSON without `definition`.
 - Let Creator autosave call publish.
 - Inject persistence through a plugin slot. There is no plugin system until a second feature needs one.
