@@ -11,7 +11,9 @@ import { bindEndpoints } from "./bind-endpoints";
 
 function onSurveyRouterError(error: unknown): void {
   if (isAPIError(error)) return;
-  throw errors.internalError();
+  const wrapped = errors.internalError();
+  wrapped.cause = error;
+  throw wrapped;
 }
 
 function withUnmatchedRouteJson(

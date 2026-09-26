@@ -46,8 +46,10 @@ export const createSurveyEndpoint: CreateSurveyEndpoint = ((
     typeof pathOrOptions === "string" ? maybeHandler : optionsOrHandler
   ) as (...args: never[]) => unknown;
   const method = String(options.method ?? "GET");
-  const operation =
-    SURVEY_API_ROUTE_KEYS[surveyApiRouteKey(method, path)] ?? "getSurvey";
+  const operation = SURVEY_API_ROUTE_KEYS[surveyApiRouteKey(method, path)];
+  if (!operation) {
+    throw new Error(`Unknown survey route: ${method} ${path}`);
+  }
 
   return createEndpointWithContext(
     path,

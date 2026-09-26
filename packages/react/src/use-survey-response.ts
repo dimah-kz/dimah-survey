@@ -3,6 +3,7 @@ import { Model } from "survey-core";
 import type { SurveyClient } from "@dimah-survey/core";
 
 import { bindSurveyModel } from "./bind-survey-model";
+import { createWriteQueue } from "./write-queue";
 
 export function useSurveyResponse(options: {
   client: SurveyClient;
@@ -16,9 +17,17 @@ export function useSurveyResponse(options: {
   useEffect(() => {
     let dispose: () => void = () => undefined;
     let cancelled = false;
+    const enqueue = createWriteQueue();
     setModel(null);
     setError(null);
     updatedAt.current = undefined;
+
+    const remember = (next: string) => {
+      if (!cancelled) updatedAt.current = next;
+    };
+    const asError = (cause: unknown, fallback: string) =>
+      cause instanceof Error ? cause : new Error(fallback);
+
     void client
       .getResponse(responseId)
       .then((response) => {
@@ -26,40 +35,38 @@ export function useSurveyResponse(options: {
         updatedAt.current = response.updatedAt;
         const next = new Model(response.definition);
         next.data = response.data;
-        if (response.status !== "draft") next.mode = "display";
-        const asError = (cause: unknown) =>
-          cause instanceof Error ? cause : new Error("Save failed.");
+        if (response.status !== "draft") {
+          next.mode = "display";
+          setModel(next);
+          return;
+        }
         dispose = bindSurveyModel(next, {
           savePartial: (data) =>
-            client
-              .savePartial({
+            enqueue(async () => {
+              const saved = await client.savePartial({
                 id: responseId,
                 data,
                 expectedUpdatedAt: updatedAt.current,
-              })
-              .then((saved) => {
-                updatedAt.current = saved.updatedAt;
-              }),
+              });
+              remember(saved.updatedAt);
+            }),
           submit: (data) =>
-            client
-              .submitResponse({
+            enqueue(async () => {
+              const saved = await client.submitResponse({
                 id: responseId,
                 data,
                 expectedUpdatedAt: updatedAt.current,
-              })
-              .then((saved) => {
-                updatedAt.current = saved.updatedAt;
-              }),
+              });
+              remember(saved.updatedAt);
+            }),
           onPartialError: (cause) => {
-            if (!cancelled) setError(asError(cause));
+            if (!cancelled) setError(asError(cause, "Save failed."));
           },
         });
         setModel(next);
       })
       .catch((cause: unknown) => {
-        if (!cancelled) {
-          setError(cause instanceof Error ? cause : new Error("Load failed."));
-        }
+        if (!cancelled) setError(asError(cause, "Load failed."));
       });
     return () => {
       cancelled = true;

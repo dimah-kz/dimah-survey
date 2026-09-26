@@ -1,3 +1,5 @@
+import type { SurveyApiOperation } from "./routes";
+
 /** Opaque SurveyJS survey JSON. This library does not define question types. */
 export type SurveyJson = Record<string, unknown>;
 
@@ -125,19 +127,7 @@ export type ResponseMutationInput = {
   expectedUpdatedAt?: string;
 };
 
-export type Operation =
-  | "saveSurvey"
-  | "publishSurvey"
-  | "archiveSurvey"
-  | "getSurvey"
-  | "listSurveys"
-  | "startResponse"
-  | "listResponses"
-  | "savePartial"
-  | "submitResponse"
-  | "abandonResponse"
-  | "reopenResponse"
-  | "getResponse";
+export type Operation = SurveyApiOperation;
 
 export type GuardContext = {
   request?: Request;

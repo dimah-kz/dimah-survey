@@ -237,3 +237,29 @@ describe("list and resume", () => {
     expect(current.status).toBe("draft");
   });
 });
+
+describe("slug", () => {
+  it("keeps the previous slug when the next one is taken", async () => {
+    const { client } = instance();
+    await client.saveSurvey({ id: "a", slug: "one", draftJson: v1 });
+    await client.saveSurvey({ id: "b", slug: "two", draftJson: v1 });
+    await expect(
+      client.saveSurvey({ id: "a", slug: "two", draftJson: v2 }),
+    ).rejects.toMatchObject({ code: SURVEY_ERROR_CODES.SLUG_TAKEN.code });
+
+    const survey = await client.getSurvey("one");
+    expect(survey.id).toBe("a");
+    expect(survey.draftJson).toEqual(v1);
+  });
+
+  it("rejects a slug that is another survey's id", async () => {
+    const { client } = instance();
+    await client.saveSurvey({ id: "pulse", draftJson: v1 });
+    await client.saveSurvey({ id: "other", slug: "kept", draftJson: v1 });
+    await expect(
+      client.saveSurvey({ id: "other", slug: "pulse", draftJson: v2 }),
+    ).rejects.toMatchObject({ code: SURVEY_ERROR_CODES.SLUG_TAKEN.code });
+    expect((await client.getSurvey("kept")).id).toBe("other");
+    expect((await client.getSurvey("pulse")).draftJson).toEqual(v1);
+  });
+});

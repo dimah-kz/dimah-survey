@@ -10,7 +10,7 @@ Keep these in lockstep (same paths, same payloads — no duplicate route strings
 
 1. `@dimah-survey/core` — operation map, Zod payloads, `APIError`, `createSurveyFetch`, `createSurveyClient`
 2. `@dimah-survey/server` — `createSurveyEndpoint` routes, `dimahSurvey().handler` and `.api`
-3. `@dimah-survey/react` — re-exports the client until the fill session exists
+3. `@dimah-survey/react` — `bindSurveyModel`, `useSurveyResponse`, and a re-export of the client
 
 The browser client takes flat object arguments. `survey.api` is the better-call map (`{ body }` / `{ query }`). Do not wrap `<Survey>`.
 

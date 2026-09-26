@@ -1,71 +1,33 @@
 import { createSurveyFetch, type SurveyClientFetchOptions } from "./fetch";
 import { normalizeSurveyApiBasePath, SURVEY_API_ROUTES } from "./routes";
 import type {
+  ArchiveSurveyInput,
+  ListResponsesQuery,
+  ListSurveysQuery,
+  PublishSurveyInput,
   ResponseList,
+  ResponseMutationInput,
   ResponseRecord,
-  SurveyJson,
+  SavePartialInput,
+  SaveSurveyInput,
+  StartResponseInput,
+  SubmitResponseInput,
   SurveyList,
   SurveyRecord,
-  SurveyResult,
-  SurveyStatus,
-  ResponseStatus,
 } from "./types";
 
 export type SurveyClient = {
-  saveSurvey(input: {
-    id: string;
-    slug?: string;
-    draftJson: SurveyJson;
-    expectedUpdatedAt?: string;
-  }): Promise<SurveyRecord>;
-  publishSurvey(input: {
-    id: string;
-    expectedUpdatedAt?: string;
-  }): Promise<SurveyRecord>;
-  archiveSurvey(input: {
-    id: string;
-    expectedUpdatedAt?: string;
-  }): Promise<SurveyRecord>;
+  saveSurvey(input: SaveSurveyInput): Promise<SurveyRecord>;
+  publishSurvey(input: PublishSurveyInput): Promise<SurveyRecord>;
+  archiveSurvey(input: ArchiveSurveyInput): Promise<SurveyRecord>;
   getSurvey(id: string): Promise<SurveyRecord>;
-  listSurveys(input?: {
-    status?: SurveyStatus;
-    limit?: number;
-    offset?: number;
-  }): Promise<SurveyList>;
-  startResponse(input: {
-    surveyId: string;
-    respondentId?: string;
-    resume?: boolean;
-  }): Promise<ResponseRecord>;
-  listResponses(input?: {
-    surveyId?: string;
-    respondentId?: string;
-    status?: ResponseStatus;
-    submittedFrom?: string;
-    submittedTo?: string;
-    updatedAfter?: string;
-    include?: "summary" | "full";
-    limit?: number;
-    offset?: number;
-  }): Promise<ResponseList>;
-  savePartial(input: {
-    id: string;
-    data: SurveyResult;
-    expectedUpdatedAt?: string;
-  }): Promise<ResponseRecord>;
-  submitResponse(input: {
-    id: string;
-    data?: SurveyResult;
-    expectedUpdatedAt?: string;
-  }): Promise<ResponseRecord>;
-  abandonResponse(input: {
-    id: string;
-    expectedUpdatedAt?: string;
-  }): Promise<ResponseRecord>;
-  reopenResponse(input: {
-    id: string;
-    expectedUpdatedAt?: string;
-  }): Promise<ResponseRecord>;
+  listSurveys(input?: ListSurveysQuery): Promise<SurveyList>;
+  startResponse(input: StartResponseInput): Promise<ResponseRecord>;
+  listResponses(input?: ListResponsesQuery): Promise<ResponseList>;
+  savePartial(input: SavePartialInput): Promise<ResponseRecord>;
+  submitResponse(input: SubmitResponseInput): Promise<ResponseRecord>;
+  abandonResponse(input: ResponseMutationInput): Promise<ResponseRecord>;
+  reopenResponse(input: ResponseMutationInput): Promise<ResponseRecord>;
   getResponse(id: string): Promise<ResponseRecord>;
 };
 

@@ -96,11 +96,11 @@ export function memoryAdapter(): SurveyStore {
   }
 
   function bindSlug(id: string, slug: string, previous?: string) {
-    if (previous && previous !== slug) slugToId.delete(previous);
     const owner = slugToId.get(slug);
-    if (owner && owner !== id) {
-      throw errors.slugTaken();
-    }
+    if (owner && owner !== id) throw errors.slugTaken();
+    const idClash = surveys.get(slug);
+    if (idClash && idClash.id !== id) throw errors.slugTaken();
+    if (previous && previous !== slug) slugToId.delete(previous);
     slugToId.set(slug, id);
   }
 

@@ -91,7 +91,10 @@ export const surveyEndpoints = {
         });
         if (open) return open;
       }
-      return database.startResponse(ctx.body);
+      return database.startResponse({
+        surveyId: ctx.body.surveyId,
+        respondentId: ctx.body.respondentId,
+      });
     },
   ),
   listResponses: createSurveyEndpoint(

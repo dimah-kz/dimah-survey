@@ -36,7 +36,8 @@
   "scripts": {
     "build": "tsup --config tsup.config.ts && tsc --emitDeclarationOnly -p tsconfig.build.json && tsc-alias",
     "check-types": "tsc --noEmit",
-    "lint": "eslint --max-warnings 0 --cache"
+    "lint": "eslint --max-warnings 0 --cache",
+    "test": "vitest run"
   },
   "dependencies": {
     "@dimah-survey/core": "workspace:*",
@@ -46,11 +47,13 @@
     "@workspace/eslint-config": "workspace:*",
     "@workspace/tsup-config": "workspace:*",
     "@workspace/typescript-config": "workspace:*",
+    "@workspace/vitest-config": "workspace:*",
     "drizzle-orm": "catalog:",
     "eslint": "catalog:",
     "tsc-alias": "catalog:",
     "tsup": "catalog:",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "vitest": "catalog:"
   },
   "peerDependencies": {
     "drizzle-orm": "^0.44.0 || ^0.45.0 || >=1.0.0-rc.1 <2.0.0"

@@ -23,11 +23,11 @@ function apiErrorFromFetch(error: {
   statusText: string;
   error?: unknown;
 }): APIError {
-  if (surveyFetchErrorSchema.safeParse(error).success) {
-    const parsed = surveyFetchErrorSchema.parse(error);
+  const parsed = surveyFetchErrorSchema.safeParse(error);
+  if (parsed.success) {
     return new APIError(error.status, {
-      message: parsed.message,
-      ...(parsed.code !== undefined ? { code: parsed.code } : {}),
+      message: parsed.data.message,
+      ...(parsed.data.code !== undefined ? { code: parsed.data.code } : {}),
     });
   }
   return new APIError(error.status, { message: fallbackMessage(error) });

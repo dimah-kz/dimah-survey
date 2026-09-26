@@ -10,6 +10,7 @@ import {
 } from "@dimah-survey/core";
 import type { InferFumaDB } from "fumadb";
 
+import { responseWriteLanded, surveyWriteLanded } from "./cas";
 import { v1, type DimahSurveyDB } from "./fuma-db";
 
 export type DimahSurveyDbClient = InferFumaDB<typeof DimahSurveyDB>;
@@ -141,11 +142,8 @@ function stale() {
   return APIError.from("CONFLICT", SURVEY_ERROR_CODES.STALE_UPDATE);
 }
 
-function sameSecond(left: string, right: string) {
-  const a = Date.parse(left);
-  const b = Date.parse(right);
-  if (Number.isNaN(a) || Number.isNaN(b)) return left === right;
-  return Math.abs(a - b) < 1000;
+function slugTaken() {
+  return APIError.from("CONFLICT", SURVEY_ERROR_CODES.SLUG_TAKEN);
 }
 
 export function db(client: DimahSurveyDbClient): SurveyStore {
@@ -186,8 +184,7 @@ export function db(client: DimahSurveyDbClient): SurveyStore {
           ),
       });
       const fresh = await readSurvey(row.id);
-      if (!fresh || sameSecond(fresh.updatedAt, expectedUpdatedAt))
-        throw stale();
+      if (!fresh || !surveyWriteLanded(fresh, row)) throw stale();
       return fresh;
     }
     if (creating) {
@@ -236,13 +233,16 @@ export function db(client: DimahSurveyDbClient): SurveyStore {
     },
     async saveSurvey(input) {
       const existing = await readSurvey(input.id);
+      const id = existing?.id ?? input.id;
+      const slug = input.slug ?? existing?.slug ?? input.id;
+      await assertSlugAvailable(id, slug);
       const now = new Date().toISOString();
       if (!existing) {
         if (input.expectedUpdatedAt) throw stale();
         return writeSurvey(
           {
             id: input.id,
-            slug: input.slug ?? input.id,
+            slug,
             status: "draft",
             draftJson: input.draftJson,
             publishedJson: null,
@@ -257,7 +257,7 @@ export function db(client: DimahSurveyDbClient): SurveyStore {
       return writeSurvey(
         {
           ...existing,
-          slug: input.slug ?? existing.slug,
+          slug,
           draftJson: input.draftJson,
           updatedAt: now,
         },
@@ -359,12 +359,12 @@ export function db(client: DimahSurveyDbClient): SurveyStore {
     },
     async countResponses(query?: ListResponsesQuery) {
       const filtered = hasListResponseFilters(query);
-      const rows = await orm.findMany("response", {
-        select: ["id"],
-        where:
-          filtered && query ? (b) => listResponseWhere(query, b) : undefined,
-      });
-      return rows.length;
+      return orm.count(
+        "response",
+        filtered && query
+          ? { where: (b) => listResponseWhere(query, b) }
+          : undefined,
+      );
     },
     async savePartial(input) {
       return updateResponse(input.id, input.expectedUpdatedAt, (current) => {
@@ -444,19 +444,27 @@ export function db(client: DimahSurveyDbClient): SurveyStore {
       const fresh = await orm.findFirst("response", {
         where: (b) => b("id", "=", id),
       });
-      if (
-        !fresh ||
-        sameSecond(iso((fresh as ResponseRow).updatedAt), expectedUpdatedAt)
-      ) {
-        throw stale();
-      }
-      return toResponse(fresh as ResponseRow);
-    } else {
-      await orm.updateMany("response", {
-        set,
-        where: (b) => b("id", "=", id),
-      });
+      if (!fresh) throw stale();
+      const saved = toResponse(fresh as ResponseRow);
+      if (!responseWriteLanded(saved, row)) throw stale();
+      return saved;
     }
+    await orm.updateMany("response", {
+      set,
+      where: (b) => b("id", "=", id),
+    });
     return row;
+  }
+
+  async function assertSlugAvailable(id: string, slug: string) {
+    const bySlug = await orm.findFirst("survey", {
+      where: (b) => b("slug", "=", slug),
+    });
+    if (bySlug && (bySlug as SurveyRow).id !== id) throw slugTaken();
+    if (slug === id) return;
+    const byId = await orm.findFirst("survey", {
+      where: (b) => b("id", "=", slug),
+    });
+    if (byId && (byId as SurveyRow).id !== id) throw slugTaken();
   }
 }

@@ -7,9 +7,16 @@ export type SurveyModelActions = {
   onPartialError?: (error: unknown) => void;
 };
 
+type CompletingOptions = {
+  allow: boolean;
+  /** SurveyJS 2 name for `allow`. Set both so either version blocks completion. */
+  allowComplete?: boolean;
+  message?: string;
+};
+
 /**
  * Wire a survey-core Model to partial save and submit.
- * The app still renders `<Survey model={model} />` itself.
+ * Completion waits for the server. The app still renders `<Survey model={model} />`.
  */
 export function bindSurveyModel(model: Model, actions: SurveyModelActions) {
   model.sendResultOnPageNext = true;
@@ -18,29 +25,19 @@ export function bindSurveyModel(model: Model, actions: SurveyModelActions) {
       actions.onPartialError?.(error);
     });
   };
-  const onComplete = (
-    sender: Model,
-    options: {
-      showSaveInProgress: (text?: string) => void;
-      showSaveSuccess: (text?: string) => void;
-      showSaveError: (text?: string) => void;
-    },
-  ) => {
-    options.showSaveInProgress();
-    void actions
-      .submit({ ...sender.data })
-      .then(() => {
-        options.showSaveSuccess();
-      })
-      .catch((error: unknown) => {
-        const message = error instanceof Error ? error.message : "Save failed.";
-        options.showSaveError(message);
-      });
+  const onCompleting = async (sender: Model, options: CompletingOptions) => {
+    try {
+      await actions.submit({ ...sender.data });
+    } catch (error: unknown) {
+      options.allow = false;
+      options.allowComplete = false;
+      options.message = error instanceof Error ? error.message : "Save failed.";
+    }
   };
   model.onPartialSend.add(onPartial);
-  model.onComplete.add(onComplete);
+  model.onCompleting.add(onCompleting);
   return () => {
     model.onPartialSend.remove(onPartial);
-    model.onComplete.remove(onComplete);
+    model.onCompleting.remove(onCompleting);
   };
 }
