@@ -7,6 +7,11 @@
       "inputs": ["$TURBO_DEFAULT$", "../../tooling/tsup-config/**"],
       "outputs": ["dist/**"]
     },
+    "dev": {
+      "cache": false,
+      "persistent": true,
+      "dependsOn": ["^build"]
+    },
     "lint": {
       "inputs": ["$TURBO_DEFAULT$", "../../tooling/eslint-config/**"]
     },

@@ -8,6 +8,10 @@ dist/
 # Lock files
 pnpm-lock.yaml
 
+# Generated Drizzle snapshots and Next types
+examples/next/drizzle/**/snapshot.json
+next-env.d.ts
+
 # Coverage
 coverage/
 

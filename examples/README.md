@@ -1,5 +1,7 @@
 # Examples
 
-No example app yet.
+[`next`](./next) is a Next.js app. SurveyJS renders the form and Creator. This library publishes, stores the per-response snapshot, and validates submit.
 
-Add one after `dimahSurvey()` validates submissions with `survey-core` against `response.definition`. The app should use SurveyJS for rendering and Creator, and this library for publish, drafts, and submit.
+```bash
+pnpm example
+```

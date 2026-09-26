@@ -29,6 +29,14 @@ pnpm test
 
 Node 24 or newer. Versions are cut with Tegami; see [docs/agents/release.md](./docs/agents/release.md).
 
+## Example
+
+[`examples/next`](./examples/next) is a Next.js app: Creator, fill, and stored snapshots in SQLite.
+
+```bash
+pnpm example
+```
+
 ## License
 
 [MIT](./LICENSE)

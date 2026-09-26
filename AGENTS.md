@@ -25,7 +25,7 @@ pnpm + Turbo. From the root: `pnpm lint`, `pnpm check-types`, `pnpm test`.
 - Still under construction and not on npm. Ship the current design and delete the previous API in the same change. Policy: [architecture.md](docs/agents/architecture.md) **Pre-release** — replace that section after the first publish.
 - Commit when asked. Never `git push` unless the human explicitly asks.
 
-`examples/` stays empty until a consumer app is worth showing. `docs/agents/` = these checklists. `tooling/` = shared ESLint, TypeScript, tsup, and Vitest config.
+`examples/next` is a Next.js consumer (Creator, fill, responses) on SQLite through Drizzle and `@dimah-survey/db`. It is not a published package. `docs/agents/` = these checklists. `tooling/` = shared ESLint, TypeScript, tsup, and Vitest config.
 
 ## Checklists
 

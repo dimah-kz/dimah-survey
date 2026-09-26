@@ -1,4 +1,4 @@
-/** @type {import("prettier").Config} */
+/** @type {import("prettier").Config & import("prettier-plugin-tailwindcss").PluginOptions} */
 const config = {
   semi: true,
   singleQuote: false,
@@ -8,7 +8,9 @@ const config = {
   endOfLine: "lf",
   arrowParens: "always",
   bracketSameLine: false,
-  plugins: ["prettier-plugin-packagejson"],
+  plugins: ["prettier-plugin-packagejson", "prettier-plugin-tailwindcss"],
+  tailwindStylesheet: "./examples/next/app/globals.css",
+  tailwindFunctions: ["cn", "cva"],
   overrides: [
     {
       files: ["**/*.md"],

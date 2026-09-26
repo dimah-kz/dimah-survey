@@ -12,9 +12,10 @@
   "license": "MIT",
   "type": "module",
   "scripts": {
-    "build": "turbo run build",
+    "build": "turbo run build --filter=./packages/*",
     "build:packages": "turbo run build --filter=\"./packages/*\"",
     "check-types": "turbo run check-types",
+    "example": "turbo run dev --filter=example-next",
     "format": "prettier --write --cache --cache-location .prettiercache .",
     "format:check": "prettier --check --cache --cache-location .prettiercache .",
     "knip": "knip",
@@ -33,6 +34,7 @@
     "lefthook": "catalog:",
     "prettier": "catalog:",
     "prettier-plugin-packagejson": "catalog:",
+    "prettier-plugin-tailwindcss": "catalog:",
     "sherif": "catalog:",
     "tegami": "catalog:",
     "turbo": "catalog:",
@@ -43,5 +45,11 @@
   "engines": {
     "node": ">=24.0.0",
     "pnpm": ">=12"
+  },
+  "sherif": {
+    "ignoreDependency": [
+      "typescript@5.9.3",
+      "eslint@9.39.5"
+    ]
   }
 }

@@ -1,0 +1,48 @@
+{
+  "name": "example-next",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "next build",
+    "check-types": "tsc --noEmit",
+    "db:generate": "drizzle-kit generate",
+    "dev": "next dev",
+    "lint": "eslint --max-warnings 0 --cache",
+    "start": "next start"
+  },
+  "dependencies": {
+    "@base-ui/react": "^1.8.0",
+    "@dimah-survey/core": "workspace:*",
+    "@dimah-survey/db": "workspace:*",
+    "@dimah-survey/react": "workspace:*",
+    "@dimah-survey/server": "workspace:*",
+    "class-variance-authority": "^0.7.1",
+    "cn": "^0.4.0",
+    "drizzle-orm": "catalog:",
+    "fumadb": "catalog:",
+    "lucide-react": "^1.48.0",
+    "next": "16.3.4",
+    "next-themes": "^0.4.6",
+    "react": "catalog:",
+    "react-dom": "catalog:",
+    "server-only": "^0.0.1",
+    "shadcn": "^4.21.0",
+    "survey-core": "catalog:",
+    "survey-creator-core": "catalog:",
+    "survey-creator-react": "catalog:",
+    "survey-react-ui": "catalog:",
+    "tw-animate-css": "^1.4.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "catalog:",
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
+    "drizzle-kit": "catalog:",
+    "eslint": "9.39.5",
+    "eslint-config-next": "16.3.4",
+    "tailwindcss": "^4",
+    "typescript": "5.9.3"
+  }
+}
