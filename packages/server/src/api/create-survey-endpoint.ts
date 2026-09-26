@@ -3,6 +3,7 @@ import { createEndpoint, type EndpointOptions } from "better-call";
 import * as z from "zod";
 
 import { errors } from "@/errors";
+import { enforceRespondent } from "@/respondent";
 import { surveyContextMiddleware } from "./middleware";
 
 const createEndpointWithContext = createEndpoint.create({
@@ -56,12 +57,20 @@ export const createSurveyEndpoint: CreateSurveyEndpoint = ((
     withValidation(options),
     async (ctx) => {
       const input = ctx as { body?: unknown; query?: unknown };
-      await ctx.context.config.guard?.({
+      const principal = await ctx.context.config.guard?.({
         request: ctx.context.request,
         operation,
         body: input.body,
         query: input.query,
       });
+      if (principal) {
+        await enforceRespondent(
+          operation,
+          principal,
+          input,
+          ctx.context.config.database,
+        );
+      }
       return handler(ctx as never);
     },
   );

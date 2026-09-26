@@ -53,6 +53,7 @@ export type {
   SubmitResponseInput,
   SurveyJson,
   SurveyList,
+  SurveyPrincipal,
   SurveyRecord,
   SurveyResult,
   SurveyStatus,

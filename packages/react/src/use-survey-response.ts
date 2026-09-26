@@ -1,24 +1,47 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Model } from "survey-core";
 import type { SurveyClient } from "@dimah-survey/core";
 
 import { bindSurveyModel } from "./bind-survey-model";
+import { isStaleUpdate } from "./stale";
 import { createWriteQueue } from "./write-queue";
+
+export type SurveyResponseBinding = {
+  model: Model | null;
+  /** The snapshot failed to load. `model` is null. */
+  error: Error | null;
+  /** A partial save or submit failed. `model` stays mounted. */
+  saveError: Error | null;
+  /** `saveError` is a compare-and-swap conflict. Call `reload`. */
+  stale: boolean;
+  /** Load the stored snapshot again. */
+  reload: () => void;
+};
 
 export function useSurveyResponse(options: {
   client: SurveyClient;
   responseId: string;
-}) {
+}): SurveyResponseBinding {
   const { client, responseId } = options;
+  const [epoch, setEpoch] = useState(0);
   const [model, setModel] = useState<Model | null>(null);
   const [error, setError] = useState<Error | null>(null);
+  const [saveError, setSaveError] = useState<Error | null>(null);
   const updatedAt = useRef<string | undefined>(undefined);
+  const shownFor = useRef<string | undefined>(undefined);
+  const reload = useCallback(() => {
+    setEpoch((current) => current + 1);
+  }, []);
 
   useEffect(() => {
     let dispose: () => void = () => undefined;
     let cancelled = false;
     const enqueue = createWriteQueue();
-    setModel(null);
+    if (shownFor.current !== responseId) {
+      setModel(null);
+      setSaveError(null);
+      shownFor.current = undefined;
+    }
     setError(null);
     updatedAt.current = undefined;
 
@@ -27,6 +50,9 @@ export function useSurveyResponse(options: {
     };
     const asError = (cause: unknown, fallback: string) =>
       cause instanceof Error ? cause : new Error(fallback);
+    const failWrite = (cause: unknown) => {
+      if (!cancelled) setSaveError(asError(cause, "Save failed."));
+    };
 
     void client
       .getResponse(responseId)
@@ -35,6 +61,8 @@ export function useSurveyResponse(options: {
         updatedAt.current = response.updatedAt;
         const next = new Model(response.definition);
         next.data = response.data;
+        shownFor.current = responseId;
+        setSaveError(null);
         if (response.status !== "draft") {
           next.mode = "display";
           setModel(next);
@@ -49,6 +77,7 @@ export function useSurveyResponse(options: {
                 expectedUpdatedAt: updatedAt.current,
               });
               remember(saved.updatedAt);
+              if (!cancelled) setSaveError(null);
             }),
           submit: (data) =>
             enqueue(async () => {
@@ -58,21 +87,24 @@ export function useSurveyResponse(options: {
                 expectedUpdatedAt: updatedAt.current,
               });
               remember(saved.updatedAt);
+              if (!cancelled) setSaveError(null);
             }),
-          onPartialError: (cause) => {
-            if (!cancelled) setError(asError(cause, "Save failed."));
-          },
+          onWriteError: failWrite,
         });
         setModel(next);
       })
       .catch((cause: unknown) => {
-        if (!cancelled) setError(asError(cause, "Load failed."));
+        if (!cancelled) {
+          shownFor.current = undefined;
+          setModel(null);
+          setError(asError(cause, "Load failed."));
+        }
       });
     return () => {
       cancelled = true;
       dispose();
     };
-  }, [client, responseId]);
+  }, [client, responseId, epoch]);
 
-  return { model, error };
+  return { model, error, saveError, stale: isStaleUpdate(saveError), reload };
 }

@@ -138,6 +138,15 @@ export type GuardContext = {
   query?: unknown;
 };
 
+/**
+ * Fill caller. The server stamps `respondentId` onto start and list,
+ * and refuses editor reads, `include: "full"`, and any other respondent's row.
+ * An editor request returns nothing, so a trusted caller may still pass `respondentId` in the body.
+ */
+export type SurveyPrincipal = {
+  respondentId: string;
+};
+
 export type ValidateResultInput = {
   definition: SurveyJson;
   data: SurveyResult;

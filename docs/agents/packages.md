@@ -16,6 +16,10 @@ The browser client takes flat object arguments. `survey.api` is the better-call 
 
 Consumer servers import `@dimah-survey/server`. Browsers import `@dimah-survey/react` or `@dimah-survey/core`. Do not pass the server instance into the client.
 
+## Guard
+
+`guard` may return `{ respondentId }`. `guardRespondent(id)` is that return for fill operations and throws on editor operations. The server stamps the id onto `startResponse` and `listResponses`, rejects a different id in the body or query, rejects `include: "full"`, and rejects `getResponse` / partial / submit / abandon / reopen when the stored `respondentId` differs. Editor requests return nothing. Do not add a second auth system.
+
 ## Store
 
 `database` implements `SurveyStore`. `memoryAdapter()` is the reference. A SQL adapter must:
@@ -39,7 +43,7 @@ Validation failure is `VALIDATION_FAILED`. Do not localize `message`. Callers br
 
 ## React
 
-The fill hook reads the snapshot, constructs a Model, and calls partial save / submit with `expectedUpdatedAt` from the last read. It does not render questions. Do not add `survey-react-ui` to this package.
+The fill hook reads the snapshot, constructs a Model, and calls partial save / submit with `expectedUpdatedAt` from the last read. It does not render questions. Do not add `survey-react-ui` to this package. A write failure sets `saveError` and leaves the Model mounted. `STALE_UPDATE` sets `stale`. `reload` hydrates the stored snapshot again. File bytes are not a route: the app handles `onUploadFiles` on that Model, with `storeDataAsText: false`, and `data` keeps the returned URL.
 
 ## Publish boundary
 

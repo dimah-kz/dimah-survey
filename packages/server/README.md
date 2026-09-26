@@ -13,15 +13,28 @@ pnpm add @dimah-survey/server
 `database` is required; SQL is not. `memoryAdapter()` is for tests and process-local development. Use `@dimah-survey/db` or a custom `SurveyStore` for durable data.
 
 ```ts
-import { dimahSurvey, memoryAdapter } from "@dimah-survey/server";
+import {
+  APIError,
+  SURVEY_ERROR_CODES,
+  dimahSurvey,
+  guardRespondent,
+  memoryAdapter,
+} from "@dimah-survey/server";
 
 export const survey = dimahSurvey({
   database: memoryAdapter(),
-  guard: async ({ request, operation }) => {
-    /* auth */
+  guard: ({ request, operation }) => {
+    const userId = userIdFromSession(request);
+    if (!userId) {
+      throw APIError.from("FORBIDDEN", SURVEY_ERROR_CODES.FORBIDDEN);
+    }
+    if (isEditor(request)) return;
+    return guardRespondent(userId)({ request, operation });
   },
 });
 ```
+
+A fill request returns `{ respondentId }`. The server stamps that id onto start and list, and refuses another respondent's row, `include: "full"`, and `getSurvey` (that read includes `draftJson`). An editor request returns nothing, so the body may still name a respondent. Omit `respondentId` from the fill client, or send the same id.
 
 Mount `survey.handler` on a Fetch runtime. Submit validation defaults to survey-core `clearIncorrectValues(true)` then `validate`, against the stored definition.
 
