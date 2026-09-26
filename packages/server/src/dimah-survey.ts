@@ -5,6 +5,7 @@ import {
   type FillPrincipal,
   type GuardContext,
   type ResponseRecord,
+  type SurveyRecord,
   type SurveyStore,
   type ValidateResult,
 } from "@dimah-survey/core";
@@ -15,12 +16,14 @@ import { checkSurveyResult } from "./validate";
 
 export type SurveyAudience = "fill" | "editor";
 
-export type ResolvedDimahSurveyConfig = Omit<
-  DimahSurveyConfig,
-  "validateResult" | "basePath"
-> & {
+export type ResolvedDimahSurveyConfig = {
+  audience: SurveyAudience;
+  database: SurveyStore;
+  guard?: Guard;
+  hooks?: FillHooks | EditorHooks;
   validateResult: ValidateResult;
   basePath: string;
+  sanitizePartial: SanitizePartial;
 };
 
 export type SurveyHookContext = {
@@ -28,15 +31,41 @@ export type SurveyHookContext = {
   response: ResponseRecord;
 };
 
+export type SurveyStartContext = {
+  request?: Request;
+  survey: SurveyRecord;
+};
+
+export type SurveyPublishContext = {
+  request?: Request;
+  survey: SurveyRecord;
+};
+
 /**
  * `onSubmit` runs after validation and before persist. Throwing aborts the
  * write. `afterSubmit` runs after the row is stored. A replayed submit does
- * not call either hook. Both run on the fill handler, which owns submit.
+ * not call either hook. `onStart` runs only before a new insert. `afterStart`
+ * runs after that insert; a throw leaves the row stored.
  */
-export type SurveyHooks = {
+export type FillHooks = {
   onSubmit?: (context: SurveyHookContext) => void | Promise<void>;
   afterSubmit?: (context: SurveyHookContext) => void | Promise<void>;
+  onStart?: (context: SurveyStartContext) => void | Promise<void>;
+  afterStart?: (context: SurveyHookContext) => void | Promise<void>;
 };
+
+/**
+ * `onPublish` runs before `draftJson` is copied onto `publishedJson`.
+ * Throwing aborts the write. `afterPublish` runs after the row is stored.
+ * `resumeSurvey` does not call either hook.
+ */
+export type EditorHooks = {
+  onPublish?: (context: SurveyPublishContext) => void | Promise<void>;
+  afterPublish?: (context: SurveyPublishContext) => void | Promise<void>;
+};
+
+/** `"clear"` runs `clearIncorrectValues(true)` and skips `validate`. */
+export type SanitizePartial = "clear" | "replace";
 
 type Guard = (
   context: GuardContext,
@@ -50,7 +79,6 @@ type DimahSurveyConfigBase = {
    * A fill handler with no guard is refused at startup.
    */
   guard?: Guard;
-  hooks?: SurveyHooks;
   /**
    * Runs on the response snapshot. Defaults to survey-core
    * `clearIncorrectValues(true)` plus `validate`. Read on the fill handler.
@@ -59,18 +87,20 @@ type DimahSurveyConfigBase = {
   basePath?: string;
 };
 
-export type DimahSurveyConfig = DimahSurveyConfigBase & {
-  audience: SurveyAudience;
-};
-
 export type DimahFillConfig = DimahSurveyConfigBase & {
   audience: "fill";
   guard: Guard;
+  hooks?: FillHooks;
+  /** Defaults to `"clear"`. */
+  sanitizePartial?: SanitizePartial;
 };
 
 export type DimahEditorConfig = DimahSurveyConfigBase & {
   audience: "editor";
+  hooks?: EditorHooks;
 };
+
+export type DimahSurveyConfig = DimahFillConfig | DimahEditorConfig;
 
 type SurveyHandler = (request: Request) => Promise<Response>;
 
@@ -88,6 +118,13 @@ export type DimahEditor = {
   handler: SurveyHandler;
 };
 
+function sanitizePartialOf(
+  config: DimahFillConfig | DimahEditorConfig,
+): SanitizePartial {
+  if (config.audience === "fill") return config.sanitizePartial ?? "clear";
+  return "replace";
+}
+
 type InstanceFor<A extends SurveyAudience> = A extends "fill"
   ? DimahFill
   : DimahEditor;
@@ -103,14 +140,18 @@ export function dimahSurvey<A extends SurveyAudience>(
     throw new Error('dimahSurvey({ audience: "fill" }) requires guard.');
   }
   const resolved: ResolvedDimahSurveyConfig = {
-    ...config,
+    audience: config.audience,
+    database: config.database,
+    guard: config.guard,
+    hooks: config.hooks,
+    validateResult: config.validateResult ?? checkSurveyResult,
+    sanitizePartial: sanitizePartialOf(config),
     basePath: normalizeSurveyApiBasePath(
       config.basePath ??
         (config.audience === "editor"
           ? SURVEY_EDITOR_API_BASE_PATH
           : SURVEY_API_BASE_PATH),
     ),
-    validateResult: config.validateResult ?? checkSurveyResult,
   };
   if (config.audience === "fill") {
     const router = createSurveyRouter(fillSurveyEndpoints, {

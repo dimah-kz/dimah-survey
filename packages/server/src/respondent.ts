@@ -83,6 +83,7 @@ async function enforceAnonymous(
   if (!FILL_OPERATIONS.has(operation) || operation === "listResponses") {
     throw errors.forbidden();
   }
+  if (operation === "getPublishedSurvey") return;
   if (operation === "startResponse") {
     const body = input.body as StartResponseInput;
     if (body.respondentId) throw errors.forbidden();
@@ -103,6 +104,7 @@ async function enforceRespondent(
   if (principal.respondentId.length === 0 || !FILL_OPERATIONS.has(operation)) {
     throw errors.forbidden();
   }
+  if (operation === "getPublishedSurvey") return;
   if (operation === "startResponse") {
     const body = input.body as StartResponseInput;
     claimRespondent(body.respondentId, principal.respondentId);

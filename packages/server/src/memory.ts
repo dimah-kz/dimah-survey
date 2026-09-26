@@ -1,4 +1,9 @@
 import {
+  DEFAULT_SURVEY_SETTINGS,
+  assertReopenAllowed,
+  assertResponseLimit,
+  assertSurveyAccepting,
+  existingResponseForStart,
   isAPIError,
   SURVEY_ERROR_CODES,
   toResponseSummary,
@@ -8,9 +13,12 @@ import {
   type PublishSurveyInput,
   type ResponseMutationInput,
   type ResponseRecord,
+  type ResumeSurveyInput,
   type SavePartialInput,
   type SaveSurveyInput,
+  type SaveSurveySettingsInput,
   type StartResponseInput,
+  type StartResponseLifecycle,
   type SubmitResponseInput,
   type SurveyRecord,
   type SurveyStore,
@@ -76,6 +84,10 @@ function draftKey(surveyId: string, respondentId: string) {
   return `${surveyId}\0${respondentId}`;
 }
 
+function surveyKey(surveyId: string) {
+  return `survey\0${surveyId}`;
+}
+
 export function memoryAdapter(): SurveyStore {
   const surveys = new Map<string, SurveyRecord>();
   const slugToId = new Map<string, string>();
@@ -111,14 +123,37 @@ export function memoryAdapter(): SurveyStore {
   }
 
   function latestDraft(surveyId: string, respondentId: string) {
+    return latestFor(surveyId, respondentId, "draft");
+  }
+
+  function latestFor(
+    surveyId: string,
+    respondentId: string,
+    status?: ResponseRecord["status"],
+  ) {
     return sortByUpdatedAtDesc(
       [...responses.values()].filter(
         (row) =>
           row.surveyId === surveyId &&
           row.respondentId === respondentId &&
-          row.status === "draft",
+          (status === undefined || row.status === status),
       ),
     )[0];
+  }
+
+  function submittedCount(surveyId: string) {
+    let count = 0;
+    for (const row of responses.values()) {
+      if (row.surveyId === surveyId && row.status === "submitted") count += 1;
+    }
+    return count;
+  }
+
+  function requireAccepting(survey: SurveyRecord) {
+    if (survey.status !== "active" || survey.publishedJson === null) {
+      throw errors.notPublished();
+    }
+    assertSurveyAccepting(survey.settings);
   }
 
   function openResponse(survey: SurveyRecord, respondentId?: string) {
@@ -171,6 +206,7 @@ export function memoryAdapter(): SurveyStore {
         draftJson: clone(input.draftJson),
         publishedJson: null,
         publishedAt: null,
+        settings: { ...DEFAULT_SURVEY_SETTINGS },
         createdAt: timestamp,
         updatedAt: timestamp,
       };
@@ -205,6 +241,34 @@ export function memoryAdapter(): SurveyStore {
       return clone(next);
     },
 
+    async saveSurveySettings(input: SaveSurveySettingsInput) {
+      const existing = requireSurvey(input.id);
+      assertFresh(existing.updatedAt, input.expectedUpdatedAt);
+      const next: SurveyRecord = {
+        ...existing,
+        settings: clone(input.settings),
+        updatedAt: now(),
+      };
+      surveys.set(existing.id, next);
+      return clone(next);
+    },
+
+    async resumeSurvey(input: ResumeSurveyInput) {
+      const existing = requireSurvey(input.id);
+      if (existing.status === "active") return clone(existing);
+      if (existing.status === "archived" && existing.publishedJson !== null) {
+        assertFresh(existing.updatedAt, input.expectedUpdatedAt);
+        const next: SurveyRecord = {
+          ...existing,
+          status: "active",
+          updatedAt: now(),
+        };
+        surveys.set(existing.id, next);
+        return clone(next);
+      }
+      throw errors.notPublished();
+    },
+
     async getSurvey(idOrSlug: string) {
       try {
         return clone(requireSurvey(idOrSlug));
@@ -233,14 +297,38 @@ export function memoryAdapter(): SurveyStore {
       return open ? clone(open) : null;
     },
 
-    async startResponse(input: StartResponseInput) {
+    async startResponse(
+      input: StartResponseInput,
+      lifecycle?: StartResponseLifecycle,
+    ) {
       const survey = requireSurvey(input.surveyId);
-      if (!input.respondentId) return openResponse(survey, undefined);
-      return exclusive(draftKey(survey.id, input.respondentId), async () => {
-        const open = latestDraft(survey.id, input.respondentId as string);
-        if (open) return clone(open);
+      return exclusive(surveyKey(survey.id), async () => {
         const fresh = requireSurvey(survey.id);
-        return openResponse(fresh, input.respondentId);
+        requireAccepting(fresh);
+        if (!input.respondentId) {
+          assertResponseLimit(fresh.settings, submittedCount(fresh.id));
+          await lifecycle?.onStart?.(fresh);
+          const created = openResponse(fresh);
+          await lifecycle?.afterStart?.(created);
+          return created;
+        }
+        const respondentId = input.respondentId;
+        return exclusive(draftKey(fresh.id, respondentId), async () => {
+          const current = requireSurvey(fresh.id);
+          requireAccepting(current);
+          const existing = existingResponseForStart({
+            settings: current.settings,
+            respondentId,
+            openDraft: latestDraft(current.id, respondentId) ?? null,
+            latest: latestFor(current.id, respondentId) ?? null,
+          });
+          if (existing) return clone(existing);
+          assertResponseLimit(current.settings, submittedCount(current.id));
+          await lifecycle?.onStart?.(current);
+          const created = openResponse(current, respondentId);
+          await lifecycle?.afterStart?.(created);
+          return created;
+        });
       });
     },
 
@@ -249,6 +337,7 @@ export function memoryAdapter(): SurveyStore {
       if (existing.status !== "draft") {
         throw errors.responseClosed();
       }
+      assertSurveyAccepting(requireSurvey(existing.surveyId).settings);
       assertFresh(existing.updatedAt, input.expectedUpdatedAt);
       const next: ResponseRecord = {
         ...existing,
@@ -261,20 +350,26 @@ export function memoryAdapter(): SurveyStore {
 
     async submitResponse(input: SubmitResponseInput) {
       const existing = requireResponse(input.id);
-      if (existing.status !== "draft") {
-        throw errors.responseClosed();
-      }
-      assertFresh(existing.updatedAt, input.expectedUpdatedAt);
-      const timestamp = now();
-      const next: ResponseRecord = {
-        ...existing,
-        data: clone(input.data ?? existing.data),
-        status: "submitted",
-        submittedAt: timestamp,
-        updatedAt: timestamp,
-      };
-      responses.set(existing.id, next);
-      return clone(next);
+      return exclusive(surveyKey(existing.surveyId), async () => {
+        const current = requireResponse(input.id);
+        if (current.status !== "draft") {
+          throw errors.responseClosed();
+        }
+        const survey = requireSurvey(current.surveyId);
+        assertSurveyAccepting(survey.settings);
+        assertResponseLimit(survey.settings, submittedCount(survey.id));
+        assertFresh(current.updatedAt, input.expectedUpdatedAt);
+        const timestamp = now();
+        const next: ResponseRecord = {
+          ...current,
+          data: clone(input.data ?? current.data),
+          status: "submitted",
+          submittedAt: timestamp,
+          updatedAt: timestamp,
+        };
+        responses.set(current.id, next);
+        return clone(next);
+      });
     },
 
     async abandonResponse(input: ResponseMutationInput) {
@@ -294,6 +389,7 @@ export function memoryAdapter(): SurveyStore {
 
     async reopenResponse(input: ResponseMutationInput) {
       const existing = requireResponse(input.id);
+      assertReopenAllowed(requireSurvey(existing.surveyId).settings);
       const run = async () => {
         const current = requireResponse(input.id);
         if (current.status === "draft") throw errors.responseClosed();

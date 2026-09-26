@@ -8,6 +8,13 @@ export type SurveyModelActions = {
   onWriteError?: (error: unknown) => void;
 };
 
+export type SurveyPartialSend = "page" | "off";
+
+export type SurveyModelBindOptions = {
+  /** `"page"` saves on page next. `"off"` saves only on complete. */
+  partial?: SurveyPartialSend;
+};
+
 type CompletingOptions = {
   allow: boolean;
   /** SurveyJS 2 name for `allow`. Set both so either version blocks completion. */
@@ -20,29 +27,35 @@ type CompletingOptions = {
  * Completion waits for the server. The app still renders `<Survey model={model} />`.
  * File bytes stay on the app's `onUploadFiles` handler. `data` stores the locator.
  */
-export function bindSurveyModel(model: Model, actions: SurveyModelActions) {
+export function bindSurveyModel(
+  model: Model,
+  actions: SurveyModelActions,
+  options?: SurveyModelBindOptions,
+) {
+  const partial = options?.partial ?? "page";
   // SurveyJS 2 reads `sendResultOnPageNext`. SurveyJS 3 reads `partialSendEnabled`.
-  model.sendResultOnPageNext = true;
-  model.partialSendEnabled = true;
+  model.sendResultOnPageNext = partial === "page";
+  model.partialSendEnabled = partial === "page";
   const onPartial = () => {
     void actions.savePartial({ ...model.data }).catch((error: unknown) => {
       actions.onWriteError?.(error);
     });
   };
-  const onCompleting = async (sender: Model, options: CompletingOptions) => {
+  const onCompleting = async (sender: Model, completing: CompletingOptions) => {
     try {
       await actions.submit({ ...sender.data });
     } catch (error: unknown) {
-      options.allow = false;
-      options.allowComplete = false;
-      options.message = error instanceof Error ? error.message : "Save failed.";
+      completing.allow = false;
+      completing.allowComplete = false;
+      completing.message =
+        error instanceof Error ? error.message : "Save failed.";
       actions.onWriteError?.(error);
     }
   };
-  model.onPartialSend.add(onPartial);
+  if (partial === "page") model.onPartialSend.add(onPartial);
   model.onCompleting.add(onCompleting);
   return () => {
-    model.onPartialSend.remove(onPartial);
+    if (partial === "page") model.onPartialSend.remove(onPartial);
     model.onCompleting.remove(onCompleting);
   };
 }

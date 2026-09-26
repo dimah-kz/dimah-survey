@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import { responseWriteLanded, surveyWriteLanded } from "./cas";
+import { DEFAULT_SURVEY_SETTINGS } from "@dimah-survey/core";
 import type { ResponseRecord, SurveyRecord } from "@dimah-survey/core";
+
+import { responseWriteLanded, surveyWriteLanded } from "./cas";
 
 const writtenSurvey: SurveyRecord = {
   id: "a",
@@ -10,6 +12,7 @@ const writtenSurvey: SurveyRecord = {
   draftJson: { title: "v2", pages: [] },
   publishedJson: { title: "v2" },
   publishedAt: "2020-01-01T00:00:01.200Z",
+  settings: { ...DEFAULT_SURVEY_SETTINGS },
   createdAt: "2020-01-01T00:00:00.000Z",
   updatedAt: "2020-01-01T00:00:01.200Z",
 };
@@ -30,6 +33,14 @@ describe("surveyWriteLanded", () => {
       ...writtenSurvey,
       updatedAt: "2020-01-01T00:00:00.100Z",
       publishedAt: "2020-01-01T00:00:00.100Z",
+    };
+    expect(surveyWriteLanded(fresh, writtenSurvey)).toBe(false);
+  });
+
+  it("rejects a row whose collection settings differ", () => {
+    const fresh: SurveyRecord = {
+      ...writtenSurvey,
+      settings: { ...DEFAULT_SURVEY_SETTINGS, reopen: false },
     };
     expect(surveyWriteLanded(fresh, writtenSurvey)).toBe(false);
   });

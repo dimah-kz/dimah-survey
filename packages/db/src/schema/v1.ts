@@ -14,6 +14,8 @@ const survey = table("survey", {
   draftJson: column("draft_json", "json"),
   publishedJson: column("published_json", "json").nullable(),
   publishedAt: column("published_at", "timestamp").nullable(),
+  /** Collection rules. Not copied into response.definition. */
+  settings: column("settings", "json"),
   createdAt: column("created_at", "timestamp").defaultTo$("now"),
   updatedAt: column("updated_at", "timestamp").defaultTo$("now"),
 });

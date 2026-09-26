@@ -9,6 +9,15 @@ export { APIError, isAPIError } from "./error";
 export { SURVEY_ERROR_CODES, defineErrorCodes } from "./error-codes";
 export type { SurveyErrorCode } from "./error-codes";
 export { sameJson } from "./json";
+export {
+  DEFAULT_SURVEY_SETTINGS,
+  assertReopenAllowed,
+  assertResponseLimit,
+  assertSurveyAccepting,
+  existingResponseForStart,
+  readSurveySettings,
+  toPublishedSurvey,
+} from "./settings";
 export { createSurveyFetch } from "./fetch";
 export type { SurveyClientFetchOptions, SurveyFetch } from "./fetch";
 export {
@@ -34,6 +43,8 @@ export {
   listResponsesQuerySchema,
   listSurveysQuerySchema,
   publishSurveyBodySchema,
+  saveSurveySettingsBodySchema,
+  surveySettingsSchema,
   responseMutationBodySchema,
   savePartialBodySchema,
   saveSurveyBodySchema,
@@ -52,19 +63,25 @@ export type {
   FillPrincipal,
   Operation,
   PublishSurveyInput,
+  PublishedSurvey,
   ResponseList,
   ResponseMutationInput,
   ResponseRecord,
   ResponseStatus,
   ResponseSummary,
+  ResumeSurveyInput,
   SavePartialInput,
   SaveSurveyInput,
+  SaveSurveySettingsInput,
   StartResponseInput,
+  StartResponseLifecycle,
   SubmitResponseInput,
   SurveyJson,
   SurveyList,
   SurveyPrincipal,
   SurveyRecord,
+  SurveyResponsePolicy,
+  SurveySettings,
   SurveyResult,
   SurveyStatus,
   SurveyStore,

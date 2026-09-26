@@ -22,6 +22,8 @@ export const SURVEY_ERROR_CODES = defineErrorCodes({
   VALIDATION_ERROR: "Validation error",
   SURVEY_NOT_FOUND: "Survey was not found.",
   NOT_PUBLISHED: "Only an active published survey can be started.",
+  SURVEY_CLOSED: "This survey is not accepting responses.",
+  RESPONSE_LIMIT: "This survey has reached its response limit.",
   SLUG_TAKEN: "Slug is already used by another survey.",
   STALE_UPDATE: "The record changed since it was read.",
   RESPONSE_NOT_FOUND: "Response was not found.",

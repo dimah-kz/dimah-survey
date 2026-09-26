@@ -10,6 +10,22 @@ export type SurveyStatus = "draft" | "active" | "archived";
 
 export type ResponseStatus = "draft" | "submitted" | "abandoned";
 
+/** How an identified respondent may hold responses. Anonymous starts always insert. */
+export type SurveyResponsePolicy = "one-open" | "single";
+
+/**
+ * Collection rules for one survey. Not part of SurveyJS JSON and not copied
+ * onto `response.definition`.
+ */
+export type SurveySettings = {
+  responses: SurveyResponsePolicy;
+  reopen: boolean;
+  opensAt: string | null;
+  closesAt: string | null;
+  /** Maximum `submitted` rows. `null` means no cap. */
+  maxResponses: number | null;
+};
+
 export type SurveyRecord = {
   id: string;
   slug: string;
@@ -17,8 +33,18 @@ export type SurveyRecord = {
   draftJson: SurveyJson;
   publishedJson: SurveyJson | null;
   publishedAt: string | null;
+  settings: SurveySettings;
   createdAt: string;
   updatedAt: string;
+};
+
+/** Active published document. `draftJson` is absent. */
+export type PublishedSurvey = {
+  id: string;
+  slug: string;
+  publishedJson: SurveyJson;
+  publishedAt: string;
+  settings: SurveySettings;
 };
 
 export type ResponseRecord = {
@@ -51,13 +77,34 @@ export type ArchiveSurveyInput = {
   expectedUpdatedAt?: string;
 };
 
+export type SaveSurveySettingsInput = {
+  id: string;
+  settings: SurveySettings;
+  expectedUpdatedAt?: string;
+};
+
+export type ResumeSurveyInput = {
+  id: string;
+  expectedUpdatedAt?: string;
+};
+
 export type StartResponseInput = {
   surveyId: string;
   /**
-   * When set, start returns the open draft for this survey and respondent.
-   * A new row is inserted only when none is open. Omit it to always insert.
+   * When set, `responses: "one-open"` returns the open draft and
+   * `responses: "single"` returns the latest row of any status.
+   * A new row is inserted only when that lookup misses. Omit it to always insert.
    */
   respondentId?: string;
+};
+
+/**
+ * Store callbacks for `startResponse`. The HTTP body does not carry them.
+ * Both run inside the store lock. `onStart` runs only before a new insert.
+ */
+export type StartResponseLifecycle = {
+  onStart?: (survey: SurveyRecord) => void | Promise<void>;
+  afterStart?: (response: ResponseRecord) => void | Promise<void>;
 };
 
 export type ListPageQuery = {
@@ -166,17 +213,27 @@ export type SurveyStore = {
   saveSurvey(input: SaveSurveyInput): Promise<SurveyRecord>;
   publishSurvey(input: PublishSurveyInput): Promise<SurveyRecord>;
   archiveSurvey(input: ArchiveSurveyInput): Promise<SurveyRecord>;
+  saveSurveySettings(input: SaveSurveySettingsInput): Promise<SurveyRecord>;
+  /**
+   * Archived survey with `publishedJson` becomes `active` again.
+   * Does not copy `draftJson`. An active survey is returned unchanged.
+   */
+  resumeSurvey(input: ResumeSurveyInput): Promise<SurveyRecord>;
   getSurvey(idOrSlug: string): Promise<SurveyRecord | null>;
   listSurveys(query?: ListSurveysQuery): Promise<SurveyRecord[]>;
   /**
    * Newest draft for this survey and respondent (`updatedAt` descending).
-   * Identified `startResponse` returns this row instead of inserting.
+   * Identified `startResponse` returns this row instead of inserting when
+   * `settings.responses` is `"one-open"`.
    */
   findLatestDraft(query: {
     surveyId: string;
     respondentId: string;
   }): Promise<ResponseRecord | null>;
-  startResponse(input: StartResponseInput): Promise<ResponseRecord>;
+  startResponse(
+    input: StartResponseInput,
+    lifecycle?: StartResponseLifecycle,
+  ): Promise<ResponseRecord>;
   listResponses(
     query?: ListResponsesQuery,
   ): Promise<(ResponseRecord | ResponseSummary)[]>;

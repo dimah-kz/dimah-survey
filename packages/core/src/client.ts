@@ -5,11 +5,14 @@ import type {
   ListResponsesQuery,
   ListSurveysQuery,
   PublishSurveyInput,
+  PublishedSurvey,
   ResponseList,
   ResponseMutationInput,
   ResponseRecord,
+  ResumeSurveyInput,
   SavePartialInput,
   SaveSurveyInput,
+  SaveSurveySettingsInput,
   StartResponseInput,
   SubmitResponseInput,
   SurveyList,
@@ -20,7 +23,10 @@ export type SurveyClient = {
   saveSurvey(input: SaveSurveyInput): Promise<SurveyRecord>;
   publishSurvey(input: PublishSurveyInput): Promise<SurveyRecord>;
   archiveSurvey(input: ArchiveSurveyInput): Promise<SurveyRecord>;
+  saveSurveySettings(input: SaveSurveySettingsInput): Promise<SurveyRecord>;
+  resumeSurvey(input: ResumeSurveyInput): Promise<SurveyRecord>;
   getSurvey(id: string): Promise<SurveyRecord>;
+  getPublishedSurvey(id: string): Promise<PublishedSurvey>;
   listSurveys(input?: ListSurveysQuery): Promise<SurveyList>;
   startResponse(input: StartResponseInput): Promise<ResponseRecord>;
   listResponses(input?: ListResponsesQuery): Promise<ResponseList>;
@@ -33,6 +39,7 @@ export type SurveyClient = {
 
 export type FillClient = Pick<
   SurveyClient,
+  | "getPublishedSurvey"
   | "startResponse"
   | "listResponses"
   | "savePartial"
@@ -47,6 +54,8 @@ export type EditorClient = Pick<
   | "saveSurvey"
   | "publishSurvey"
   | "archiveSurvey"
+  | "saveSurveySettings"
+  | "resumeSurvey"
   | "getSurvey"
   | "listSurveys"
   | "listResponses"
@@ -69,8 +78,17 @@ function createSurveyClient(
       $fetch(SURVEY_API_ROUTES.publishSurvey, { method: "POST", body }),
     archiveSurvey: (body) =>
       $fetch(SURVEY_API_ROUTES.archiveSurvey, { method: "POST", body }),
+    saveSurveySettings: (body) =>
+      $fetch(SURVEY_API_ROUTES.surveySettings, { method: "POST", body }),
+    resumeSurvey: (body) =>
+      $fetch(SURVEY_API_ROUTES.resumeSurvey, { method: "POST", body }),
     getSurvey: (id) =>
       $fetch(SURVEY_API_ROUTES.survey, { method: "GET", query: { id } }),
+    getPublishedSurvey: (id) =>
+      $fetch(SURVEY_API_ROUTES.publishedSurvey, {
+        method: "GET",
+        query: { id },
+      }),
     listSurveys: (query) =>
       $fetch(SURVEY_API_ROUTES.surveys, { method: "GET", query }),
     startResponse: (body) =>
@@ -95,6 +113,7 @@ export function createFillClient(
 ): FillClient {
   const client = createSurveyClient(options);
   return {
+    getPublishedSurvey: client.getPublishedSurvey,
     startResponse: client.startResponse,
     listResponses: client.listResponses,
     savePartial: client.savePartial,
@@ -113,6 +132,8 @@ export function createEditorClient(
     saveSurvey: client.saveSurvey,
     publishSurvey: client.publishSurvey,
     archiveSurvey: client.archiveSurvey,
+    saveSurveySettings: client.saveSurveySettings,
+    resumeSurvey: client.resumeSurvey,
     getSurvey: client.getSurvey,
     listSurveys: client.listSurveys,
     listResponses: client.listResponses,

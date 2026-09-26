@@ -25,6 +25,33 @@ const isoDateTimeQuerySchema = z
 export const surveyStatusSchema = z.enum(["draft", "active", "archived"]);
 export const responseStatusSchema = z.enum(["draft", "submitted", "abandoned"]);
 
+const nullableIsoDateTimeSchema = z.union([
+  z.null(),
+  z
+    .string()
+    .trim()
+    .min(1)
+    .refine((value) => !Number.isNaN(Date.parse(value)), {
+      error: "Invalid datetime",
+    }),
+]);
+
+export const surveySettingsSchema = z
+  .object({
+    responses: z.enum(["one-open", "single"]),
+    reopen: z.boolean(),
+    opensAt: nullableIsoDateTimeSchema,
+    closesAt: nullableIsoDateTimeSchema,
+    maxResponses: z.int().positive().nullable(),
+  })
+  .refine(
+    (settings) => {
+      if (settings.opensAt === null || settings.closesAt === null) return true;
+      return Date.parse(settings.closesAt) > Date.parse(settings.opensAt);
+    },
+    { error: "closesAt must be after opensAt" },
+  );
+
 export const idQuerySchema = z.object({
   id: idSchema,
 });
@@ -38,6 +65,12 @@ export const saveSurveyBodySchema = z.object({
 
 export const publishSurveyBodySchema = z.object({
   id: idSchema,
+  expectedUpdatedAt: expectedUpdatedAtSchema,
+});
+
+export const saveSurveySettingsBodySchema = z.object({
+  id: idSchema,
+  settings: surveySettingsSchema,
   expectedUpdatedAt: expectedUpdatedAtSchema,
 });
 

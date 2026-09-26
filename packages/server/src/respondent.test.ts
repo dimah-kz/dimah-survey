@@ -9,7 +9,10 @@ import { dimahSurvey } from "./dimah-survey";
 import { memoryAdapter } from "./memory";
 import { guardAnonymous, guardRespondent } from "./respondent";
 
-const definition = { title: "v1", pages: [{ name: "p" }] };
+const definition = {
+  title: "v1",
+  pages: [{ name: "p", elements: [{ type: "text", name: "q1" }] }],
+};
 
 function session(respondentId: string) {
   const database = memoryAdapter();

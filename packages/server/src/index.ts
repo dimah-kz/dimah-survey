@@ -5,11 +5,15 @@ export type {
   DimahFill,
   DimahFillConfig,
   DimahSurveyConfig,
+  EditorHooks,
+  FillHooks,
+  SanitizePartial,
   SurveyAudience,
   SurveyHookContext,
-  SurveyHooks,
+  SurveyPublishContext,
+  SurveyStartContext,
 } from "./dimah-survey";
-export { checkSurveyResult } from "./validate";
+export { checkSurveyResult, clearSurveyResult } from "./validate";
 export { guardAnonymous, guardRespondent } from "./respondent";
 export { memoryAdapter } from "./memory";
 export type {

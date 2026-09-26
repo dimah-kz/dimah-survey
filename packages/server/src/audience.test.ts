@@ -6,7 +6,7 @@ import {
 import { describe, expect, it } from "vitest";
 
 import { editorSurveyEndpoints, fillSurveyEndpoints } from "./api/routes";
-import { dimahSurvey, type DimahSurveyConfig } from "./dimah-survey";
+import { dimahSurvey } from "./dimah-survey";
 import { memoryAdapter } from "./memory";
 import { guardRespondent } from "./respondent";
 
@@ -23,7 +23,10 @@ describe("audience routes", () => {
   });
 
   it("refuses to build a fill handler without guard", () => {
-    const build = dimahSurvey as (config: DimahSurveyConfig) => unknown;
+    const build = dimahSurvey as (config: {
+      audience: "fill";
+      database: ReturnType<typeof memoryAdapter>;
+    }) => unknown;
     expect(() =>
       build({ audience: "fill", database: memoryAdapter() }),
     ).toThrow(/requires guard/);

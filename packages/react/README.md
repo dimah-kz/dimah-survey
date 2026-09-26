@@ -33,6 +33,8 @@ export function Fill({ responseId }: { responseId: string }) {
 
 `error` means the snapshot did not load. A failed partial save or submit sets `saveError` and leaves the model mounted. `stale` is `STALE_UPDATE`; `reload` reads the stored snapshot again.
 
+`partial` defaults to `"page"` (`partialSendEnabled` and `sendResultOnPageNext`). Pass `partial: "off"` to submit only when the respondent completes. `createFillClient` also exposes `getPublishedSurvey` for the published document before start.
+
 `survey-react-ui` stays in the app. Partial save and complete go through the client.
 
 Creator stays in the app too. `bindSurveyCreator` / `useSurveyDraft` point autosave at `saveSurvey` (`draftJson` only) and send `expectedUpdatedAt` from the loaded survey. Publish is a separate `publishSurvey` call.

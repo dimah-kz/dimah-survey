@@ -10,7 +10,11 @@ export type {
   SurveyCreatorDraft,
 } from "./bind-survey-creator";
 export { bindSurveyModel } from "./bind-survey-model";
-export type { SurveyModelActions } from "./bind-survey-model";
+export type {
+  SurveyModelActions,
+  SurveyModelBindOptions,
+  SurveyPartialSend,
+} from "./bind-survey-model";
 export { isStaleUpdate } from "./stale";
 export { useSurveyDraft } from "./use-survey-draft";
 export type { SurveyDraftBinding } from "./use-survey-draft";

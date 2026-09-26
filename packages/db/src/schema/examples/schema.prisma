@@ -13,6 +13,8 @@ model Survey {
   draftJson     Json      @map("draft_json")
   publishedJson Json?     @map("published_json")
   publishedAt   DateTime? @map("published_at")
+  /// Collection rules. Not copied into response.definition.
+  settings      Json      @map("settings")
   createdAt     DateTime  @default(now()) @map("created_at")
   updatedAt     DateTime  @default(now()) @map("updated_at")
   responses     Response[]

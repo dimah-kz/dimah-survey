@@ -15,11 +15,18 @@ function open() {
   sqlite.$client.exec(`
     pragma journal_mode = wal;
     pragma busy_timeout = 5000;
-    pragma foreign_keys = on;
+    pragma foreign_keys = off;
   `);
-  migrate(sqlite, {
-    migrationsFolder: path.join(process.cwd(), "drizzle"),
-  });
+  try {
+    // Drizzle applies every migration inside one transaction, so a
+    // PRAGMA foreign_keys inside the SQL never takes effect. The settings
+    // migration rebuilds survey while response still references it.
+    migrate(sqlite, {
+      migrationsFolder: path.join(process.cwd(), "drizzle"),
+    });
+  } finally {
+    sqlite.$client.exec(`pragma foreign_keys = on;`);
+  }
   return sqlite;
 }
 

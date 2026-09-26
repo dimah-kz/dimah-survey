@@ -17,6 +17,9 @@ export const SURVEY_API_ROUTES = {
   surveys: "/surveys",
   publishSurvey: "/survey/publish",
   archiveSurvey: "/survey/archive",
+  surveySettings: "/survey/settings",
+  resumeSurvey: "/survey/resume",
+  publishedSurvey: "/survey/published",
   startResponse: "/response/start",
   response: "/response",
   responses: "/responses",
@@ -32,6 +35,15 @@ export const SURVEY_API_OPERATIONS = {
   listSurveys: { method: "GET", path: SURVEY_API_ROUTES.surveys },
   publishSurvey: { method: "POST", path: SURVEY_API_ROUTES.publishSurvey },
   archiveSurvey: { method: "POST", path: SURVEY_API_ROUTES.archiveSurvey },
+  saveSurveySettings: {
+    method: "POST",
+    path: SURVEY_API_ROUTES.surveySettings,
+  },
+  resumeSurvey: { method: "POST", path: SURVEY_API_ROUTES.resumeSurvey },
+  getPublishedSurvey: {
+    method: "GET",
+    path: SURVEY_API_ROUTES.publishedSurvey,
+  },
   startResponse: { method: "POST", path: SURVEY_API_ROUTES.startResponse },
   getResponse: { method: "GET", path: SURVEY_API_ROUTES.response },
   listResponses: { method: "GET", path: SURVEY_API_ROUTES.responses },
@@ -45,6 +57,7 @@ export type SurveyApiOperation = keyof typeof SURVEY_API_OPERATIONS;
 
 /** Routes mounted by `audience: "fill"`. Editor survey routes are absent. */
 export const FILL_AUDIENCE_OPERATIONS = [
+  "getPublishedSurvey",
   "startResponse",
   "getResponse",
   "listResponses",
@@ -61,6 +74,8 @@ export const EDITOR_AUDIENCE_OPERATIONS = [
   "listSurveys",
   "publishSurvey",
   "archiveSurvey",
+  "saveSurveySettings",
+  "resumeSurvey",
   "getResponse",
   "listResponses",
 ] as const satisfies readonly SurveyApiOperation[];

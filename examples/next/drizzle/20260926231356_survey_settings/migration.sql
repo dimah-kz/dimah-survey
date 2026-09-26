@@ -1,0 +1,2 @@
+-- Backfill existing rows. The following migration rebuilds the table and drops this default.
+ALTER TABLE `survey` ADD `settings` blob DEFAULT '{"responses":"one-open","reopen":true,"opensAt":null,"closesAt":null,"maxResponses":null}' NOT NULL;

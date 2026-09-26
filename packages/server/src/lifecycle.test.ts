@@ -8,16 +8,19 @@ import {
 } from "@dimah-survey/core";
 import { describe, expect, it } from "vitest";
 
-import { dimahSurvey, type SurveyHooks } from "./dimah-survey";
+import { dimahSurvey, type FillHooks } from "./dimah-survey";
 import { memoryAdapter } from "./memory";
 import { guardAnonymous, guardRespondent } from "./respondent";
 
-const v1 = { title: "v1", pages: [{ name: "p" }] };
+const v1 = {
+  title: "v1",
+  pages: [{ name: "p", elements: [{ type: "text", name: "q1" }] }],
+};
 const v2 = { title: "v2", pages: [] };
 
 function mount(options?: {
   respondentId?: string;
-  hooks?: SurveyHooks;
+  hooks?: FillHooks;
   validateResult?: ValidateResult;
   database?: ReturnType<typeof memoryAdapter>;
 }) {
@@ -28,7 +31,6 @@ function mount(options?: {
     audience: "editor",
     database,
     validateResult,
-    hooks,
     basePath: "/api/editor",
   });
   const fillSurvey = dimahSurvey({

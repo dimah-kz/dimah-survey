@@ -54,6 +54,23 @@ describe("bindSurveyModel", () => {
     expect(survey.data).toEqual({ q1: "Ada" });
   });
 
+  it("does not partial-save when partial sending is off", async () => {
+    const survey = new Model({
+      pages: [
+        { name: "p1", elements: [{ type: "text", name: "q1" }] },
+        { name: "p2", elements: [{ type: "text", name: "q2" }] },
+      ],
+    });
+    const savePartial = vi.fn(async () => undefined);
+    const submit = vi.fn(async () => undefined);
+    bindSurveyModel(survey, { savePartial, submit }, { partial: "off" });
+    survey.nextPage();
+    await Promise.resolve();
+    expect(savePartial).not.toHaveBeenCalled();
+    survey.doComplete();
+    await vi.waitFor(() => expect(submit).toHaveBeenCalledOnce());
+  });
+
   it("completes after the server accepts the result", async () => {
     const survey = model();
     bindSurveyModel(survey, {

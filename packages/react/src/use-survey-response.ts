@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Model } from "survey-core";
 import type { FillClient } from "@dimah-survey/core";
 
-import { bindSurveyModel } from "./bind-survey-model";
+import { bindSurveyModel, type SurveyPartialSend } from "./bind-survey-model";
 import { isStaleUpdate } from "./stale";
 import { createWriteQueue } from "./write-queue";
 
@@ -21,8 +21,10 @@ export type SurveyResponseBinding = {
 export function useSurveyResponse(options: {
   client: Pick<FillClient, "getResponse" | "savePartial" | "submitResponse">;
   responseId: string;
+  /** `"page"` saves on page next. `"off"` saves only on complete. */
+  partial?: SurveyPartialSend;
 }): SurveyResponseBinding {
-  const { client, responseId } = options;
+  const { client, responseId, partial } = options;
   const [epoch, setEpoch] = useState(0);
   const [model, setModel] = useState<Model | null>(null);
   const [error, setError] = useState<Error | null>(null);
@@ -68,29 +70,33 @@ export function useSurveyResponse(options: {
           setModel(next);
           return;
         }
-        dispose = bindSurveyModel(next, {
-          savePartial: (data) =>
-            enqueue(async () => {
-              const saved = await client.savePartial({
-                id: responseId,
-                data,
-                expectedUpdatedAt: updatedAt.current,
-              });
-              remember(saved.updatedAt);
-              if (!cancelled) setSaveError(null);
-            }),
-          submit: (data) =>
-            enqueue(async () => {
-              const saved = await client.submitResponse({
-                id: responseId,
-                data,
-                expectedUpdatedAt: updatedAt.current,
-              });
-              remember(saved.updatedAt);
-              if (!cancelled) setSaveError(null);
-            }),
-          onWriteError: failWrite,
-        });
+        dispose = bindSurveyModel(
+          next,
+          {
+            savePartial: (data) =>
+              enqueue(async () => {
+                const saved = await client.savePartial({
+                  id: responseId,
+                  data,
+                  expectedUpdatedAt: updatedAt.current,
+                });
+                remember(saved.updatedAt);
+                if (!cancelled) setSaveError(null);
+              }),
+            submit: (data) =>
+              enqueue(async () => {
+                const saved = await client.submitResponse({
+                  id: responseId,
+                  data,
+                  expectedUpdatedAt: updatedAt.current,
+                });
+                remember(saved.updatedAt);
+                if (!cancelled) setSaveError(null);
+              }),
+            onWriteError: failWrite,
+          },
+          { partial },
+        );
         setModel(next);
       })
       .catch((cause: unknown) => {
@@ -104,7 +110,7 @@ export function useSurveyResponse(options: {
       cancelled = true;
       dispose();
     };
-  }, [client, responseId, epoch]);
+  }, [client, partial, responseId, epoch]);
 
   return { model, error, saveError, stale: isStaleUpdate(saveError), reload };
 }

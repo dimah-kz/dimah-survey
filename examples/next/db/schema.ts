@@ -19,6 +19,7 @@ export const survey = sqliteTable(
     draftJson: blob("draft_json", { mode: "json" }).notNull(),
     publishedJson: blob("published_json", { mode: "json" }),
     publishedAt: integer("published_at", { mode: "timestamp" }),
+    settings: blob("settings", { mode: "json" }).notNull(),
     createdAt: integer("created_at", { mode: "timestamp" })
       .notNull()
       .defaultNow(),

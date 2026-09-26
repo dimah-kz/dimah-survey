@@ -28,6 +28,9 @@ function apiErrorFromFetch(error: {
     return new APIError(error.status, {
       message: parsed.data.message,
       ...(parsed.data.code !== undefined ? { code: parsed.data.code } : {}),
+      ...(parsed.data.questions !== undefined
+        ? { questions: parsed.data.questions }
+        : {}),
     });
   }
   return new APIError(error.status, { message: fallbackMessage(error) });

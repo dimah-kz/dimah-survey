@@ -8,6 +8,7 @@ create table survey (
   draft_json jsonb not null,
   published_json jsonb,
   published_at timestamptz,
+  settings jsonb not null,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   constraint survey_slug_unique unique (slug),
@@ -32,3 +33,6 @@ create table response (
 
 comment on column response.definition is
   'Copy of survey.published_json at start. Do not update after insert.';
+
+comment on column survey.settings is
+  'Collection rules. Not copied into response.definition.';
