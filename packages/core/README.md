@@ -11,9 +11,9 @@ pnpm add @dimah-survey/core
 ```
 
 ```ts
-import { createSurveyClient } from "@dimah-survey/core";
+import { createFillClient } from "@dimah-survey/core";
 
-const survey = createSurveyClient({ baseURL: "/api/survey" });
+const survey = createFillClient({ baseURL: "/api/survey" });
 const response = await survey.startResponse({ surveyId });
 ```
 

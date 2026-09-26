@@ -3,7 +3,7 @@ import { createEndpoint, type EndpointOptions } from "better-call";
 import * as z from "zod";
 
 import { errors } from "@/errors";
-import { enforceRespondent } from "@/respondent";
+import { enforceFillPrincipal } from "@/respondent";
 import { surveyContextMiddleware } from "./middleware";
 
 const createEndpointWithContext = createEndpoint.create({
@@ -63,13 +63,16 @@ export const createSurveyEndpoint: CreateSurveyEndpoint = ((
         body: input.body,
         query: input.query,
       });
-      if (principal) {
-        await enforceRespondent(
+      if (ctx.context.config.audience === "fill") {
+        if (!principal) throw errors.forbidden();
+        await enforceFillPrincipal(
           operation,
           principal,
           input,
           ctx.context.config.database,
         );
+      } else if (principal) {
+        throw errors.forbidden();
       }
       return handler(ctx as never);
     },

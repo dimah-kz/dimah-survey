@@ -1,32 +1,48 @@
-import type {
-  GuardContext,
-  ListResponsesQuery,
-  Operation,
-  StartResponseInput,
-  SurveyPrincipal,
-  SurveyStore,
+import {
+  FILL_AUDIENCE_OPERATIONS,
+  type AnonymousPrincipal,
+  type FillPrincipal,
+  type GuardContext,
+  type ListResponsesQuery,
+  type Operation,
+  type StartResponseInput,
+  type SurveyPrincipal,
+  type SurveyStore,
 } from "@dimah-survey/core";
 
 import { errors } from "@/errors";
 
-const FILL_OPERATIONS = new Set<Operation>([
-  "startResponse",
-  "listResponses",
-  "getResponse",
-  "savePartial",
-  "submitResponse",
-  "abandonResponse",
-  "reopenResponse",
-]);
+const FILL_OPERATIONS = new Set<Operation>(FILL_AUDIENCE_OPERATIONS);
 
 type RespondentCall = {
   body?: unknown;
   query?: unknown;
 };
 
+function isAnonymousPrincipal(
+  principal: FillPrincipal,
+): principal is AnonymousPrincipal {
+  return (
+    "anonymous" in principal &&
+    principal.anonymous &&
+    !("respondentId" in principal)
+  );
+}
+
+function isRespondentPrincipal(
+  principal: FillPrincipal,
+): principal is SurveyPrincipal {
+  return (
+    "respondentId" in principal &&
+    typeof principal.respondentId === "string" &&
+    principal.respondentId.length > 0 &&
+    !("anonymous" in principal)
+  );
+}
+
 /**
- * Guard result for a fill request. Editor operations throw, and the server
- * stamps `respondentId` onto start and list.
+ * Guard result for a logged-in fill request.
+ * Pair with `enforceFillPrincipal`, which stamps this id onto the call.
  */
 export function guardRespondent(respondentId: string) {
   return (context: GuardContext): SurveyPrincipal => {
@@ -37,7 +53,48 @@ export function guardRespondent(respondentId: string) {
   };
 }
 
-export async function enforceRespondent(
+/** Guard result for a public fill request. The response id is the capability. */
+export function guardAnonymous() {
+  return (context: GuardContext): AnonymousPrincipal => {
+    if (!FILL_OPERATIONS.has(context.operation)) throw errors.forbidden();
+    return { anonymous: true };
+  };
+}
+
+export async function enforceFillPrincipal(
+  operation: Operation,
+  principal: FillPrincipal,
+  input: RespondentCall,
+  database: SurveyStore,
+): Promise<void> {
+  if (isAnonymousPrincipal(principal)) {
+    await enforceAnonymous(operation, input, database);
+    return;
+  }
+  if (!isRespondentPrincipal(principal)) throw errors.forbidden();
+  await enforceRespondent(operation, principal, input, database);
+}
+
+async function enforceAnonymous(
+  operation: Operation,
+  input: RespondentCall,
+  database: SurveyStore,
+) {
+  if (!FILL_OPERATIONS.has(operation) || operation === "listResponses") {
+    throw errors.forbidden();
+  }
+  if (operation === "startResponse") {
+    const body = input.body as StartResponseInput;
+    if (body.respondentId) throw errors.forbidden();
+    return;
+  }
+  const id = responseId(operation, input);
+  if (!id) throw errors.forbidden();
+  const row = await database.getResponse(id);
+  if (!row || row.respondentId !== null) throw errors.forbidden();
+}
+
+async function enforceRespondent(
   operation: Operation,
   principal: SurveyPrincipal,
   input: RespondentCall,

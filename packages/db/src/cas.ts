@@ -1,4 +1,8 @@
-import type { ResponseRecord, SurveyRecord } from "@dimah-survey/core";
+import {
+  sameJson,
+  type ResponseRecord,
+  type SurveyRecord,
+} from "@dimah-survey/core";
 
 /** SQL timestamps often drop sub-second precision on the way back out. */
 export function sameInstant(left: string, right: string) {
@@ -13,26 +17,6 @@ function sameInstantOrNull(left: string | null, right: string | null) {
   return sameInstant(left, right);
 }
 
-function stableJson(value: unknown): string {
-  if (Array.isArray(value)) {
-    return `[${value.map((item) => stableJson(item)).join(",")}]`;
-  }
-  if (value !== null && typeof value === "object") {
-    const record = value as Record<string, unknown>;
-    const body = Object.keys(record)
-      .filter((key) => record[key] !== undefined)
-      .sort()
-      .map((key) => `${JSON.stringify(key)}:${stableJson(record[key])}`)
-      .join(",");
-    return `{${body}}`;
-  }
-  return JSON.stringify(value);
-}
-
-function jsonEqual(left: unknown, right: unknown) {
-  return stableJson(left) === stableJson(right);
-}
-
 /**
  * The conditional update landed when the row read back is the row we wrote.
  * Matching the previous token marks a fast successful write as stale, and a
@@ -44,8 +28,8 @@ export function surveyWriteLanded(fresh: SurveyRecord, written: SurveyRecord) {
     fresh.status === written.status &&
     sameInstant(fresh.updatedAt, written.updatedAt) &&
     sameInstantOrNull(fresh.publishedAt, written.publishedAt) &&
-    jsonEqual(fresh.draftJson, written.draftJson) &&
-    jsonEqual(fresh.publishedJson, written.publishedJson)
+    sameJson(fresh.draftJson, written.draftJson) &&
+    sameJson(fresh.publishedJson, written.publishedJson)
   );
 }
 
@@ -58,7 +42,7 @@ export function responseWriteLanded(
     fresh.respondentId === written.respondentId &&
     sameInstant(fresh.updatedAt, written.updatedAt) &&
     sameInstantOrNull(fresh.submittedAt, written.submittedAt) &&
-    jsonEqual(fresh.data, written.data) &&
-    jsonEqual(fresh.definition, written.definition)
+    sameJson(fresh.data, written.data) &&
+    sameJson(fresh.definition, written.definition)
   );
 }

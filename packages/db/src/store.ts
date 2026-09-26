@@ -12,6 +12,8 @@ import type { InferFumaDB } from "fumadb";
 
 import { responseWriteLanded, surveyWriteLanded } from "./cas";
 import { v1, type DimahSurveyDB } from "./fuma-db";
+import { createKeyLock } from "./key-lock";
+import { isUniqueViolation } from "./unique";
 
 export type DimahSurveyDbClient = InferFumaDB<typeof DimahSurveyDB>;
 
@@ -146,8 +148,21 @@ function slugTaken() {
   return APIError.from("CONFLICT", SURVEY_ERROR_CODES.SLUG_TAKEN);
 }
 
+function openDraft() {
+  return APIError.from("CONFLICT", SURVEY_ERROR_CODES.OPEN_DRAFT);
+}
+
+function notPublished() {
+  return APIError.from("CONFLICT", SURVEY_ERROR_CODES.NOT_PUBLISHED);
+}
+
+function draftKey(surveyId: string, respondentId: string) {
+  return `${surveyId}\0${respondentId}`;
+}
+
 export function db(client: DimahSurveyDbClient): SurveyStore {
   const orm = client.orm(v1.version);
+  const exclusive = createKeyLock();
 
   async function readSurvey(idOrSlug: string) {
     const byId = await orm.findFirst("survey", {
@@ -202,6 +217,71 @@ export function db(client: DimahSurveyDbClient): SurveyStore {
     return row;
   }
 
+  async function latestDraft(query: {
+    surveyId: string;
+    respondentId: string;
+  }) {
+    const rows = await orm.findMany("response", {
+      where: (b) =>
+        b.and(
+          b("surveyId", "=", query.surveyId),
+          b("respondentId", "=", query.respondentId),
+          b("status", "=", "draft"),
+        ),
+      orderBy: ["updatedAt", "desc"],
+      limit: 1,
+    });
+    const row = rows[0];
+    return row ? toResponse(row as ResponseRow) : null;
+  }
+
+  async function readResponse(id: string) {
+    const row = await orm.findFirst("response", {
+      where: (b) => b("id", "=", id),
+    });
+    return row ? toResponse(row as ResponseRow) : null;
+  }
+
+  async function insertResponse(survey: SurveyRecord, respondentId?: string) {
+    if (survey.status !== "active" || !survey.publishedJson)
+      throw notPublished();
+    const now = new Date().toISOString();
+    const row: ResponseRecord = {
+      id: crypto.randomUUID(),
+      surveyId: survey.id,
+      respondentId: respondentId ?? null,
+      status: "draft",
+      definition: structuredClone(survey.publishedJson),
+      data: {},
+      createdAt: now,
+      updatedAt: now,
+      submittedAt: null,
+    };
+    try {
+      await orm.create("response", {
+        id: row.id,
+        surveyId: row.surveyId,
+        respondentId: row.respondentId,
+        status: row.status,
+        definition: row.definition,
+        data: row.data,
+        submittedAt: null,
+        createdAt: new Date(now),
+        updatedAt: new Date(now),
+      });
+    } catch (error) {
+      if (respondentId && isUniqueViolation(error)) {
+        const open = await latestDraft({
+          surveyId: survey.id,
+          respondentId,
+        });
+        if (open) return open;
+      }
+      throw error;
+    }
+    return row;
+  }
+
   return {
     async getSurvey(idOrSlug) {
       return readSurvey(idOrSlug);
@@ -218,18 +298,7 @@ export function db(client: DimahSurveyDbClient): SurveyStore {
       return rows.map((row) => toSurvey(row as SurveyRow));
     },
     async findLatestDraft(query) {
-      const rows = await orm.findMany("response", {
-        where: (b) =>
-          b.and(
-            b("surveyId", "=", query.surveyId),
-            b("respondentId", "=", query.respondentId),
-            b("status", "=", "draft"),
-          ),
-        orderBy: ["updatedAt", "desc"],
-        limit: 1,
-      });
-      const row = rows[0];
-      return row ? toResponse(row as ResponseRow) : null;
+      return latestDraft(query);
     },
     async saveSurvey(input) {
       const existing = await readSurvey(input.id);
@@ -300,39 +369,20 @@ export function db(client: DimahSurveyDbClient): SurveyStore {
     },
     async startResponse(input) {
       const survey = await readSurvey(input.surveyId);
-      if (!survey || survey.status !== "active" || !survey.publishedJson) {
-        throw APIError.from("CONFLICT", SURVEY_ERROR_CODES.NOT_PUBLISHED);
-      }
-      const now = new Date().toISOString();
-      const row: ResponseRecord = {
-        id: crypto.randomUUID(),
-        surveyId: survey.id,
-        respondentId: input.respondentId ?? null,
-        status: "draft",
-        definition: structuredClone(survey.publishedJson),
-        data: {},
-        createdAt: now,
-        updatedAt: now,
-        submittedAt: null,
-      };
-      await orm.create("response", {
-        id: row.id,
-        surveyId: row.surveyId,
-        respondentId: row.respondentId,
-        status: row.status,
-        definition: row.definition,
-        data: row.data,
-        submittedAt: null,
-        createdAt: new Date(now),
-        updatedAt: new Date(now),
+      if (!survey) throw notPublished();
+      if (!input.respondentId) return insertResponse(survey);
+      const respondentId = input.respondentId;
+      return exclusive(draftKey(survey.id, respondentId), async () => {
+        const open = await latestDraft({
+          surveyId: survey.id,
+          respondentId,
+        });
+        if (open) return open;
+        return insertResponse(survey, respondentId);
       });
-      return row;
     },
     async getResponse(id) {
-      const row = await orm.findFirst("response", {
-        where: (b) => b("id", "=", id),
-      });
-      return row ? toResponse(row as ResponseRow) : null;
+      return readResponse(id);
     },
     async listResponses(query?: ListResponsesQuery) {
       const include = query?.include === "full" ? "full" : "summary";
@@ -398,12 +448,39 @@ export function db(client: DimahSurveyDbClient): SurveyStore {
       });
     },
     async reopenResponse(input) {
-      return updateResponse(input.id, input.expectedUpdatedAt, (current) => {
-        if (current.status === "draft") {
-          throw APIError.from("CONFLICT", SURVEY_ERROR_CODES.RESPONSE_CLOSED);
+      const existing = await readResponse(input.id);
+      if (!existing) {
+        throw APIError.from("NOT_FOUND", SURVEY_ERROR_CODES.RESPONSE_NOT_FOUND);
+      }
+      const run = async () => {
+        if (existing.respondentId) {
+          const open = await latestDraft({
+            surveyId: existing.surveyId,
+            respondentId: existing.respondentId,
+          });
+          if (open && open.id !== existing.id) throw openDraft();
         }
-        return { ...current, status: "draft", submittedAt: null };
-      });
+        try {
+          return await updateResponse(
+            input.id,
+            input.expectedUpdatedAt,
+            (current) => {
+              if (current.status === "draft") {
+                throw APIError.from(
+                  "CONFLICT",
+                  SURVEY_ERROR_CODES.RESPONSE_CLOSED,
+                );
+              }
+              return { ...current, status: "draft", submittedAt: null };
+            },
+          );
+        } catch (error) {
+          if (isUniqueViolation(error)) throw openDraft();
+          throw error;
+        }
+      };
+      if (!existing.respondentId) return run();
+      return exclusive(draftKey(existing.surveyId, existing.respondentId), run);
     },
   };
 

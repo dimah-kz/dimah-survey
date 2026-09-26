@@ -1,5 +1,6 @@
 import {
   SURVEY_API_OPERATIONS,
+  SURVEY_ERROR_CODES,
   idQuerySchema,
   isAPIError,
   listResponsesQuerySchema,
@@ -8,11 +9,16 @@ import {
   pageFromOverfetch,
   publishSurveyBodySchema,
   responseMutationBodySchema,
+  sameJson,
   savePartialBodySchema,
   saveSurveyBodySchema,
   startResponseBodySchema,
   submitResponseBodySchema,
   toResponseSummary,
+  type ResponseRecord,
+  type SurveyJson,
+  type SurveyResult,
+  type ValidateResult,
 } from "@dimah-survey/core";
 
 import { createSurveyEndpoint } from "./create-survey-endpoint";
@@ -79,23 +85,7 @@ export const surveyEndpoints = {
   startResponse: createSurveyEndpoint(
     start.path,
     { method: start.method, body: startResponseBodySchema },
-    async (ctx) => {
-      const database = ctx.context.config.database;
-      if (ctx.body.resume) {
-        if (!ctx.body.respondentId) throw errors.resumeRequiresRespondent();
-        const survey = await database.getSurvey(ctx.body.surveyId);
-        if (!survey) throw errors.surveyNotFound();
-        const open = await database.findLatestDraft({
-          surveyId: survey.id,
-          respondentId: ctx.body.respondentId,
-        });
-        if (open) return open;
-      }
-      return database.startResponse({
-        surveyId: ctx.body.surveyId,
-        respondentId: ctx.body.respondentId,
-      });
-    },
+    (ctx) => ctx.context.config.database.startResponse(ctx.body),
   ),
   listResponses: createSurveyEndpoint(
     listResponsesOp.path,
@@ -157,21 +147,16 @@ export const surveyEndpoints = {
       const database = ctx.context.config.database;
       const current = await database.getResponse(ctx.body.id);
       if (!current) throw errors.responseNotFound();
-      if (current.status !== "draft") throw errors.responseClosed();
-      const data = ctx.body.data ?? current.data;
-      let stored = data;
-      try {
-        const checked = await ctx.context.config.validateResult({
-          definition: current.definition,
-          data,
-        });
-        if (checked) stored = checked;
-      } catch (error) {
-        if (isAPIError(error)) throw error;
-        const message =
-          error instanceof Error ? error.message : "Survey result is invalid.";
-        throw errors.validationFailed(message);
+      const validateResult = ctx.context.config.validateResult;
+      if (current.status === "submitted") {
+        return replaySubmit(current, ctx.body.data, validateResult);
       }
+      if (current.status !== "draft") throw errors.responseClosed();
+      const stored = await cleanedResult(
+        validateResult,
+        current.definition,
+        ctx.body.data ?? current.data,
+      );
       const hooks = ctx.context.config.hooks;
       const request = ctx.context.request;
       await hooks?.onSubmit?.({
@@ -208,3 +193,70 @@ export const surveyEndpoints = {
     },
   ),
 };
+
+export const fillSurveyEndpoints = {
+  startResponse: surveyEndpoints.startResponse,
+  getResponse: surveyEndpoints.getResponse,
+  listResponses: surveyEndpoints.listResponses,
+  savePartial: surveyEndpoints.savePartial,
+  submitResponse: surveyEndpoints.submitResponse,
+  abandonResponse: surveyEndpoints.abandonResponse,
+  reopenResponse: surveyEndpoints.reopenResponse,
+};
+
+export const editorSurveyEndpoints = {
+  getSurvey: surveyEndpoints.getSurvey,
+  saveSurvey: surveyEndpoints.saveSurvey,
+  listSurveys: surveyEndpoints.listSurveys,
+  publishSurvey: surveyEndpoints.publishSurvey,
+  archiveSurvey: surveyEndpoints.archiveSurvey,
+  getResponse: surveyEndpoints.getResponse,
+  listResponses: surveyEndpoints.listResponses,
+};
+
+const validationCodes: ReadonlySet<string> = new Set([
+  SURVEY_ERROR_CODES.VALIDATION_FAILED.code,
+  SURVEY_ERROR_CODES.VALIDATION_ERROR.code,
+]);
+
+async function cleanedResult(
+  validateResult: ValidateResult,
+  definition: SurveyJson,
+  data: SurveyResult,
+) {
+  try {
+    const checked = await validateResult({ definition, data });
+    return checked ?? data;
+  } catch (error) {
+    if (isAPIError(error)) throw error;
+    const message =
+      error instanceof Error ? error.message : "Survey result is invalid.";
+    throw errors.validationFailed(message);
+  }
+}
+
+/**
+ * A retry of a submit that already landed returns the stored row.
+ * Hooks do not run again. A different cleaned payload conflicts.
+ */
+async function replaySubmit(
+  current: ResponseRecord,
+  data: SurveyResult | undefined,
+  validateResult: ValidateResult,
+) {
+  if (data === undefined) return current;
+  try {
+    const stored = await cleanedResult(
+      validateResult,
+      current.definition,
+      data,
+    );
+    if (sameJson(stored, current.data)) return current;
+  } catch (error) {
+    if (isAPIError(error) && error.code && validationCodes.has(error.code)) {
+      throw errors.responseClosed();
+    }
+    throw error;
+  }
+  throw errors.responseClosed();
+}

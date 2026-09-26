@@ -74,6 +74,11 @@ export const response = sqliteTable(
       table.respondentId,
       table.status,
     ),
+    uniqueIndex("response_one_open_draft")
+      .on(table.surveyId, table.respondentId)
+      .where(
+        sql`${table.status} = 'draft' and ${table.respondentId} is not null`,
+      ),
   ],
 );
 

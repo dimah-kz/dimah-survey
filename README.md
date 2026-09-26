@@ -8,16 +8,16 @@ It is not a form renderer, not a hosted survey product, and not a plugin for dim
 
 ## Status
 
-The lifecycle is usable. Submit validation defaults to `survey-core` (`clearIncorrectValues(true)` then `validate`) against the response snapshot. `@dimah-survey/react` binds that same `Model` for partial save and complete. It does not render the survey. `@dimah-survey/db` is the SQL schema and `db(client)` store.
+The lifecycle is usable. Submit validation defaults to `survey-core` (`clearIncorrectValues(true)` then `validate`) against the response snapshot. Mount `audience: "fill"` and `audience: "editor"` as separate handlers. An identified respondent has one open draft. `@dimah-survey/react` binds a `Model` for partial save and complete, and binds Creator autosave to the editor draft. It does not render the survey or Creator. `@dimah-survey/db` is the SQL schema and `db(client)` store.
 
 ## Packages
 
-| Package                | Role                                                                  |
-| ---------------------- | --------------------------------------------------------------------- |
-| `@dimah-survey/core`   | Routes, payloads, errors, fetch client                                |
-| `@dimah-survey/server` | `dimahSurvey()`, Fetch handler, framework adapters, `memoryAdapter()` |
-| `@dimah-survey/react`  | Binds a survey-core Model. Does not render                            |
-| `@dimah-survey/db`     | SQL schema and `db(client)` store                                     |
+| Package                | Role                                                          |
+| ---------------------- | ------------------------------------------------------------- |
+| `@dimah-survey/core`   | Routes, payloads, errors, fill and editor clients             |
+| `@dimah-survey/server` | `dimahSurvey({ audience })`, Fetch handler, `memoryAdapter()` |
+| `@dimah-survey/react`  | Binds a Model and Creator autosave. Does not render           |
+| `@dimah-survey/db`     | SQL schema and `db(client)` store                             |
 
 ## Workspace
 

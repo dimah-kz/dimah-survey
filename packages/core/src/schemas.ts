@@ -44,11 +44,6 @@ export const publishSurveyBodySchema = z.object({
 export const startResponseBodySchema = z.object({
   surveyId: idSchema,
   respondentId: z.string().min(1).optional(),
-  /**
-   * When true, return the latest draft for this survey and respondent.
-   * Requires `respondentId`. Otherwise create a new response.
-   */
-  resume: z.boolean().optional(),
 });
 
 export const listSurveysQuerySchema = z

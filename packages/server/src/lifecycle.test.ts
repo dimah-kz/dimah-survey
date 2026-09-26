@@ -1,48 +1,89 @@
 import {
   APIError,
   SURVEY_ERROR_CODES,
-  createSurveyClient,
+  createEditorClient,
+  createFillClient,
+  type EditorClient,
+  type ValidateResult,
 } from "@dimah-survey/core";
 import { describe, expect, it } from "vitest";
 
-import { dimahSurvey } from "./dimah-survey";
+import { dimahSurvey, type SurveyHooks } from "./dimah-survey";
 import { memoryAdapter } from "./memory";
+import { guardAnonymous, guardRespondent } from "./respondent";
 
 const v1 = { title: "v1", pages: [{ name: "p" }] };
 const v2 = { title: "v2", pages: [] };
 
-function instance() {
-  const seen: { title: unknown }[] = [];
-  const survey = dimahSurvey({
-    database: memoryAdapter(),
-    validateResult: ({ definition }) => {
-      seen.push({ title: definition.title });
-    },
+function mount(options?: {
+  respondentId?: string;
+  hooks?: SurveyHooks;
+  validateResult?: ValidateResult;
+  database?: ReturnType<typeof memoryAdapter>;
+}) {
+  const database = options?.database ?? memoryAdapter();
+  const validateResult = options?.validateResult ?? (() => undefined);
+  const hooks = options?.hooks;
+  const editorSurvey = dimahSurvey({
+    audience: "editor",
+    database,
+    validateResult,
+    hooks,
+    basePath: "/api/editor",
   });
-  const client = createSurveyClient({
-    baseURL: "http://survey.local/api/survey",
-    fetch: (input, init) => survey.handler(new Request(input, init)),
+  const fillSurvey = dimahSurvey({
+    audience: "fill",
+    database,
+    validateResult,
+    hooks,
+    basePath: "/api/fill",
+    guard: (context) =>
+      options?.respondentId
+        ? guardRespondent(options.respondentId)(context)
+        : guardAnonymous()(context),
   });
-  return { client, seen };
+  const fetchFor =
+    (survey: { handler: (request: Request) => Promise<Response> }) =>
+    (input: RequestInfo | URL, init?: RequestInit) =>
+      survey.handler(new Request(input, init));
+  const editor = createEditorClient({
+    baseURL: "http://survey.local/api/editor",
+    fetch: fetchFor(editorSurvey),
+  });
+  const fill = createFillClient({
+    baseURL: "http://survey.local/api/fill",
+    fetch: fetchFor(fillSurvey),
+  });
+  return { editor, fill, database };
+}
+
+async function publish(editor: EditorClient, id: string, draftJson = v1) {
+  await editor.saveSurvey({ id, draftJson });
+  await editor.publishSurvey({ id });
 }
 
 describe("published snapshot", () => {
   it("keeps the definition a response started with", async () => {
-    const { client, seen } = instance();
+    const seen: { title: unknown }[] = [];
+    const { editor, fill } = mount({
+      validateResult: ({ definition }) => {
+        seen.push({ title: definition.title });
+      },
+    });
     const draft = { ...v1 };
-    await client.saveSurvey({ id: "onboarding", draftJson: draft });
-    await client.publishSurvey({ id: "onboarding" });
+    await editor.saveSurvey({ id: "onboarding", draftJson: draft });
+    await editor.publishSurvey({ id: "onboarding" });
     draft.title = "mutated-by-caller";
 
-    const started = await client.startResponse({ surveyId: "onboarding" });
+    const started = await fill.startResponse({ surveyId: "onboarding" });
     expect(started.definition).toEqual(v1);
 
-    const saved = await client.savePartial({
+    const saved = await fill.savePartial({
       id: started.id,
       data: { q1: "a" },
       expectedUpdatedAt: started.updatedAt,
     });
-    const submitted = await client.submitResponse({
+    const submitted = await fill.submitResponse({
       id: started.id,
       expectedUpdatedAt: saved.updatedAt,
     });
@@ -50,28 +91,28 @@ describe("published snapshot", () => {
     expect(submitted.definition).toEqual(v1);
     expect(seen).toEqual([{ title: "v1" }]);
 
-    const edited = await client.saveSurvey({
+    const edited = await editor.saveSurvey({
       id: "onboarding",
       draftJson: v2,
     });
-    await client.publishSurvey({
+    await editor.publishSurvey({
       id: "onboarding",
       expectedUpdatedAt: edited.updatedAt,
     });
 
-    const again = await client.getResponse(started.id);
+    const again = await fill.getResponse(started.id);
     expect(again.definition).toEqual(v1);
-    const next = await client.startResponse({ surveyId: "onboarding" });
+    const next = await fill.startResponse({ surveyId: "onboarding" });
+    expect(next.id).not.toBe(started.id);
     expect(next.definition).toEqual(v2);
   });
 
   it("rejects a stale partial save", async () => {
-    const { client } = instance();
-    await client.saveSurvey({ id: "pulse", draftJson: v1 });
-    await client.publishSurvey({ id: "pulse" });
-    const started = await client.startResponse({ surveyId: "pulse" });
+    const { editor, fill } = mount();
+    await publish(editor, "pulse");
+    const started = await fill.startResponse({ surveyId: "pulse" });
     await expect(
-      client.savePartial({
+      fill.savePartial({
         id: started.id,
         data: { q1: "a" },
         expectedUpdatedAt: "2000-01-01T00:00:00.000Z",
@@ -84,6 +125,7 @@ describe("published snapshot", () => {
   it("runs the consumer guard before the store", async () => {
     const seen: { operation?: string; id?: string }[] = [];
     const survey = dimahSurvey({
+      audience: "editor",
       database: memoryAdapter(),
       validateResult: () => undefined,
       guard: (context) => {
@@ -101,28 +143,196 @@ describe("published snapshot", () => {
   });
 });
 
-describe("list and resume", () => {
-  it("pages surveys and response summaries", async () => {
-    const { client } = instance();
-    await client.saveSurvey({ id: "a", slug: "pulse", draftJson: v1 });
-    await client.publishSurvey({ id: "a" });
-    await client.saveSurvey({ id: "b", draftJson: v2 });
-    const started = await client.startResponse({
-      surveyId: "a",
-      respondentId: "user-1",
+describe("one open draft", () => {
+  it("returns the open draft for the same respondent", async () => {
+    const database = memoryAdapter();
+    const { editor, fill } = mount({ respondentId: "user-1", database });
+    const other = dimahSurvey({
+      audience: "fill",
+      database,
+      basePath: "/api/fill",
+      validateResult: () => undefined,
+      guard: (context) => guardRespondent("user-2")(context),
     });
-    await client.submitResponse({
+    const user2 = createFillClient({
+      baseURL: "http://survey.local/api/fill",
+      fetch: (input, init) => other.handler(new Request(input, init)),
+    });
+    await publish(editor, "onboarding");
+    const first = await fill.startResponse({ surveyId: "onboarding" });
+    await fill.savePartial({
+      id: first.id,
+      data: { q1: "Ada" },
+      expectedUpdatedAt: first.updatedAt,
+    });
+
+    const resumed = await fill.startResponse({ surveyId: "onboarding" });
+    expect(resumed.id).toBe(first.id);
+    expect(resumed.data).toEqual({ q1: "Ada" });
+    expect(resumed.respondentId).toBe("user-1");
+
+    const edited = await editor.saveSurvey({
+      id: "onboarding",
+      draftJson: v2,
+    });
+    await editor.publishSurvey({
+      id: "onboarding",
+      expectedUpdatedAt: edited.updatedAt,
+    });
+    const still = await fill.startResponse({ surveyId: "onboarding" });
+    expect(still.id).toBe(first.id);
+    expect(still.definition).toEqual(v1);
+
+    const second = await user2.startResponse({ surveyId: "onboarding" });
+    expect(second.id).not.toBe(first.id);
+    expect(second.definition).toEqual(v2);
+  });
+
+  it("opens a new anonymous response on every start", async () => {
+    const { editor, fill } = mount();
+    await publish(editor, "onboarding");
+    const first = await fill.startResponse({ surveyId: "onboarding" });
+    const second = await fill.startResponse({ surveyId: "onboarding" });
+    expect(second.id).not.toBe(first.id);
+    expect(first.respondentId).toBeNull();
+  });
+
+  it("collapses concurrent starts for one respondent", async () => {
+    const { editor, fill } = mount({ respondentId: "user-1" });
+    await publish(editor, "onboarding");
+    const [first, second] = await Promise.all([
+      fill.startResponse({ surveyId: "onboarding" }),
+      fill.startResponse({ surveyId: "onboarding" }),
+    ]);
+    expect(first.id).toBe(second.id);
+  });
+
+  it("rejects reopen while another draft is open", async () => {
+    const { editor, fill } = mount({ respondentId: "user-1" });
+    await publish(editor, "onboarding");
+    const first = await fill.startResponse({ surveyId: "onboarding" });
+    const submitted = await fill.submitResponse({
+      id: first.id,
+      data: { q1: "yes" },
+      expectedUpdatedAt: first.updatedAt,
+    });
+    const next = await fill.startResponse({ surveyId: "onboarding" });
+    expect(next.id).not.toBe(first.id);
+    await expect(
+      fill.reopenResponse({
+        id: submitted.id,
+        expectedUpdatedAt: submitted.updatedAt,
+      }),
+    ).rejects.toMatchObject({ code: SURVEY_ERROR_CODES.OPEN_DRAFT.code });
+    expect((await fill.getResponse(submitted.id)).status).toBe("submitted");
+  });
+
+  it("reopen becomes the open draft when none exists", async () => {
+    const { editor, fill } = mount({ respondentId: "user-1" });
+    await publish(editor, "onboarding");
+    const first = await fill.startResponse({ surveyId: "onboarding" });
+    const abandoned = await fill.abandonResponse({
+      id: first.id,
+      expectedUpdatedAt: first.updatedAt,
+    });
+    const reopened = await fill.reopenResponse({
+      id: abandoned.id,
+      expectedUpdatedAt: abandoned.updatedAt,
+    });
+    expect(reopened.status).toBe("draft");
+    expect(reopened.definition).toEqual(v1);
+    const resumed = await fill.startResponse({ surveyId: "onboarding" });
+    expect(resumed.id).toBe(first.id);
+  });
+});
+
+describe("idempotent submit", () => {
+  it("returns the stored row when the cleaned payload matches", async () => {
+    const seen: string[] = [];
+    const { editor, fill } = mount({
+      validateResult: ({ data }) => {
+        const next = { ...data };
+        delete next.extra;
+        return next;
+      },
+      hooks: {
+        onSubmit: () => {
+          seen.push("before");
+        },
+        afterSubmit: () => {
+          seen.push("after");
+        },
+      },
+    });
+    await publish(editor, "pulse");
+    const started = await fill.startResponse({ surveyId: "pulse" });
+    const submitted = await fill.submitResponse({
+      id: started.id,
+      data: { q1: "yes", extra: true },
+      expectedUpdatedAt: started.updatedAt,
+    });
+    const replayed = await fill.submitResponse({
+      id: started.id,
+      data: { extra: true, q1: "yes" },
+      expectedUpdatedAt: started.updatedAt,
+    });
+    expect(replayed).toMatchObject({
+      id: submitted.id,
+      status: "submitted",
+      data: { q1: "yes" },
+      updatedAt: submitted.updatedAt,
+    });
+    expect(seen).toEqual(["before", "after"]);
+    await expect(
+      fill.submitResponse({
+        id: started.id,
+        data: { q1: "no" },
+      }),
+    ).rejects.toMatchObject({
+      code: SURVEY_ERROR_CODES.RESPONSE_CLOSED.code,
+    });
+  });
+
+  it("does not persist when onSubmit throws", async () => {
+    const { editor, fill } = mount({
+      validateResult: () => undefined,
+      hooks: {
+        onSubmit: () => {
+          throw APIError.from("FORBIDDEN", SURVEY_ERROR_CODES.FORBIDDEN);
+        },
+      },
+    });
+    await publish(editor, "pulse");
+    const started = await fill.startResponse({ surveyId: "pulse" });
+    await expect(
+      fill.submitResponse({
+        id: started.id,
+        expectedUpdatedAt: started.updatedAt,
+      }),
+    ).rejects.toMatchObject({ code: SURVEY_ERROR_CODES.FORBIDDEN.code });
+    expect((await fill.getResponse(started.id)).status).toBe("draft");
+  });
+});
+
+describe("list", () => {
+  it("pages surveys and response summaries", async () => {
+    const { editor, fill } = mount({ respondentId: "user-1" });
+    await editor.saveSurvey({ id: "a", slug: "pulse", draftJson: v1 });
+    await editor.publishSurvey({ id: "a" });
+    await editor.saveSurvey({ id: "b", draftJson: v2 });
+    const started = await fill.startResponse({ surveyId: "a" });
+    await fill.submitResponse({
       id: started.id,
       data: { q1: "yes" },
       expectedUpdatedAt: started.updatedAt,
     });
 
-    const surveys = await client.listSurveys({ limit: 1 });
+    const surveys = await editor.listSurveys({ limit: 1 });
     expect(surveys.surveys).toHaveLength(1);
     expect(surveys.limit).toBe(1);
     expect(surveys.nextOffset).toBe(1);
 
-    const listed = await client.listResponses({ surveyId: "pulse" });
+    const listed = await editor.listResponses({ surveyId: "pulse" });
     expect(listed.total).toBe(1);
     expect(listed.responses[0]).toMatchObject({
       id: started.id,
@@ -131,7 +341,7 @@ describe("list and resume", () => {
     expect(listed.responses[0]).not.toHaveProperty("definition");
     expect(listed.responses[0]).not.toHaveProperty("data");
 
-    const full = await client.listResponses({
+    const full = await editor.listResponses({
       surveyId: "a",
       include: "full",
     });
@@ -140,126 +350,30 @@ describe("list and resume", () => {
       data: { q1: "yes" },
     });
   });
-
-  it("resumes the latest draft for the same respondent", async () => {
-    const { client } = instance();
-    await client.saveSurvey({ id: "onboarding", draftJson: v1 });
-    await client.publishSurvey({ id: "onboarding" });
-    const first = await client.startResponse({
-      surveyId: "onboarding",
-      respondentId: "user-1",
-    });
-    await client.savePartial({
-      id: first.id,
-      data: { q1: "Ada" },
-      expectedUpdatedAt: first.updatedAt,
-    });
-
-    const resumed = await client.startResponse({
-      surveyId: "onboarding",
-      respondentId: "user-1",
-      resume: true,
-    });
-    expect(resumed.id).toBe(first.id);
-    expect(resumed.data).toEqual({ q1: "Ada" });
-
-    const other = await client.startResponse({
-      surveyId: "onboarding",
-      respondentId: "user-2",
-      resume: true,
-    });
-    expect(other.id).not.toBe(first.id);
-  });
-
-  it("rejects resume without respondentId", async () => {
-    const { client } = instance();
-    await client.saveSurvey({ id: "onboarding", draftJson: v1 });
-    await client.publishSurvey({ id: "onboarding" });
-    await expect(
-      client.startResponse({ surveyId: "onboarding", resume: true }),
-    ).rejects.toMatchObject({
-      code: SURVEY_ERROR_CODES.RESUME_REQUIRES_RESPONDENT.code,
-    });
-  });
-
-  it("runs onSubmit before persist and afterSubmit after", async () => {
-    const seen: string[] = [];
-    const survey = dimahSurvey({
-      database: memoryAdapter(),
-      validateResult: () => undefined,
-      hooks: {
-        onSubmit: ({ response }) => {
-          seen.push(`before:${response.status}`);
-        },
-        afterSubmit: ({ response }) => {
-          seen.push(`after:${response.status}`);
-        },
-      },
-    });
-    const client = createSurveyClient({
-      baseURL: "http://survey.local/api/survey",
-      fetch: (input, init) => survey.handler(new Request(input, init)),
-    });
-    await client.saveSurvey({ id: "pulse", draftJson: v1 });
-    await client.publishSurvey({ id: "pulse" });
-    const started = await client.startResponse({ surveyId: "pulse" });
-    await client.submitResponse({
-      id: started.id,
-      expectedUpdatedAt: started.updatedAt,
-    });
-    expect(seen).toEqual(["before:draft", "after:submitted"]);
-  });
-
-  it("does not persist when onSubmit throws", async () => {
-    const survey = dimahSurvey({
-      database: memoryAdapter(),
-      validateResult: () => undefined,
-      hooks: {
-        onSubmit: () => {
-          throw APIError.from("FORBIDDEN", SURVEY_ERROR_CODES.FORBIDDEN);
-        },
-      },
-    });
-    const client = createSurveyClient({
-      baseURL: "http://survey.local/api/survey",
-      fetch: (input, init) => survey.handler(new Request(input, init)),
-    });
-    await client.saveSurvey({ id: "pulse", draftJson: v1 });
-    await client.publishSurvey({ id: "pulse" });
-    const started = await client.startResponse({ surveyId: "pulse" });
-    await expect(
-      client.submitResponse({
-        id: started.id,
-        expectedUpdatedAt: started.updatedAt,
-      }),
-    ).rejects.toMatchObject({ code: SURVEY_ERROR_CODES.FORBIDDEN.code });
-    const current = await client.getResponse(started.id);
-    expect(current.status).toBe("draft");
-  });
 });
 
 describe("slug", () => {
   it("keeps the previous slug when the next one is taken", async () => {
-    const { client } = instance();
-    await client.saveSurvey({ id: "a", slug: "one", draftJson: v1 });
-    await client.saveSurvey({ id: "b", slug: "two", draftJson: v1 });
+    const { editor } = mount();
+    await editor.saveSurvey({ id: "a", slug: "one", draftJson: v1 });
+    await editor.saveSurvey({ id: "b", slug: "two", draftJson: v1 });
     await expect(
-      client.saveSurvey({ id: "a", slug: "two", draftJson: v2 }),
+      editor.saveSurvey({ id: "a", slug: "two", draftJson: v2 }),
     ).rejects.toMatchObject({ code: SURVEY_ERROR_CODES.SLUG_TAKEN.code });
 
-    const survey = await client.getSurvey("one");
+    const survey = await editor.getSurvey("one");
     expect(survey.id).toBe("a");
     expect(survey.draftJson).toEqual(v1);
   });
 
   it("rejects a slug that is another survey's id", async () => {
-    const { client } = instance();
-    await client.saveSurvey({ id: "pulse", draftJson: v1 });
-    await client.saveSurvey({ id: "other", slug: "kept", draftJson: v1 });
+    const { editor } = mount();
+    await editor.saveSurvey({ id: "pulse", draftJson: v1 });
+    await editor.saveSurvey({ id: "other", slug: "kept", draftJson: v1 });
     await expect(
-      client.saveSurvey({ id: "other", slug: "pulse", draftJson: v2 }),
+      editor.saveSurvey({ id: "other", slug: "pulse", draftJson: v2 }),
     ).rejects.toMatchObject({ code: SURVEY_ERROR_CODES.SLUG_TAKEN.code });
-    expect((await client.getSurvey("kept")).id).toBe("other");
-    expect((await client.getSurvey("pulse")).draftJson).toEqual(v1);
+    expect((await editor.getSurvey("kept")).id).toBe("other");
+    expect((await editor.getSurvey("pulse")).draftJson).toEqual(v1);
   });
 });

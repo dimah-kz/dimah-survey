@@ -15,12 +15,13 @@ import { DimahSurveyDB, db } from "@dimah-survey/db";
 import { dimahSurvey } from "@dimah-survey/server";
 import { drizzleAdapter } from "fumadb/adapters/drizzle";
 
-const survey = dimahSurvey({
-  database: db(
-    DimahSurveyDB.client(
-      drizzleAdapter({ db: drizzleOrm, provider: "sqlite" }),
-    ),
-  ),
+const database = db(
+  DimahSurveyDB.client(drizzleAdapter({ db: drizzleOrm, provider: "sqlite" })),
+);
+
+const editor = dimahSurvey({
+  audience: "editor",
+  database,
 });
 ```
 

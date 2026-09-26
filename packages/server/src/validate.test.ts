@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 
 import { dimahSurvey } from "./dimah-survey";
 import { memoryAdapter } from "./memory";
+import { guardAnonymous } from "./respondent";
 import { checkSurveyResult } from "./validate";
 
 const definition = {
@@ -35,15 +36,21 @@ describe("checkSurveyResult", () => {
   });
 
   it("stores the cleaned data on submit", async () => {
-    const survey = dimahSurvey({ database: memoryAdapter() });
-    await survey.api.saveSurvey({
+    const database = memoryAdapter();
+    const editor = dimahSurvey({ audience: "editor", database });
+    const fill = dimahSurvey({
+      audience: "fill",
+      database,
+      guard: (context) => guardAnonymous()(context),
+    });
+    await editor.api.saveSurvey({
       body: { id: "pulse", draftJson: definition },
     });
-    await survey.api.publishSurvey({ body: { id: "pulse" } });
-    const started = await survey.api.startResponse({
+    await editor.api.publishSurvey({ body: { id: "pulse" } });
+    const started = await fill.api.startResponse({
       body: { surveyId: "pulse" },
     });
-    const submitted = await survey.api.submitResponse({
+    const submitted = await fill.api.submitResponse({
       body: {
         id: started.id,
         data: { q1: "ok", q2: "nope" },
@@ -52,5 +59,18 @@ describe("checkSurveyResult", () => {
     });
     expect(submitted.data).toEqual({ q1: "ok" });
     expect(submitted.definition).toEqual(definition);
+
+    const replayed = await fill.api.submitResponse({
+      body: {
+        id: started.id,
+        data: { q1: "ok", q2: "nope", extra: 1 },
+        expectedUpdatedAt: started.updatedAt,
+      },
+    });
+    expect(replayed).toMatchObject({
+      status: "submitted",
+      data: { q1: "ok" },
+      updatedAt: submitted.updatedAt,
+    });
   });
 });

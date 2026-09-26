@@ -12,31 +12,57 @@ pnpm add @dimah-survey/server
 
 `database` is required; SQL is not. `memoryAdapter()` is for tests and process-local development. Use `@dimah-survey/db` or a custom `SurveyStore` for durable data.
 
+Mount fill and editor separately. Fill cannot serve `draftJson` or publish. Editor cannot serve start, partial save, or submit. `hooks` and a custom `validateResult` go on the fill instance, because that handler owns submit.
+
 ```ts
 import {
   APIError,
+  SURVEY_API_BASE_PATH,
+  SURVEY_EDITOR_API_BASE_PATH,
   SURVEY_ERROR_CODES,
+  createEditorClient,
+  createFillClient,
   dimahSurvey,
+  guardAnonymous,
   guardRespondent,
   memoryAdapter,
 } from "@dimah-survey/server";
 
-export const survey = dimahSurvey({
-  database: memoryAdapter(),
-  guard: ({ request, operation }) => {
-    const userId = userIdFromSession(request);
-    if (!userId) {
+const database = memoryAdapter();
+
+export const editor = dimahSurvey({
+  audience: "editor",
+  database,
+  basePath: SURVEY_EDITOR_API_BASE_PATH,
+  guard: ({ request }) => {
+    if (!isEditor(request)) {
       throw APIError.from("FORBIDDEN", SURVEY_ERROR_CODES.FORBIDDEN);
     }
-    if (isEditor(request)) return;
-    return guardRespondent(userId)({ request, operation });
   },
+});
+
+export const fill = dimahSurvey({
+  audience: "fill",
+  database,
+  basePath: SURVEY_API_BASE_PATH,
+  guard: (context) => {
+    const userId = userIdFromSession(context.request);
+    if (!userId) return guardAnonymous()(context);
+    return guardRespondent(userId)(context);
+  },
+});
+
+export const editorClient = createEditorClient({
+  baseURL: SURVEY_EDITOR_API_BASE_PATH,
+});
+export const fillClient = createFillClient({
+  baseURL: SURVEY_API_BASE_PATH,
 });
 ```
 
-A fill request returns `{ respondentId }`. The server stamps that id onto start and list, and refuses another respondent's row, `include: "full"`, and `getSurvey` (that read includes `draftJson`). An editor request returns nothing, so the body may still name a respondent. Omit `respondentId` from the fill client, or send the same id.
+A logged-in fill guard returns `{ respondentId }`. The server stamps that id onto start and list, keeps one open draft for that survey and respondent, and refuses another respondent's row and `include: "full"`. `guardAnonymous()` is the public link: each start inserts a row, list is refused, and the response id is the capability. An editor guard returns nothing. Omit `respondentId` from the fill client, or send the same id.
 
-Mount `survey.handler` on a Fetch runtime. Submit validation defaults to survey-core `clearIncorrectValues(true)` then `validate`, against the stored definition.
+Mount each `handler` on a Fetch runtime. Submit validation defaults to survey-core `clearIncorrectValues(true)` then `validate`, against the stored definition. A repeated submit of the same answers returns the stored row.
 
 ## License
 

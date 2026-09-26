@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Model } from "survey-core";
-import type { SurveyClient } from "@dimah-survey/core";
+import type { FillClient } from "@dimah-survey/core";
 
 import { bindSurveyModel } from "./bind-survey-model";
 import { isStaleUpdate } from "./stale";
@@ -19,7 +19,7 @@ export type SurveyResponseBinding = {
 };
 
 export function useSurveyResponse(options: {
-  client: SurveyClient;
+  client: Pick<FillClient, "getResponse" | "savePartial" | "submitResponse">;
   responseId: string;
 }): SurveyResponseBinding {
   const { client, responseId } = options;

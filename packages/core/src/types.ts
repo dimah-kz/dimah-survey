@@ -53,12 +53,11 @@ export type ArchiveSurveyInput = {
 
 export type StartResponseInput = {
   surveyId: string;
-  respondentId?: string;
   /**
-   * When true, return the latest draft for this survey and respondent.
-   * Requires `respondentId`.
+   * When set, start returns the open draft for this survey and respondent.
+   * A new row is inserted only when none is open. Omit it to always insert.
    */
-  resume?: boolean;
+  respondentId?: string;
 };
 
 export type ListPageQuery = {
@@ -139,13 +138,19 @@ export type GuardContext = {
 };
 
 /**
- * Fill caller. The server stamps `respondentId` onto start and list,
- * and refuses editor reads, `include: "full"`, and any other respondent's row.
- * An editor request returns nothing, so a trusted caller may still pass `respondentId` in the body.
+ * Logged-in fill caller. The server stamps `respondentId` onto start and list,
+ * and refuses `include: "full"` and any other respondent's row.
  */
 export type SurveyPrincipal = {
   respondentId: string;
 };
+
+/** Public fill caller. The response id is the capability. List is refused. */
+export type AnonymousPrincipal = {
+  anonymous: true;
+};
+
+export type FillPrincipal = SurveyPrincipal | AnonymousPrincipal;
 
 export type ValidateResultInput = {
   definition: SurveyJson;
@@ -165,7 +170,7 @@ export type SurveyStore = {
   listSurveys(query?: ListSurveysQuery): Promise<SurveyRecord[]>;
   /**
    * Newest draft for this survey and respondent (`updatedAt` descending).
-   * `startResponse({ resume: true })` reads this before inserting.
+   * Identified `startResponse` returns this row instead of inserting.
    */
   findLatestDraft(query: {
     surveyId: string;

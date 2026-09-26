@@ -9,4 +9,4 @@ Not imported at runtime. `src/schema/v1.ts` is the FumaDB source. These files ar
 | [`drizzle.ts`](./drizzle.ts)       | Drizzle SQLite               |
 | [`schema.prisma`](./schema.prisma) | Prisma PostgreSQL            |
 
-`response.definition` is insert-only. Do not add a survey version table.
+`response.definition` is insert-only. Do not add a survey version table. `response_one_open_draft` is the partial unique index: one `draft` row per survey and respondent. Anonymous rows are excluded. Prisma cannot express that predicate; it lives in `indexes.sql` and `drizzle.ts`.

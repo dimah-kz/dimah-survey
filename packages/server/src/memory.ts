@@ -17,6 +17,7 @@ import {
 } from "@dimah-survey/core";
 
 import { errors } from "./errors";
+import { createKeyLock } from "./key-lock";
 
 function assertFresh(updatedAt: string, expectedUpdatedAt?: string) {
   if (expectedUpdatedAt !== undefined && expectedUpdatedAt !== updatedAt) {
@@ -71,10 +72,15 @@ function responseMatches(row: ResponseRecord, query?: ListResponsesQuery) {
   return true;
 }
 
+function draftKey(surveyId: string, respondentId: string) {
+  return `${surveyId}\0${respondentId}`;
+}
+
 export function memoryAdapter(): SurveyStore {
   const surveys = new Map<string, SurveyRecord>();
   const slugToId = new Map<string, string>();
   const responses = new Map<string, ResponseRecord>();
+  const exclusive = createKeyLock();
 
   function requireSurvey(idOrSlug: string) {
     const byId = surveys.get(idOrSlug);
@@ -102,6 +108,37 @@ export function memoryAdapter(): SurveyStore {
     if (idClash && idClash.id !== id) throw errors.slugTaken();
     if (previous && previous !== slug) slugToId.delete(previous);
     slugToId.set(slug, id);
+  }
+
+  function latestDraft(surveyId: string, respondentId: string) {
+    return sortByUpdatedAtDesc(
+      [...responses.values()].filter(
+        (row) =>
+          row.surveyId === surveyId &&
+          row.respondentId === respondentId &&
+          row.status === "draft",
+      ),
+    )[0];
+  }
+
+  function openResponse(survey: SurveyRecord, respondentId?: string) {
+    if (survey.status !== "active" || survey.publishedJson === null) {
+      throw errors.notPublished();
+    }
+    const timestamp = now();
+    const response: ResponseRecord = {
+      id: crypto.randomUUID(),
+      surveyId: survey.id,
+      respondentId: respondentId ?? null,
+      status: "draft",
+      definition: clone(survey.publishedJson),
+      data: {},
+      createdAt: timestamp,
+      updatedAt: timestamp,
+      submittedAt: null,
+    };
+    responses.set(response.id, response);
+    return clone(response);
   }
 
   return {
@@ -192,36 +229,19 @@ export function memoryAdapter(): SurveyStore {
     },
 
     async findLatestDraft(query: { surveyId: string; respondentId: string }) {
-      const open = sortByUpdatedAtDesc(
-        [...responses.values()].filter(
-          (row) =>
-            row.surveyId === query.surveyId &&
-            row.respondentId === query.respondentId &&
-            row.status === "draft",
-        ),
-      );
-      return open[0] ? clone(open[0]) : null;
+      const open = latestDraft(query.surveyId, query.respondentId);
+      return open ? clone(open) : null;
     },
 
     async startResponse(input: StartResponseInput) {
       const survey = requireSurvey(input.surveyId);
-      if (survey.status !== "active" || survey.publishedJson === null) {
-        throw errors.notPublished();
-      }
-      const timestamp = now();
-      const response: ResponseRecord = {
-        id: crypto.randomUUID(),
-        surveyId: survey.id,
-        respondentId: input.respondentId ?? null,
-        status: "draft",
-        definition: clone(survey.publishedJson),
-        data: {},
-        createdAt: timestamp,
-        updatedAt: timestamp,
-        submittedAt: null,
-      };
-      responses.set(response.id, response);
-      return clone(response);
+      if (!input.respondentId) return openResponse(survey, undefined);
+      return exclusive(draftKey(survey.id, input.respondentId), async () => {
+        const open = latestDraft(survey.id, input.respondentId as string);
+        if (open) return clone(open);
+        const fresh = requireSurvey(survey.id);
+        return openResponse(fresh, input.respondentId);
+      });
     },
 
     async savePartial(input: SavePartialInput) {
@@ -274,18 +294,25 @@ export function memoryAdapter(): SurveyStore {
 
     async reopenResponse(input: ResponseMutationInput) {
       const existing = requireResponse(input.id);
-      if (existing.status === "draft") {
-        throw errors.responseClosed();
-      }
-      assertFresh(existing.updatedAt, input.expectedUpdatedAt);
-      const next: ResponseRecord = {
-        ...existing,
-        status: "draft",
-        submittedAt: null,
-        updatedAt: now(),
+      const run = async () => {
+        const current = requireResponse(input.id);
+        if (current.status === "draft") throw errors.responseClosed();
+        if (current.respondentId) {
+          const open = latestDraft(current.surveyId, current.respondentId);
+          if (open && open.id !== current.id) throw errors.openDraft();
+        }
+        assertFresh(current.updatedAt, input.expectedUpdatedAt);
+        const next: ResponseRecord = {
+          ...current,
+          status: "draft",
+          submittedAt: null,
+          updatedAt: now(),
+        };
+        responses.set(current.id, next);
+        return clone(next);
       };
-      responses.set(existing.id, next);
-      return clone(next);
+      if (!existing.respondentId) return run();
+      return exclusive(draftKey(existing.surveyId, existing.respondentId), run);
     },
 
     async getResponse(id: string) {

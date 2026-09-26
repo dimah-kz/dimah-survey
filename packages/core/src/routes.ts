@@ -1,5 +1,8 @@
 export const SURVEY_API_BASE_PATH = "/api/survey";
 
+/** Default mount for `audience: "editor"`. Fill stays on `SURVEY_API_BASE_PATH`. */
+export const SURVEY_EDITOR_API_BASE_PATH = "/api/admin/survey";
+
 const ABSOLUTE_URL = /^[a-z][a-z0-9+.-]*:/i;
 
 export function normalizeSurveyApiBasePath(basePath = SURVEY_API_BASE_PATH) {
@@ -39,6 +42,33 @@ export const SURVEY_API_OPERATIONS = {
 } as const;
 
 export type SurveyApiOperation = keyof typeof SURVEY_API_OPERATIONS;
+
+/** Routes mounted by `audience: "fill"`. Editor survey routes are absent. */
+export const FILL_AUDIENCE_OPERATIONS = [
+  "startResponse",
+  "getResponse",
+  "listResponses",
+  "savePartial",
+  "submitResponse",
+  "abandonResponse",
+  "reopenResponse",
+] as const satisfies readonly SurveyApiOperation[];
+
+/** Routes mounted by `audience: "editor"`. Fill writes are absent. */
+export const EDITOR_AUDIENCE_OPERATIONS = [
+  "getSurvey",
+  "saveSurvey",
+  "listSurveys",
+  "publishSurvey",
+  "archiveSurvey",
+  "getResponse",
+  "listResponses",
+] as const satisfies readonly SurveyApiOperation[];
+
+export type FillAudienceOperation = (typeof FILL_AUDIENCE_OPERATIONS)[number];
+
+export type EditorAudienceOperation =
+  (typeof EDITOR_AUDIENCE_OPERATIONS)[number];
 
 export function surveyApiRouteKey(method: string, path: string) {
   return `${method} ${path}`;
