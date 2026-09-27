@@ -93,7 +93,7 @@ export default function HomePage() {
         aria-labelledby="hero-heading"
         className="mx-auto flex w-full max-w-5xl flex-1 flex-col justify-center-safe px-6 py-16 sm:py-20"
       >
-        <div className="grid w-full gap-14 lg:translate-y-10 lg:grid-cols-[max-content_minmax(0,1fr)] lg:items-start lg:gap-x-20">
+        <div className="grid w-full gap-14 lg:translate-y-8 lg:grid-cols-[max-content_minmax(0,1fr)] lg:items-start lg:gap-x-20">
           <div className="max-w-lg">
             <h1
               id="hero-heading"
