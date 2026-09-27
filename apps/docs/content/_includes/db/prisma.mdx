@@ -1,12 +1,4 @@
-```prisma title="prisma/schema.prisma"
-generator client {
-  provider = "prisma-client-js"
-}
-
-datasource db {
-  provider = "postgresql"
-}
-
+```prisma title="schema.prisma"
 model Survey {
   id            String    @id @map("id") @db.VarChar(255)
   slug          String    @unique(map: "dimah_survey_slug_unique") @map("slug") @db.VarChar(255)

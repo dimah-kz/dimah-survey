@@ -1,97 +1,60 @@
 ﻿---
 title: Database
-description: Add the tables and connect Drizzle, Prisma, or Kysely.
+description: Add the survey tables to the database you already use.
 icon: Database
 ---
 
-Copy the schema for your ORM, run a migration, then pass the resulting store to
-both server audiences. dimah-survey never runs migrations for you.
+Add `dimah_survey` and `dimah_response` to your schema, migrate with the tool
+you already use, and pass the same `database` to both server audiences.
+dimah-survey does not run migrations.
 
 ```npm
 npm i @dimah-survey/db fumadb
 ```
 
-Model keys are `survey` and `response`; SQL tables are `dimah_survey` and
-`dimah_response`.
+Model keys are `survey` and `response`. Copy the tables into your application.
+Do not import them from `@dimah-survey/db` at runtime.
 
-The examples use SQLite with Drizzle and PostgreSQL with Prisma or Kysely.
+`provider` is `"sqlite"`, `"postgresql"`, or `"mysql"`.
 
 <Tabs items={["Drizzle", "Prisma", "Kysely"]}>
 <Tab value="Drizzle">
 
-```npm
-npm i drizzle-orm
-npm i -D drizzle-kit
-```
+Add these tables to your Drizzle schema. This copy is SQLite. On PostgreSQL or
+MySQL, use that driver's table builder and set `provider` to match. Keep the
+partial unique index.
 
 <include>../../_includes/db/drizzle.mdx</include>
 
-```ts title="drizzle.config.ts"
-import { defineConfig } from "drizzle-kit";
-
-export default defineConfig({
-  dialect: "sqlite",
-  schema: "./db/schema.ts",
-  out: "./drizzle",
-  dbCredentials: { url: "./survey.db" },
-});
-```
-
-```bash
-npx drizzle-kit generate
-npx drizzle-kit migrate
-```
-
 ```ts title="db/index.ts"
 import { DimahSurveyDB, db } from "@dimah-survey/db";
-import { drizzle } from "drizzle-orm/node-sqlite";
 import { drizzleAdapter } from "fumadb/adapters/drizzle";
 
-import { relations } from "./schema";
-
-const orm = drizzle("survey.db", { relations });
-
 export const database = db(
-  DimahSurveyDB.client(drizzleAdapter({ db: orm, provider: "sqlite" })),
+  DimahSurveyDB.client(
+    drizzleAdapter({ db: drizzleDb, provider: "sqlite" }),
+  ),
 );
 ```
 
-This setup uses SQLite. For PostgreSQL, use its Drizzle table builder and
-driver, then set `provider: "postgresql"`.
+`drizzleDb` is the Drizzle client you already open. Pass `relations` from the
+schema into that client.
 
 </Tab>
 <Tab value="Prisma">
 
-```npm
-npm i @prisma/client
-npm i -D prisma
-```
+Add these models to your Prisma schema. This copy is PostgreSQL.
 
 <include>../../_includes/db/prisma.mdx</include>
 
-Generate the migration without applying it:
-
-```bash
-npx prisma migrate dev --create-only --name dimah-survey
-```
-
 Prisma cannot express the partial unique index. Add this statement to the
-generated migration:
+migration you generate, then apply it as you usually do:
 
 <include>../../_includes/db/indexes.mdx</include>
 
-Then apply the migration:
-
-```bash
-npx prisma migrate dev
-```
-
 ```ts title="db/index.ts"
 import { DimahSurveyDB, db } from "@dimah-survey/db";
-import { PrismaClient } from "@prisma/client";
 import { prismaAdapter } from "fumadb/adapters/prisma";
-
-const prisma = new PrismaClient();
 
 export const database = db(
   DimahSurveyDB.client(
@@ -100,50 +63,62 @@ export const database = db(
 );
 ```
 
+`prisma` is your existing `PrismaClient`.
+
 </Tab>
 <Tab value="Kysely">
 
-```npm
-npm i kysely pg
-```
+Add this SQL with your migration tool. This copy is PostgreSQL.
 
 <include>../../_includes/db/sql.mdx</include>
 
-Apply the SQL with your migration system or the PostgreSQL client:
-
-```bash
-psql "$DATABASE_URL" -f db/schema.sql
-```
-
 ```ts title="db/index.ts"
-import { Pool } from "pg";
 import { DimahSurveyDB, db } from "@dimah-survey/db";
-import { Kysely, PostgresDialect } from "kysely";
 import { kyselyAdapter } from "fumadb/adapters/kysely";
 
-const orm = new Kysely({
-  dialect: new PostgresDialect({
-    pool: new Pool({ connectionString: process.env.DATABASE_URL }),
-  }),
-});
-
 export const database = db(
-  DimahSurveyDB.client(kyselyAdapter({ db: orm, provider: "postgresql" })),
+  DimahSurveyDB.client(
+    kyselyAdapter({ db: kysely, provider: "postgresql" }),
+  ),
 );
 ```
+
+`kysely` is your existing Kysely instance.
 
 </Tab>
 </Tabs>
 
-`provider` is `"sqlite"`, `"postgresql"`, or `"mysql"`. Copy the reference
-schema into your application and migrate that copy; do not import it at
-runtime.
-
 <Callout>
-  The store accepts `provider: "mysql"`, but this page does not provide a MySQL
-  schema. Translate the tables and indexes for your MySQL ORM before connecting
-  the adapter.
+  The store accepts `provider: "mysql"`, but this page does not include a MySQL
+  schema. Translate the tables and indexes before connecting the adapter.
 </Callout>
+
+## Next.js
+
+Keep the store on the Node.js runtime. The last entry is the ORM package that
+opens the connection: `drizzle-orm`, `@prisma/client`, or `kysely`.
+
+```ts title="next.config.ts"
+import type { NextConfig } from "next";
+
+const nextConfig: NextConfig = {
+  serverExternalPackages: ["@dimah-survey/db", "fumadb", "drizzle-orm"],
+};
+
+export default nextConfig;
+```
+
+## In memory
+
+`memoryAdapter()` from `@dimah-survey/server` stores rows in the process. They
+disappear when the process exits. Use it for tests, or when you do not want
+the SQL tables. Pass it as `database` the same way as the SQL store.
+
+```ts
+import { memoryAdapter } from "@dimah-survey/server";
+
+export const database = memoryAdapter();
+```
 
 ## Custom store
 

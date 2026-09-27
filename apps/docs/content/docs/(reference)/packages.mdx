@@ -19,17 +19,19 @@ React applications use `server`, `db`, and `react`.
 | `@dimah-survey/db`     | FumaDB-backed SQL store and schema references                 |
 
 ```npm
-npm i @dimah-survey/server @dimah-survey/db @dimah-survey/react react react-dom survey-core survey-react-ui fumadb
+npm i @dimah-survey/server @dimah-survey/db @dimah-survey/react react react-dom survey-core survey-react-ui
 ```
 
-[Database](/docs/persistence) adds Drizzle, Prisma, or Kysely. Install
-`survey-creator-core` and `survey-creator-react` only when you render Creator.
+[Database](/docs/persistence) installs `fumadb` and adds the tables to Drizzle,
+Prisma, or Kysely. Install `survey-creator-core` and `survey-creator-react`
+only when you render Creator.
 
 ## `@dimah-survey/server`
 
 Backend integration:
 
 - `dimahSurvey()` for fill and editor instances
+- `memoryAdapter()` for a process-local store
 - `guardRespondent()` and `guardAnonymous()` for fill guards
 - `checkSurveyResult()` for submit validation
 - `clearSurveyResult()` for partial-save sanitization
@@ -72,10 +74,11 @@ files.
   application.
 </Callout>
 
-`@dimah-survey/db` is the SQL store. A custom `SurveyStore` is the alternative
-when those tables cannot live in your database. Either store must preserve
-immutable response definitions, compare-and-swap inside writes, and one open
-draft per identified respondent.
+`memoryAdapter()` keeps rows in the process for tests. `@dimah-survey/db` is
+the SQL store. A custom `SurveyStore` is the alternative when those tables
+cannot live in your database. See [Database](/docs/persistence). Every store
+must preserve immutable response definitions, compare-and-swap inside writes,
+and one open draft per identified respondent.
 
 Continue with [Configuration](/docs/configuration) or the
 [HTTP protocol](/docs/protocol).
