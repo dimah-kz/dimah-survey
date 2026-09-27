@@ -1,44 +1,65 @@
 name: Bug report
-description: Report a reproducible bug in a package
+description: Report a reproducible bug in a package, the docs, or CI
 title: "[Bug]: "
 labels:
   - bug
+  - "needs triage"
 body:
   - type: markdown
     attributes:
       value: |
-        Thanks for reporting a bug. Please include a minimal reproduction.
+        Thanks for taking the time to report a bug. A minimal reproduction is the fastest way to a fix.
 
-        Security vulnerabilities must not be filed as public issues. Use [private reporting](https://github.com/dimah-kz/dimah-survey/security/advisories/new).
+        Usage questions belong in [Discussions](https://github.com/dimah-kz/dimah-survey/discussions). Security vulnerabilities must be reported [privately](https://github.com/dimah-kz/dimah-survey/security/advisories/new).
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checks
+      options:
+        - label: I searched existing [issues](https://github.com/dimah-kz/dimah-survey/issues) and [discussions](https://github.com/dimah-kz/dimah-survey/discussions).
+          required: true
+        - label: This is not a security vulnerability.
+          required: true
   - type: dropdown
     id: package
     attributes:
-      label: Package
-      description: Which package is affected?
+      label: Area
+      description: Where does this show up?
       options:
         - "@dimah-survey/core"
         - "@dimah-survey/server"
         - "@dimah-survey/db"
         - "@dimah-survey/react"
-        - other
+        - Documentation site
+        - Example app
+        - GitHub Actions or release
+        - Other
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: npm version of the package, or `main` if you built from this repository.
+      placeholder: "0.1.0 or main"
     validations:
       required: true
   - type: textarea
     id: description
     attributes:
       label: What happened?
-      description: Clear and concise description of the bug.
+      description: What did you expect, and what happened instead?
     validations:
       required: true
   - type: textarea
     id: reproduce
     attributes:
       label: Steps to reproduce
-      description: Provide a minimal reproduction.
+      description: A minimal reproduction. A small repository or a code sample is enough.
       placeholder: |
-        1. Install package
-        2. Run code
-        3. See error
+        1. Install the package
+        2. Run this code
+        3. See the error
     validations:
       required: true
   - type: textarea
@@ -48,14 +69,14 @@ body:
     validations:
       required: true
   - type: input
-    id: version
-    attributes:
-      label: Package version
-      placeholder: "0.0.x"
-    validations:
-      required: true
-  - type: input
     id: environment
     attributes:
       label: Environment
+      description: Optional.
       placeholder: "Node 24, pnpm 12, Windows 11"
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: Optional. Redact secrets, tokens, and respondent data.
+      render: text

@@ -5,12 +5,13 @@
     "index",
     "quickstart",
     "comparison",
-    "---Guides---",
+    "---Concepts---",
     "(surveys)",
+    "---Server---",
     "(server)",
-    "---Client---",
+    "---React---",
     "(client)",
-    "---Resources---",
+    "---Reference---",
     "(reference)"
   ]
 }

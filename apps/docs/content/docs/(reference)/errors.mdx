@@ -1,14 +1,22 @@
 ---
-title: Error reference
-description: Stable error codes, status codes, and the JSON response body.
+title: Errors
+description: Handle stable error codes, HTTP status mapping, and validation details.
 icon: CircleAlert
 ---
 
-Failed requests return an HTTP status and JSON
-`{ message, code?, questions? }`.
+Failed HTTP requests return:
+
+```ts
+type SurveyErrorBody = {
+  message: string;
+  code?: SurveyErrorCode;
+  questions?: string[];
+};
+```
 
 Throw with `APIError.from` and a code from `SURVEY_ERROR_CODES`. A plain
-`Error` becomes `INTERNAL_ERROR`. Branch on `code`, never on `message`.
+`Error` is normalized to `INTERNAL_ERROR`. Treat `code` as the stable contract;
+messages are for diagnostics.
 
 ```ts
 import {
@@ -26,36 +34,36 @@ if (isAPIError(error)) {
 }
 ```
 
-`isAPIError` is also exported from `@dimah-survey/core`. There is no
-`UNAUTHORIZED` code. Reject an anonymous caller with `FORBIDDEN`.
+`APIError` and `isAPIError` are also exported from `@dimah-survey/core`. There
+is no `UNAUTHORIZED` code; guards reject callers with `FORBIDDEN`.
 
-## Error catalog
+## Codes
 
-| `code`               | HTTP | When                                                                 |
-| -------------------- | ---- | -------------------------------------------------------------------- |
-| `NOT_FOUND`          | 404  | Path matches no route on this audience                               |
-| `SURVEY_NOT_FOUND`   | 404  | Id or slug is missing, or the survey is not an active published read |
-| `RESPONSE_NOT_FOUND` | 404  | Response id is missing                                               |
-| `FORBIDDEN`          | 403  | `guard` rejected the caller, or the principal cannot touch the row   |
-| `NOT_PUBLISHED`      | 409  | Start or resume without an active published document                 |
-| `SURVEY_CLOSED`      | 409  | Start, partial save, or submit outside `opensAt` / `closesAt`        |
-| `RESPONSE_LIMIT`     | 409  | `submitted` rows are already at `maxResponses`                       |
-| `SLUG_TAKEN`         | 409  | Slug is already used by another survey                               |
-| `STALE_UPDATE`       | 409  | `expectedUpdatedAt` does not match the stored row                    |
-| `RESPONSE_CLOSED`    | 409  | The row status does not allow this write, or reopen is disabled      |
-| `OPEN_DRAFT`         | 409  | This respondent already has a different open draft                   |
-| `VALIDATION_ERROR`   | 400  | The payload failed schema checks. Read `message`                     |
-| `VALIDATION_FAILED`  | 400  | The snapshot rejected the answers. Read `questions`                  |
-| `INTERNAL_ERROR`     | 500  | Unhandled exception                                                  |
+| Code                 | HTTP | Meaning                                                          |
+| -------------------- | ---- | ---------------------------------------------------------------- |
+| `NOT_FOUND`          | 404  | No route for the requested operation on this audience            |
+| `SURVEY_NOT_FOUND`   | 404  | Survey id or slug is missing, or no active published read exists |
+| `RESPONSE_NOT_FOUND` | 404  | Response id is missing                                           |
+| `FORBIDDEN`          | 403  | Guard rejected the caller or ownership check failed              |
+| `NOT_PUBLISHED`      | 409  | Start or resume has no eligible published document               |
+| `SURVEY_CLOSED`      | 409  | Start, partial save, or submit is outside the collection window  |
+| `RESPONSE_LIMIT`     | 409  | Submitted rows reached `maxResponses`                            |
+| `SLUG_TAKEN`         | 409  | Another survey owns the slug                                     |
+| `STALE_UPDATE`       | 409  | `expectedUpdatedAt` no longer matches                            |
+| `RESPONSE_CLOSED`    | 409  | Response state forbids the write or reopen is disabled           |
+| `OPEN_DRAFT`         | 409  | Another draft already exists for this survey and respondent      |
+| `VALIDATION_ERROR`   | 400  | Request body or query failed schema validation                   |
+| `VALIDATION_FAILED`  | 400  | The response definition rejected answer data                     |
+| `INTERNAL_ERROR`     | 500  | An unhandled exception reached the handler                       |
 
 `SURVEY_NOT_FOUND` on `getPublishedSurvey` also covers a draft or archived
 survey. The editor `getSurvey` uses the same code when the id is missing, and
 returns the draft when the row exists.
 
-## Validation failures
+## SurveyJS validation failures
 
 `VALIDATION_FAILED` adds `questions`: the SurveyJS question names that failed.
-`message` lists those names. It is not a localized string.
+The message lists the same names and is not localized.
 
 ```json
 {

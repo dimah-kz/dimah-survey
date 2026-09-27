@@ -1,13 +1,21 @@
 ---
-title: Bind a SurveyJS model
-description: Load a response snapshot and bind a survey-core Model to writes.
+title: Fill with React
+description: Hydrate a SurveyJS Model from the response snapshot and bind server writes.
 icon: Component
 ---
 
-`@dimah-survey/react` loads a response snapshot, constructs a `Model`, and
-wires partial save and completion to the fill client. It does not render the
-survey; your application still mounts `<Survey model={model} />` from
-`survey-react-ui`.
+`useSurveyResponse()` reads a response, constructs a SurveyJS `Model` from its
+stored definition, restores its data, and binds partial save and submit. Your
+application still renders the model with `survey-react-ui`.
+
+```npm
+npm i @dimah-survey/react react survey-core survey-react-ui
+```
+
+<Callout>
+  `@dimah-survey/react` is a lifecycle binding, not a renderer wrapper. You
+  retain direct access to the SurveyJS model and component.
+</Callout>
 
 ```tsx title="components/fill.tsx"
 "use client";
@@ -43,34 +51,35 @@ export function Fill({ responseId }: { responseId: string }) {
 }
 ```
 
-The hook reads `getResponse`, builds `new Model(response.definition)`, and
-assigns `response.data`. A row that is not a draft opens in `display` mode and
-does not send writes.
+SurveyJS UI components require a browser, so Next.js applications should load
+`<Survey>` dynamically. A submitted or abandoned response opens in `display`
+mode and sends no writes.
 
-## Render loading and write state
+## Handle state
 
-| Field       | When it is set                                             |
-| ----------- | ---------------------------------------------------------- |
-| `model`     | The snapshot loaded. `null` while loading or after `error` |
-| `error`     | The snapshot failed to load. The model stays `null`        |
-| `saveError` | A partial save or submit failed. The model stays mounted   |
-| `stale`     | `saveError` is `STALE_UPDATE`                              |
-| `reload`    | Reads the stored snapshot again and clears the save error  |
+| Value       | Meaning                                                       |
+| ----------- | ------------------------------------------------------------- |
+| `model`     | Hydrated snapshot; `null` while loading or after a load error |
+| `error`     | Initial response load failed                                  |
+| `saveError` | Partial save or submit failed; the model remains mounted      |
+| `stale`     | The write failed with `STALE_UPDATE`                          |
+| `reload()`  | Read the stored response again and clear the write error      |
 
-Completion waits for the server. If submit throws, the Model does not complete.
-A failed write does not unmount it.
+Completion waits for the server. If submit fails, SurveyJS does not complete
+and the respondent keeps their mounted model.
 
 `partial` defaults to `"page"`. That sets `partialSendEnabled` and
 `sendResultOnPageNext`, so the next page calls `savePartial`. Pass
-`partial: "off"` to write only when the respondent completes.
+`partial: "off"` to write only on completion. Each partial save sends the
+complete `survey.data` object; it is not a key-level patch.
 
 Writes are queued. Each one sends `expectedUpdatedAt` from the last successful
 read. See [Responses](/docs/responses).
 
 ## Bind an existing model
 
-Use `bindSurveyModel` when you already constructed the `Model`. The hook is
-that binding plus the load.
+Use `bindSurveyModel()` when your application already owns the `Model`.
+`useSurveyResponse()` is the load plus that binding.
 
 ```ts
 import { bindSurveyModel } from "@dimah-survey/react";
@@ -89,7 +98,7 @@ Call `dispose` on unmount. It removes the SurveyJS handlers it added.
 `bindSurveyModel` also sets `storeDataAsText` to `false` on file and signature
 questions, including questions added later.
 
-## Keep file bytes in your app
+## Keep file storage in your app
 
 File bytes stay in your application. There is no upload route.
 
@@ -97,4 +106,6 @@ Handle `onUploadFiles`, `onDownloadFile`, and `onClearFiles` on the `Model`.
 Give SurveyJS `{ file, content }` where `content` is your URL. Partial save
 writes that locator into `data`. The binding does not store the bytes.
 
-Creator autosave is a different hook. See [Creator](/docs/creator).
+Start with the [Quickstart](/docs/quickstart) for the complete load and render
+flow. Creator autosave uses a separate binding described in
+[Survey Creator](/docs/creator).

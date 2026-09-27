@@ -1,16 +1,20 @@
 ---
-title: Autosave Survey Creator
-description: Send Creator autosave to the editor draft and publish explicitly.
+title: Survey Creator
+description: Bind Creator autosave to the editor draft while keeping publish explicit.
 icon: PenLine
 ---
 
-`useSurveyDraft` turns Creator autosave into `saveSurvey`. It writes
-`draftJson` only. The hook does not construct Creator, render it, or publish a
-survey.
+`useSurveyDraft()` connects a Creator instance to `saveSurvey`. Autosave
+replaces `draftJson`; it never changes `publishedJson` or any response
+definition.
+
+```npm
+npm i @dimah-survey/react survey-creator-core survey-creator-react
+```
 
 <Callout>
-  Autosave and publish are separate actions. Publishing is the explicit point
-  where new responses begin using the draft.
+  Publishing is an explicit product action, not an autosave side effect. New
+  responses see the draft only after `publishSurvey`.
 </Callout>
 
 ```tsx title="components/design.tsx"
@@ -20,7 +24,7 @@ import { useMemo } from "react";
 import { createEditorClient, useSurveyDraft } from "@dimah-survey/react";
 import { SurveyCreator, SurveyCreatorComponent } from "survey-creator-react";
 
-const editor = createEditorClient({ baseURL: "/api/admin/survey" });
+const editorClient = createEditorClient({ baseURL: "/api/admin/survey" });
 
 export function Design({
   surveyId,
@@ -38,7 +42,7 @@ export function Design({
   }, [draftJson]);
 
   const { saveError, stale } = useSurveyDraft({
-    client: editor,
+    client: editorClient,
     surveyId,
     creator,
     updatedAt,
@@ -55,15 +59,17 @@ export function Design({
 ```
 
 Load `draftJson` and `updatedAt` on the server with `editor.api.getSurvey`,
-then pass them in. `createEditorClient` defaults to `/api/admin/survey`.
+then pass both into the client component. `createEditorClient()` defaults to
+`/api/admin/survey`.
 
 The hook sets `isAutoSave` and `saveSurveyFunc`. Each save sends
 `expectedUpdatedAt` from the loaded survey, then from the last successful
 write. A new `updatedAt` prop rebinds that token.
 
 `saveError` is a failed draft save. Creator stays mounted. `stale` means
-`STALE_UPDATE`: someone else wrote the draft. Reload the survey from the
-server before saving over it.
+`STALE_UPDATE`: another writer changed the draft. Unlike the fill hook,
+`useSurveyDraft()` has no `reload()` method; reload the survey in your
+application before writing again.
 
 ## Publish explicitly
 
@@ -71,16 +77,21 @@ Autosave must not call `publishSurvey`. Publish copies the current draft onto
 `publishedJson` and is an explicit action:
 
 ```ts
-await editor.publishSurvey({ id: surveyId, expectedUpdatedAt });
+await editorClient.publishSurvey({ id: surveyId, expectedUpdatedAt });
 ```
 
-`editor` here is `createEditorClient()`. On the server, the same call is
+On the server, the equivalent call is
 `editor.api.publishSurvey({ body })`. Archive, resume, and settings are editor
 calls too. See [Surveys](/docs/surveys).
 
-`bindSurveyCreator` is the same binding without React state. Pass
+## Bind without React state
+
+`bindSurveyCreator()` exposes the same binding without React state. Pass
 `initialUpdatedAt` from the load that produced the Creator instance. The app
-still constructs Creator.
+still constructs, renders, and disposes Creator.
 
 `survey-creator-core` and `survey-creator-react` stay in your application.
 They are not dependencies of `@dimah-survey/react`.
+
+See [Survey lifecycle](/docs/surveys) for publish, archive, resume, and
+compare-and-swap behavior.

@@ -1,58 +1,69 @@
 ---
 title: Overview
-description: Add a server-owned lifecycle around SurveyJS JSON.
+description: Understand the server-owned lifecycle around SurveyJS JSON.
 icon: House
 ---
 
-dimah-survey is a backend lifecycle layer for
-[SurveyJS](https://surveyjs.io/) JSON. It gives your server the responsibilities
-that sit around the SurveyJS schema and renderer: publish, response ownership,
-draft persistence, immutable definitions, and submit validation.
+dimah-survey adds a server-owned lifecycle around
+[SurveyJS](https://surveyjs.io/) JSON. It publishes survey definitions, creates
+durable response drafts, and validates each submission against the exact
+definition that response started with.
 
-SurveyJS continues to own the schema, Creator, and renderer. Your application
-continues to own authentication, database migrations, and UI composition.
-dimah-survey coordinates the server-side lifecycle between them.
+It does not replace SurveyJS. Your application still owns the renderer,
+Creator, authentication, database migrations, and UI.
+
+<Callout>
+  The central guarantee is simple: publishing a new survey never changes an
+  existing `response.definition`.
+</Callout>
+
+## The lifecycle
 
 <Flow
   label="One response"
   steps={[
-    { name: "Draft", kind: "data", note: "Creator writes draftJson" },
-    { name: "Publish", kind: "server", note: "Copy to publishedJson" },
-    { name: "Start", kind: "server", note: "Freeze a definition" },
-    { name: "Fill", kind: "client", note: "SurveyJS renders it" },
-    { name: "Submit", kind: "server", note: "Validate that snapshot" },
+    { name: "Author", kind: "data", note: "Creator writes draftJson" },
+    { name: "Publish", kind: "server", note: "Promote publishedJson" },
+    { name: "Start", kind: "server", note: "Freeze response.definition" },
+    { name: "Fill", kind: "client", note: "SurveyJS renders the snapshot" },
+    { name: "Submit", kind: "server", note: "Validate the same snapshot" },
   ]}
 />
 
-<Callout>
-  A later publish never changes an existing `response.definition`. Submit
-  validation always receives that stored definition, not the live draft.
-</Callout>
+`draftJson` is the editable document. `publishedJson` is the document new
+responses may start. At start, the server copies `publishedJson` into
+`response.definition`; every save and submit stays attached to that copy.
 
-## What belongs where
+## Clear ownership
 
-| Concern                                       | Owner                                         |
-| --------------------------------------------- | --------------------------------------------- |
-| Question JSON, `<Survey>`, Creator            | SurveyJS and your application                 |
-| Auth, sessions, roles, SQL migrations         | Your application                              |
-| Publish, snapshots, drafts, submit validation | dimah-survey                                  |
-| Browser client and React bindings             | `@dimah-survey/core` or `@dimah-survey/react` |
-| Durable SQL `SurveyStore`                     | `@dimah-survey/db` or your own adapter        |
+| Owner            | Responsibilities                                                              |
+| ---------------- | ----------------------------------------------------------------------------- |
+| SurveyJS         | Survey schema, `Model`, `<Survey>`, Creator, and question behavior            |
+| Your application | Authentication, authorization, migrations, file storage, and UI               |
+| dimah-survey     | Publish, collection policy, response snapshots, drafts, and submit validation |
 
-The server runs two isolated audiences against one shared store:
+The backend exposes two isolated audiences over one shared `SurveyStore`:
 
-- **Fill** starts, saves, submits, abandons, and reopens responses. It requires
-  a guard that establishes the respondent.
-- **Editor** edits drafts, publishes, controls collection settings, and reads
-  full response snapshots.
+| Audience | Intended caller          | Capabilities                                                                |
+| -------- | ------------------------ | --------------------------------------------------------------------------- |
+| Fill     | Respondents              | Read published JSON; start, save, submit, abandon, and reopen responses     |
+| Editor   | Trusted application code | Edit and publish surveys, change settings, and read full response snapshots |
 
-## Choose a path
+The fill audience always requires a guard. The editor audience has a separate
+guard and route, so respondent traffic never gains authoring access.
+
+## Start here
 
 <Cards>
   <Card
     title="Quickstart"
     href="/docs/quickstart"
-    description="Mount the backend layer and start a SurveyJS response."
+    description="Build the smallest working Next.js integration."
+  />
+  <Card
+    title="Response lifecycle"
+    href="/docs/responses"
+    description="Follow snapshot, partial save, submit, and reopen."
   />
   <Card
     title="Server integration"
@@ -60,16 +71,12 @@ The server runs two isolated audiences against one shared store:
     description="Mount fill and editor handlers in your runtime."
   />
   <Card
-    title="Lifecycle model"
-    href="/docs/responses"
-    description="Learn how snapshot, partial save, and submit work."
-  />
-  <Card
-    title="Package reference"
-    href="/docs/packages"
-    description="Choose the core, server, React, or database package."
+    title="Is it the right fit?"
+    href="/docs/comparison"
+    description="Compare ownership with SurveyJS alone and hosted products."
   />
 </Cards>
 
-For coding agents, [llms.txt](/llms.txt) indexes the site and
-[llms-full.txt](/llms-full.txt) exposes the complete Markdown corpus.
+Machine-readable entry points are available at [llms.txt](/llms.txt) and
+[llms-full.txt](/llms-full.txt). Every docs URL also has a Markdown twin by
+adding `.md`.

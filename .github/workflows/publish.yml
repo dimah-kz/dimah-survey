@@ -13,9 +13,6 @@ concurrency:
 permissions:
   contents: read
 
-env:
-  TURBO_TEAM: ${{ vars.TURBO_TEAM }}
-
 jobs:
   publish:
     name: Version & Publish
@@ -30,6 +27,9 @@ jobs:
       contents: write
       id-token: write
       pull-requests: write
+    # Records the deployment. Trusted publishing is OIDC (`id-token: write`).
+    # Do not set NPM_TOKEN, registry-url, or NODE_AUTH_TOKEN.
+    environment: npm
     steps:
       - uses: actions/checkout@v7
         with:

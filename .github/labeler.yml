@@ -19,5 +19,31 @@ documentation:
       - any-glob-to-any-file:
           - "**/*.md"
           - "**/*.mdx"
-          - docs/**
           - apps/docs/**
+          - docs/**
+
+area:ci:
+  - changed-files:
+      - any-glob-to-any-file:
+          - .github/**
+          - scripts/tegami.mts
+
+area:example:
+  - changed-files:
+      - any-glob-to-any-file: examples/**
+
+area:tooling:
+  - changed-files:
+      - any-glob-to-any-file: tooling/**
+
+dependencies:
+  - changed-files:
+      - any-glob-to-any-file:
+          - pnpm-lock.yaml
+          - .github/dependabot.yml
+
+release:
+  - changed-files:
+      - any-glob-to-any-file:
+          - .tegami/**
+          - scripts/tegami.mts

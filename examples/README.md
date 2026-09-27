@@ -1,7 +1,11 @@
 # Examples
 
-[`next`](./next) is a Next.js app. SurveyJS renders the form and Creator. This library publishes, stores the per-response snapshot, and validates submit.
+[`next`](./next) is the complete reference application. It combines the four
+packages with Next.js, SurveyJS, Survey Creator, Drizzle, and SQLite.
 
 ```bash
+pnpm install
 pnpm example
 ```
+
+Open [localhost:3000](http://localhost:3000).

@@ -1,38 +1,66 @@
 name: Feature request
-description: Suggest an idea for a package
+description: Suggest an idea for a package or the repository
 title: "[Feature]: "
 labels:
   - enhancement
+  - "needs triage"
 body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the suggestion. Describe the problem first, then the API you want.
+
+        Questions about current behavior belong in [Discussions](https://github.com/dimah-kz/dimah-survey/discussions).
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checks
+      options:
+        - label: I searched existing [issues](https://github.com/dimah-kz/dimah-survey/issues) and [discussions](https://github.com/dimah-kz/dimah-survey/discussions).
+          required: true
   - type: dropdown
     id: package
     attributes:
-      label: Package
-      description: Which package would this live in?
+      label: Area
+      description: Where should this live?
       options:
         - "@dimah-survey/core"
         - "@dimah-survey/server"
         - "@dimah-survey/db"
         - "@dimah-survey/react"
-        - unsure
+        - Documentation
+        - Example app
+        - Repository tooling or CI
+        - Unsure
     validations:
       required: true
   - type: textarea
     id: problem
     attributes:
-      label: Problem statement
-      description: What problem does this feature solve?
+      label: Problem
+      description: What is hard or impossible today?
     validations:
       required: true
   - type: textarea
     id: proposal
     attributes:
       label: Proposed solution
-      description: Describe your proposed API/behavior.
+      description: The API or behavior you want, from a consumer's point of view.
     validations:
       required: true
   - type: textarea
     id: alternatives
     attributes:
-      label: Alternatives considered
-      description: Optional alternatives or trade-offs.
+      label: Alternatives
+      description: Optional. Other approaches you considered, and why you rejected them.
+  - type: dropdown
+    id: breaking
+    attributes:
+      label: Breaking change
+      description: Would existing consumer code have to change?
+      options:
+        - "No"
+        - "Yes"
+        - Unsure
+    validations:
+      required: true

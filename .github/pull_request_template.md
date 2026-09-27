@@ -4,11 +4,18 @@
 
 ## Test plan
 
-- How you verified this (tests, example app, or manual steps).
+- How you verified this (tests, the example app, or manual steps).
 
 ## Checklist
 
-- [ ] `pnpm build` / `pnpm check-types` / `pnpm lint` / `pnpm format:check` / `pnpm sherif` / `pnpm knip` / `pnpm test` pass
-- [ ] Docs updated if needed
-- [ ] Changelog added for package changes (`.tegami/`) — required when published API, behavior, or build output changes
-- [ ] Breaking change (major Tegami bump) if consumer code or output contracts change
+- [ ] Build passes (`pnpm build`)
+- [ ] Type checks pass (`pnpm check-types`)
+- [ ] Lint passes (`pnpm lint`)
+- [ ] Format check passes (`pnpm format:check`)
+- [ ] Workspace checks pass (`pnpm sherif` / `pnpm knip`)
+- [ ] Tests pass (`pnpm test`)
+- [ ] Docs updated (if needed)
+- [ ] Changelog added under `.tegami/` when a published package's API, behavior, or build output changes
+- [ ] Breaking changes use a `major` Tegami bump
+
+Security issues belong in a [private advisory](https://github.com/dimah-kz/dimah-survey/security/advisories/new), not in this pull request.

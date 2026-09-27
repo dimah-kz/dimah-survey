@@ -1,10 +1,12 @@
 # Next.js example
 
-A minimal consumer of `@dimah-survey/server`, `@dimah-survey/react`, and `@dimah-survey/db`.
+The complete reference application for `@dimah-survey/server`,
+`@dimah-survey/react`, and `@dimah-survey/db`.
 
-Library guides: <https://survey.dimah.dev>.
-
-SurveyJS renders the survey and Creator. Responses are stored in SQLite (`data/survey.db`) through Drizzle and `@dimah-survey/db`. The respondent is an httpOnly cookie.
+SurveyJS renders the form and Creator. dimah-survey publishes the document,
+stores a frozen definition on each response, saves drafts, and validates
+submit. Responses persist in SQLite through Drizzle; an httpOnly cookie
+identifies the respondent.
 
 ## Run
 
@@ -14,18 +16,40 @@ From the repository root:
 pnpm example
 ```
 
-| Path                     | What it shows                                         |
-| ------------------------ | ----------------------------------------------------- |
-| `/`                      | Published surveys. Start, or continue the open draft. |
-| `/r/[responseId]`        | Fill. Partial save, submit, discard, reopen.          |
-| `/studio`                | Drafts, publish, archive.                             |
-| `/studio/[id]`           | Creator autosave. Publish is a separate action.       |
-| `/studio/[id]/responses` | Stored snapshots, not the live draft.                 |
+Open [http://localhost:3000](http://localhost:3000). The app creates
+`data/survey.db` and seeds a welcome survey.
 
-Fill is mounted at `/api/survey`. The editor is mounted at `/api/admin/survey`. The studio guard is open so the demo needs no login.
+## Routes
 
-The server applies `drizzle/` on startup. After a schema change, generate the next migration from this app:
+| Path                           | Demonstrates                                      |
+| ------------------------------ | ------------------------------------------------- |
+| `/`                            | Published surveys; start or resume the open draft |
+| `/r/[responseId]`              | Partial save, submit, abandon, and reopen         |
+| `/studio`                      | Survey creation, publish, archive, and status     |
+| `/studio/[surveyId]`           | Creator autosave with explicit publish            |
+| `/studio/[surveyId]/responses` | Response summaries and frozen snapshots           |
+
+Fill is mounted at `/api/survey`; editor is mounted separately at
+`/api/admin/survey`.
+
+> The Studio guard is intentionally open so the example runs without an auth
+> provider. Protect the editor instance in a real application.
+
+## Integration map
+
+- `lib/survey.ts` — shared SQL store, fill/editor instances, and seed
+- `lib/clients.ts` — browser clients with matching base paths
+- `components/fill-survey.tsx` — response binding and stale-write UI
+- `components/survey-designer.tsx` — Creator autosave and explicit publish
+- `db/schema.ts` — application-owned schema and indexes
+- `lib/respondent.ts` — cookie-derived respondent identity
+
+The server applies `drizzle/` migrations on startup. After a schema change,
+generate the next migration from this app:
 
 ```bash
 pnpm --filter example-next db:generate
 ```
+
+For the library integration, start with the
+[quickstart](https://survey.dimah.dev/docs/quickstart).

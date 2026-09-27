@@ -1,15 +1,18 @@
 # @dimah-survey/react
 
-Binds SurveyJS `Model` and Creator instances to the dimah-survey lifecycle.
-It does not render the survey or Creator; those components stay in your app.
+React bindings for SurveyJS responses and Creator drafts in
+[dimah-survey](https://survey.dimah.dev).
+
+The package hydrates and binds SurveyJS objects; your application still renders
+them directly.
 
 ## Install
 
 ```bash
-npm i @dimah-survey/react react survey-core
+npm i @dimah-survey/react survey-core survey-react-ui
 ```
 
-## Bind a fill session
+## Render a response snapshot
 
 ```tsx
 import { createFillClient, useSurveyResponse } from "@dimah-survey/react";
@@ -34,35 +37,37 @@ export function Fill({ responseId }: { responseId: string }) {
 }
 ```
 
-The hook fetches the stored response, builds a `Model` from
-`response.definition`, and binds partial save and submit. A non-draft response
-opens in display mode.
+`useSurveyResponse()` builds the model from `response.definition`, restores
+stored data, and binds partial save and submit.
 
-- `partial: "page"` is the default; it saves on SurveyJS page next.
-- `partial: "off"` only writes when the respondent completes.
-- `saveError` leaves the Model mounted, and `stale` means the last
-  compare-and-swap write lost to another update. Call `reload()` to hydrate the
-  stored record again.
+## Includes
 
-## Bind Creator autosave
+- `useSurveyResponse()` and `bindSurveyModel()` for fill sessions
+- `useSurveyDraft()` and `bindSurveyCreator()` for Creator autosave
+- `createFillClient()` and `createEditorClient()` from `@dimah-survey/core`
+- stale-write state and compare-and-swap support
+- file/signature setup that keeps bytes in your application
 
-`useSurveyDraft()` and `bindSurveyCreator()` point Creator autosave at
-`saveSurvey`. They update `draftJson` only; `publishSurvey` remains a separate,
-explicit action.
+`partial: "page"` saves the complete SurveyJS data object on page next.
+`partial: "off"` writes only on completion. Failed writes leave the model
+mounted; `reload()` hydrates the stored row after `STALE_UPDATE`.
 
-Pass the `updatedAt` from the server read that created the Creator instance so
-the binding can protect writes with `expectedUpdatedAt`.
+## Survey Creator
 
-## Files
+Install `survey-creator-core` and `survey-creator-react` in the application.
+`useSurveyDraft()` sends Creator autosave to `draftJson`; publishing remains a
+separate editor operation.
+
+## File questions
 
 File and signature questions set `storeDataAsText` to `false`. Handle file
 upload, download, and deletion on the SurveyJS model in your application; the
-response data stores the URL or locator your handler returns, never file bytes.
+response stores the URL or locator, never file bytes.
 
 ## Documentation
 
-<https://survey.dimah.dev/docs/react> covers Model bindings.
-[Creator autosave](https://survey.dimah.dev/docs/creator) covers draft writes.
+- [Fill with React](https://survey.dimah.dev/docs/react)
+- [Survey Creator](https://survey.dimah.dev/docs/creator)
 
 ## License
 

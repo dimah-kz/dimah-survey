@@ -1,4 +1,4 @@
 {
-  "title": "Reference",
+  "title": "API reference",
   "pages": ["packages", "configuration", "protocol", "errors"]
 }

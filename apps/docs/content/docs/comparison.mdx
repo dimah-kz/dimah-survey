@@ -1,61 +1,54 @@
 ---
-title: Is it the right fit?
-description: Choose dimah-survey, SurveyJS alone, or a hosted survey product.
+title: When to use dimah-survey
+description: Decide whether your SurveyJS application needs a server-owned response lifecycle.
 icon: Scale
 ---
 
-dimah-survey is a backend lifecycle layer for SurveyJS JSON. It is for teams
-that keep SurveyJS as their schema, Creator, and renderer, but want the server
-to own publish, response snapshots, drafts, and submit validation.
+Use dimah-survey when SurveyJS remains your schema, Creator, and renderer, but
+the server must control which document a respondent sees and preserve that
+document with the response.
 
 <Callout>
-  Choose it for a snapshot requirement, not merely because a survey needs to
-  render in React.
+  The deciding requirement is a durable response snapshot—not simply rendering a
+  SurveyJS form in React.
 </Callout>
 
-## Choose by ownership
+## It is a good fit when
 
-- Choose **dimah-survey** when your server must own publish, per-response
-  snapshots, drafts, and submit validation against the document the respondent
-  started.
-- Choose **SurveyJS alone** when you need the Form Library or Creator and you
-  will design storage, drafts, and submit checks yourself.
-- Choose a **hosted product** when a vendor account, a no-code builder, and
-  its response inbox are the right trade-off.
-- Choose a **typed questionnaire library** when the form is not SurveyJS JSON
-  and you want to define the fields yourself. This repository does not do that.
+- authors need an editable draft and an explicit publish action
+- responses must remain reproducible after the survey changes
+- partial saves, submit, abandon, and reopen belong to one server protocol
+- submit must validate against the definition that started the response
+- your application must keep ownership of auth, data, and deployment
 
-## Capability model
+Choose another approach when you only need the SurveyJS renderer, want a hosted
+inbox and account system, or do not use SurveyJS JSON as the form definition.
 
-| Concern                          | dimah-survey                                         | SurveyJS client                                      | Hosted survey product              |
-| -------------------------------- | ---------------------------------------------------- | ---------------------------------------------------- | ---------------------------------- |
-| Primary model                    | Response lifecycle for SurveyJS JSON                 | JSON survey runtime and optional Creator             | Vendor form and inbox              |
-| Who renders the survey           | Your app, with SurveyJS                              | SurveyJS                                             | The product or its embed           |
-| Per-response definition snapshot | Built in                                             | Your persistence design                              | The product's response model       |
-| Draft, submit, reopen, and CAS   | Built in                                             | Your application                                     | The product's workflow             |
-| Auth and data storage            | Your application                                     | Your application                                     | The vendor account                 |
-| Drag-and-drop authoring          | Creator stays in your app; autosave writes the draft | Survey Creator                                       | Hosted builder                     |
-| Best fit                         | SurveyJS surveys with durable response history       | Schema-driven surveys when you own the server design | Fast collection without your stack |
+## Compare the ownership model
 
-This is an ownership comparison, not a benchmark. A product can use SurveyJS
-for the survey, this library for its lifecycle, and another form library for
-unrelated settings screens.
+| Concern                        | dimah-survey              | SurveyJS alone          | Hosted product   |
+| ------------------------------ | ------------------------- | ----------------------- | ---------------- |
+| Survey renderer                | Your app uses SurveyJS    | Your app uses SurveyJS  | Product or embed |
+| Publish workflow               | Built in                  | Your implementation     | Product workflow |
+| Response definition snapshot   | Built in                  | Your persistence design | Vendor-specific  |
+| Draft, submit, reopen, and CAS | Built in                  | Your implementation     | Product workflow |
+| Authentication                 | Your application          | Your application        | Vendor account   |
+| Data and migrations            | Your application          | Your application        | Vendor storage   |
+| Authoring                      | Creator stays in your app | Survey Creator          | Hosted builder   |
 
-## What dimah-survey deliberately leaves out
+This compares responsibility, not performance. The same application can use
+SurveyJS with dimah-survey for surveys and a different form library for
+unrelated UI.
+
+## Deliberate non-goals
 
 dimah-survey does not render questions, ship Creator, define question types,
-store file bytes, or provide accounts, dashboards, PDF, or an analytics
-warehouse. SurveyJS Analytics and PDF can read a response's `definition` and
-`data`; do not flatten results against the live draft.
+store file bytes, or provide accounts, dashboards, PDF generation, or an
+analytics warehouse. It also has no plugin system and no survey-version table;
+`response.definition` is the historical record.
 
-There is no plugin slot and no survey version table. The response snapshot is
-the history.
+SurveyJS Analytics or PDF tooling can consume each response's `definition` and
+`data`. Do not interpret old response data against the current survey draft.
 
-For the concrete boundaries, read [Integration](/docs/integration),
-[Persistence](/docs/persistence), [Security](/docs/security), and
-[Responses](/docs/responses).
-
-## Sources
-
-- [SurveyJS Form Library overview](https://surveyjs.io/form-library/documentation/overview)
-- [Survey Creator overview](https://surveyjs.io/survey-creator/documentation/overview)
+Next, review the concrete [package boundaries](/docs/packages) or build the
+[quickstart](/docs/quickstart).

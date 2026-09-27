@@ -1,10 +1,11 @@
 {
   "name": "@dimah-survey/react",
-  "version": "0.0.0",
-  "description": "React session hook that binds a survey-core Model to the dimah-survey lifecycle",
+  "version": "0.1.0",
+  "description": "React bindings for SurveyJS responses and Creator drafts",
   "keywords": [
     "survey",
     "surveyjs",
+    "survey-creator",
     "react",
     "react-hooks",
     "typescript"

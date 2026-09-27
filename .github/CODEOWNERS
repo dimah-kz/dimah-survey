@@ -1,1 +1,20 @@
+# Last matching pattern wins. The default owner is first; narrower paths override it.
+
 * @dimah-kz
+
+# Published packages
+/packages/core/ @dimah-kz
+/packages/server/ @dimah-kz
+/packages/react/ @dimah-kz
+/packages/db/ @dimah-kz
+
+# Public docs, example, and shared tooling
+/apps/docs/ @dimah-kz
+/docs/ @dimah-kz
+/examples/ @dimah-kz
+/tooling/ @dimah-kz
+
+# Release and repository automation
+/.github/ @dimah-kz
+/.tegami/ @dimah-kz
+/scripts/tegami.mts @dimah-kz

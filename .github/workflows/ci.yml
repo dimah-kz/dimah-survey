@@ -5,6 +5,7 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -13,11 +14,7 @@ concurrency:
 permissions:
   contents: read
 
-# Remote cache needs a Vercel `TURBO_TOKEN` Actions secret. Until one is set,
-# jobs share a local .turbo cache via actions/cache.
-env:
-  TURBO_TEAM: ${{ vars.TURBO_TEAM }}
-
+# Jobs share a local .turbo cache via actions/cache.
 jobs:
   quality:
     name: Lint & Format
@@ -54,6 +51,7 @@ jobs:
           persist-credentials: false
 
       - uses: dorny/paths-filter@v4
+        if: github.event_name != 'workflow_dispatch'
         id: filter
         with:
           filters: |
@@ -64,17 +62,23 @@ jobs:
               - 'pnpm-workspace.yaml'
               - 'turbo.json'
               - 'package.json'
+              - '.github/workflows/ci.yml'
+              - '.github/actions/**'
 
       - name: Resolve Turbo affected range
-        if: steps.filter.outputs.packages == 'true'
+        if: github.event_name != 'workflow_dispatch' && steps.filter.outputs.packages == 'true'
         uses: ./.github/actions/turbo-affected-range
 
       - name: Setup
-        if: steps.filter.outputs.packages == 'true'
+        if: github.event_name == 'workflow_dispatch' || steps.filter.outputs.packages == 'true'
         uses: ./.github/actions/setup
 
       - name: Build, test, and typecheck packages
-        if: steps.filter.outputs.packages == 'true'
+        if: github.event_name == 'workflow_dispatch'
+        run: pnpm turbo run build test check-types --filter="./packages/*"
+
+      - name: Build, test, and typecheck affected packages
+        if: github.event_name != 'workflow_dispatch' && steps.filter.outputs.packages == 'true'
         run: pnpm turbo run build test check-types --affected --filter="./packages/*"
 
   docs:
@@ -87,6 +91,7 @@ jobs:
           persist-credentials: false
 
       - uses: dorny/paths-filter@v4
+        if: github.event_name != 'workflow_dispatch'
         id: filter
         with:
           filters: |
@@ -97,15 +102,17 @@ jobs:
               - 'turbo.json'
               - 'package.json'
               - 'prettier.config.mjs'
+              - '.github/workflows/ci.yml'
+              - '.github/actions/**'
 
       - name: Setup
-        if: steps.filter.outputs.docs == 'true'
+        if: github.event_name == 'workflow_dispatch' || steps.filter.outputs.docs == 'true'
         uses: ./.github/actions/setup
 
       - name: Typecheck docs
-        if: steps.filter.outputs.docs == 'true'
+        if: github.event_name == 'workflow_dispatch' || steps.filter.outputs.docs == 'true'
         run: pnpm --filter docs check-types
 
       - name: Build docs
-        if: steps.filter.outputs.docs == 'true'
+        if: github.event_name == 'workflow_dispatch' || steps.filter.outputs.docs == 'true'
         run: pnpm --filter docs build

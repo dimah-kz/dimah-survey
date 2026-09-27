@@ -3,6 +3,9 @@ contact_links:
   - name: Documentation
     url: https://survey.dimah.dev
     about: Guides, the protocol reference, and package docs.
-  - name: Security reports
+  - name: Ask a question
+    url: https://github.com/dimah-kz/dimah-survey/discussions
+    about: Usage questions belong in Discussions, not in an issue.
+  - name: Security report
     url: https://github.com/dimah-kz/dimah-survey/security/advisories/new
-    about: Please report security vulnerabilities privately.
+    about: Report a vulnerability privately. Do not open a public issue.

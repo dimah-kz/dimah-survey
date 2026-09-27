@@ -2,6 +2,17 @@
 
 Thanks for your interest in contributing to this project.
 
+## Where to ask
+
+| Topic                  | Where                                                               |
+| ---------------------- | ------------------------------------------------------------------- |
+| Documentation          | [survey.dimah.dev](https://survey.dimah.dev)                        |
+| Usage question         | [Discussions](https://github.com/dimah-kz/dimah-survey/discussions) |
+| Bug or feature         | Issue forms (blank issues are disabled)                             |
+| Security vulnerability | [SECURITY.md](./SECURITY.md)                                        |
+
+Search open issues and discussions before opening a new one.
+
 ## Prerequisites
 
 - Node.js 24+
@@ -34,7 +45,10 @@ pnpm --filter @dimah-survey/core check-types
 
 ## Documentation
 
-Package READMEs are concise npm entry points. The public site is [survey.dimah.dev](https://survey.dimah.dev), sourced from `apps/docs` (Fumadocs). Maintainer checklists under `docs/agents/` apply when changing published behavior:
+Package READMEs are concise npm entry points. The public site is
+[survey.dimah.dev](https://survey.dimah.dev), sourced from `apps/docs`
+(Fumadocs). Maintainer checklists under `docs/agents/` apply when changing
+published behavior:
 
 - `packages.md` for protocols, endpoints, and validation
 - `architecture.md` for package boundaries
@@ -42,21 +56,31 @@ Package READMEs are concise npm entry points. The public site is [survey.dimah.d
 
 Do not hand-edit package `CHANGELOG.md` files or `.tegami/publish-lock.yaml`.
 
-The snapshot test in `packages/server/src/lifecycle.test.ts` is the template for every new adapter. A later publish must not change an existing response definition.
+`packages/server/src/store.contract.test.ts` protects the lifecycle invariants.
+`packages/server/src/adapters/adapters.test.ts` is the template for runtime
+adapter coverage. A later publish must never change an existing response
+definition.
 
 ## Issues
 
-Use the **Bug report**, **Feature request**, or **Documentation** forms. Do not file public issues for security problems — see [SECURITY.md](./SECURITY.md).
+Use the **Bug report**, **Feature request**, or **Documentation** forms. New
+issues are labeled `needs triage`. Do not file public issues for security
+problems — see [SECURITY.md](./SECURITY.md).
 
-PRs that touch a published package are labeled `pkg:core`, `pkg:server`, `pkg:db`, or `pkg:react` from the changed paths.
+Pull requests are labeled from the paths they change: `pkg:core`,
+`pkg:server`, `pkg:db`, `pkg:react`, `documentation`, `area:ci`,
+`area:example`, `area:tooling`, `dependencies`, or `release`.
 
 ## Contribution workflow
 
+`main` is the release branch. Changes land through a pull request. CI must
+pass, history stays linear, and the merge method is squash.
+
 1. Fork the repository and create a branch from `main`.
 2. Make your changes with focused commits.
-3. Add or update tests/docs where needed.
+3. Add or update tests and docs where needed.
 4. Add a Tegami changelog for user-facing package changes.
-5. Open a Pull Request.
+5. Open a pull request.
 
 ## Changelogs (required for package changes)
 
