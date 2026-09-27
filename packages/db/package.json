@@ -1,6 +1,6 @@
 {
   "name": "@dimah-survey/db",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "SQL schema and FumaDB store for the dimah-survey response lifecycle",
   "keywords": [
     "survey",
