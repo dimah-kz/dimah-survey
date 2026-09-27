@@ -16,6 +16,7 @@ catalog:
   drizzle-orm: 1.0.0-rc.4
   drizzle-kit: 1.0.0-rc.4
   eslint: ^10.11.0
+  eslint-config-next: 16.3.6
   happy-dom: ^20.14.5
   fumadb: ^0.6.0
   eslint-config-prettier: ^10.1.8
@@ -28,6 +29,7 @@ catalog:
   eslint-plugin-unicorn: ^76.0.0
   globals: ^17.12.0
   lefthook: ^2.1.14
+  next: 16.3.6
   prettier: ^3.9.9
   prettier-plugin-packagejson: ^3.0.2
   prettier-plugin-tailwindcss: ^0.8.1
@@ -47,6 +49,16 @@ catalog:
   typescript-eslint: ^8.70.1
   vitest: ^5.0.2
   zod: ^4.6.5
+
+# TypeScript 7 has no compiler API, and eslint-config-next's React plugin
+# crashes on ESLint 10. Next apps take the API shim and ESLint 9 from these
+# catalogs. Default-catalog `typescript` and `eslint` stay 7 and 10 for the libraries.
+catalogs:
+  typescript6:
+    typescript: "npm:@typescript/typescript6@^6.0.2"
+    "@typescript/native": "npm:typescript@7.0.2"
+  next:
+    eslint: 9.39.5
 
 allowBuilds:
   esbuild: true

@@ -24,7 +24,7 @@
     "eslint-plugin-turbo": "catalog:",
     "eslint-plugin-unicorn": "catalog:",
     "globals": "catalog:",
-    "typescript": "npm:@typescript/typescript6@^6.0.2",
+    "typescript": "catalog:typescript6",
     "typescript-eslint": "catalog:"
   }
 }

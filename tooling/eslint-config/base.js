@@ -282,8 +282,8 @@ export const baseConfig = defineConfig(
     name: "workspace/pnpm-catalog-overrides",
     files: ["package.json"],
     rules: {
-      // Alias to a TS 6 build for typescript-eslint (`npm:`), not the catalog TS 7.
-      // Shared deps already use `catalog:`; example-only UI packages stay local.
+      // `catalog:typescript6` is the TypeScript 6 API. Default-catalog `typescript` is 7 and owns `tsc`.
+      // Example-only UI packages stay outside the catalog.
       "pnpm/json-enforce-catalog": "off",
     },
   },
@@ -294,6 +294,11 @@ export const baseConfig = defineConfig(
     rules: {
       // `apps/*` is product docs; keep valid even if the glob is empty.
       "pnpm/yaml-valid-packages": "off",
+      // Next apps need ESLint 9 and the TypeScript 6 API beside the default catalog.
+      "pnpm/yaml-no-duplicate-catalog-item": [
+        "error",
+        { allow: ["eslint", "typescript"] },
+      ],
     },
   },
 );

@@ -52,8 +52,8 @@ const documentationLinks = [
 export default function HomePage() {
   return (
     <main id="main" className="relative isolate overflow-hidden">
-      <div className="landing-ambient pointer-events-none absolute inset-x-0 top-0 -z-20 h-[52rem]" />
-      <div className="landing-grid pointer-events-none absolute inset-x-0 top-0 -z-10 h-[46rem] [mask-image:linear-gradient(to_bottom,black,transparent)] opacity-70" />
+      <div className="landing-ambient pointer-events-none absolute inset-x-0 top-0 -z-20 h-208" />
+      <div className="landing-grid pointer-events-none absolute inset-x-0 top-0 -z-10 h-184 mask-[linear-gradient(to_bottom,black,transparent)] opacity-70" />
 
       <section
         aria-labelledby="hero-heading"
@@ -193,7 +193,7 @@ function LifecycleContract() {
             />
           </div>
 
-          <div className="mt-5 rounded-xl border border-fd-primary/20 bg-fd-primary/[0.055] p-4">
+          <div className="mt-5 rounded-xl border border-fd-primary/20 bg-fd-primary/5.5 p-4">
             <div className="flex items-center gap-2 text-xs font-medium text-fd-foreground">
               <LockKeyhole className="size-3.5 text-fd-primary" aria-hidden />
               Submit validates the stored definition
