@@ -2,7 +2,7 @@
 
 Explore the package you are changing. This file is what to **keep in sync**, not an API reference.
 
-Still under construction. Stability policy: [architecture.md](./architecture.md) **Pre-release**.
+Published on npm and still before `1.0.0`. Stability policy: [architecture.md](./architecture.md) **Before 1.0**.
 
 ## Protocol
 

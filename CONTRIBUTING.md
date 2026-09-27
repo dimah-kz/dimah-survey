@@ -90,21 +90,13 @@ When your PR changes behavior, API, or package output, add a changelog:
 pnpm tegami
 ```
 
-Then choose the package(s) / `group:dimah-survey` and bump type:
+Then choose `group:dimah-survey` and a bump. The packages are on npm and still before `1.0.0`. See [docs/agents/architecture.md](./docs/agents/architecture.md) **Before 1.0**. Ship the current API in the same change.
 
-- `patch`: bug fixes, small improvements, non-breaking behavior updates.
-- `minor`: new backward-compatible features.
-- `major`: breaking changes.
+- `patch` — a fix that leaves existing call sites working.
+- `minor` — a feature, or any change existing consumer code must follow.
+- `major` — publishes `1.0.0`. Leave it unused until that release.
 
 A changelog file is created in `.tegami/` and must be committed with your PR. CI comments a release preview on the PR.
-
-## How to choose bump type (SemVer standard)
-
-The packages are still under construction and are not on npm. See [docs/agents/architecture.md](./docs/agents/architecture.md) **Pre-release**. Choose a bump for the changelog; do not keep an old API to avoid `major`.
-
-- Choose `patch` if consumers can upgrade safely without changing their code.
-- Choose `minor` for additive features (new exports, new options with defaults, improved behavior).
-- Choose `major` when existing consumer code may break or output contracts change.
 
 ## Pull Request checklist
 

@@ -12,6 +12,8 @@ handler and a typed in-process API.
 npm i @dimah-survey/server survey-core
 ```
 
+Published on npm, still before `1.0.0`. A release may change the API.
+
 ## Create the backend
 
 Create two instances over one store. Fill always requires a principal; editor

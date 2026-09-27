@@ -22,7 +22,7 @@ pnpm + Turbo. From the root: `pnpm lint`, `pnpm check-types`, `pnpm test`.
 - Auth lives in the consumer `guard`. Persistence is the `database` adapter. `memoryAdapter()` is in `server`. `db(client)` from `@dimah-survey/db` is the SQL store. No ORM inside `server`.
 - Do not wrap or re-export the SurveyJS renderer. The React fill hook, when it exists, only hydrates a Model from the snapshot.
 - Published packages are `@dimah-survey/core`, `server`, `react`, and `db`. They version together through Tegami (`docs/agents/release.md`). Build output is `dist` via tsup. Do not hand-edit `CHANGELOG.md` or `.tegami/publish-lock.yaml`.
-- Still under construction and not on npm. Ship the current design and delete the previous API in the same change. Policy: [architecture.md](docs/agents/architecture.md) **Pre-release** — replace that section after the first publish.
+- Published on npm and still before `1.0.0`. Ship the current design and delete the previous API in the same change. Policy: [architecture.md](docs/agents/architecture.md) **Before 1.0**.
 - Commit when asked. Never `git push` unless the human explicitly asks.
 
 `examples/next` is a Next.js consumer (Creator, fill, responses) on SQLite through Drizzle and `@dimah-survey/db`. It is not a published package. `apps/docs` is the Fumadocs site published at https://survey.dimah.dev and is not a published package. `docs/agents/` = these checklists. `tooling/` = shared ESLint, TypeScript, tsup, and Vitest config.

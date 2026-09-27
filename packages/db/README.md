@@ -12,6 +12,8 @@ This package supplies the FumaDB schema and store behavior.
 npm i @dimah-survey/db fumadb
 ```
 
+Published on npm, still before `1.0.0`. A release may change the API.
+
 ## Create the store
 
 ```ts

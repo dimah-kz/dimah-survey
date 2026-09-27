@@ -16,6 +16,6 @@
 - [ ] Tests pass (`pnpm test`)
 - [ ] Docs updated (if needed)
 - [ ] Changelog added under `.tegami/` when a published package's API, behavior, or build output changes
-- [ ] Breaking changes use a `major` Tegami bump
+- [ ] Before `1.0.0`, a consumer-contract change uses a `minor` Tegami bump
 
 Security issues belong in a [private advisory](https://github.com/dimah-kz/dimah-survey/security/advisories/new), not in this pull request.

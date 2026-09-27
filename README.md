@@ -16,6 +16,8 @@ save drafts, and validate submissions against that same snapshot.
 npm i @dimah-survey/server @dimah-survey/react survey-core survey-react-ui
 ```
 
+Published on npm, still before `1.0.0`. A release may change the API.
+
 ## Why it exists
 
 SurveyJS owns the schema, Creator, question behavior, and renderer. Your
