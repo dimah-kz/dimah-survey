@@ -24,7 +24,7 @@ const database = db(DimahSurveyDB.client(adapter));
 
 `adapter` is `drizzleAdapter`, `prismaAdapter`, or `kyselyAdapter` from
 `fumadb/adapters`. Pass the same `database` to both audiences. The
-[Database](https://survey.dimah.dev/docs/persistence) page has each ORM.
+[Database](https://survey.dimah.dev/docs/database) page has each ORM.
 
 ## Own the schema
 
@@ -48,7 +48,7 @@ They are source references, not runtime ORM models.
 
 `createCli` takes `DimahSurveyDB.client(adapter)`. That client only emits a
 file. Drizzle, Prisma, and Kysely scripts are on
-[Persistence](https://survey.dimah.dev/docs/persistence).
+[Database](https://survey.dimah.dev/docs/database).
 
 ```bash
 dimah-survey generate 1.0.0 -o ./db/survey.ts
@@ -66,7 +66,7 @@ open-draft predicate, so apply the exported `indexes.sql` separately.
 
 ## Documentation
 
-- [Persistence](https://survey.dimah.dev/docs/persistence)
+- [Database](https://survey.dimah.dev/docs/database)
 - [Package map](https://survey.dimah.dev/docs/packages)
 
 ## License

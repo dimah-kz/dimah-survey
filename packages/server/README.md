@@ -69,7 +69,7 @@ for Node.js, Express, Hono, Fastify, Elysia, and SvelteKit.
 
 - [Mount the server](https://survey.dimah.dev/docs/integration)
 - [Authorization and identity](https://survey.dimah.dev/docs/security)
-- [Persistence](https://survey.dimah.dev/docs/persistence)
+- [Database](https://survey.dimah.dev/docs/database)
 
 ## License
 

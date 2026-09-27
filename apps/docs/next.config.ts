@@ -29,6 +29,20 @@ const nextConfig: NextConfig = {
       { source: "/llms.mdx/:path*", headers: [cors, describedBy] },
     ];
   },
+  async redirects() {
+    return [
+      {
+        source: "/docs/persistence",
+        destination: "/docs/database",
+        permanent: true,
+      },
+      {
+        source: "/docs/persistence.md",
+        destination: "/docs/database.md",
+        permanent: true,
+      },
+    ];
+  },
   async rewrites() {
     return [
       { source: "/docs.md", destination: "/llms.mdx/docs" },
