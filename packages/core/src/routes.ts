@@ -7,7 +7,9 @@ const ABSOLUTE_URL = /^[a-z][a-z0-9+.-]*:/i;
 
 export function normalizeSurveyApiBasePath(basePath = SURVEY_API_BASE_PATH) {
   const trimmed = basePath.trim() || SURVEY_API_BASE_PATH;
-  const stripped = trimmed.replace(/\/+$/, "") || SURVEY_API_BASE_PATH;
+  let end = trimmed.length;
+  while (end > 0 && trimmed[end - 1] === "/") end -= 1;
+  const stripped = trimmed.slice(0, end) || SURVEY_API_BASE_PATH;
   if (ABSOLUTE_URL.test(stripped)) return stripped;
   return stripped.startsWith("/") ? stripped : `/${stripped}`;
 }
