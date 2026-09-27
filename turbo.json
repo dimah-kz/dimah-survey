@@ -17,14 +17,19 @@
     },
     "check-types": {
       "dependsOn": ["^build"],
-      "inputs": ["$TURBO_DEFAULT$", "../../tooling/typescript-config/**"]
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "../../tooling/typescript-config/**",
+        "../../tooling/survey-store-contract/**"
+      ]
     },
     "test": {
       "dependsOn": ["^build"],
       "inputs": [
         "$TURBO_DEFAULT$",
         "vitest.config.*",
-        "../../tooling/vitest-config/**"
+        "../../tooling/vitest-config/**",
+        "../../tooling/survey-store-contract/**"
       ]
     }
   }

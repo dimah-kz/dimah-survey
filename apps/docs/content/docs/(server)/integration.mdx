@@ -1,0 +1,170 @@
+---
+title: Integration
+description: Create dimahSurvey(), mount both handlers, and call the in-process API.
+icon: Server
+---
+
+`@dimah-survey/server` creates one instance per audience. Each instance has an
+HTTP `handler` and an in-process `api`. Persistence is required. SQL is not.
+
+```ts title="lib/survey.ts"
+import {
+  SURVEY_API_BASE_PATH,
+  SURVEY_EDITOR_API_BASE_PATH,
+  dimahSurvey,
+  guardAnonymous,
+  memoryAdapter,
+} from "@dimah-survey/server";
+
+const database = memoryAdapter();
+
+export const editor = dimahSurvey({
+  audience: "editor",
+  database,
+  basePath: SURVEY_EDITOR_API_BASE_PATH,
+});
+
+export const fill = dimahSurvey({
+  audience: "fill",
+  database,
+  basePath: SURVEY_API_BASE_PATH,
+  guard: guardAnonymous(),
+});
+```
+
+Both instances must share the same `database`. `basePath` must match the
+client `baseURL` for that audience. Defaults are `/api/survey` for fill and
+`/api/admin/survey` for the editor.
+
+A fill instance without `guard` throws at startup. An editor guard returns
+nothing, or throws. See [Security](/docs/security).
+
+`memoryAdapter()` is for tests and local development. Choose SQL or a custom
+`SurveyStore` in [Persistence](/docs/persistence).
+
+## Mount the handlers
+
+```ts title="app/api/survey/[[...path]]/route.ts"
+import { toNextJsHandler } from "@dimah-survey/server/next";
+import { fill } from "@/lib/survey";
+
+export const { GET, POST, PUT, PATCH, DELETE } = toNextJsHandler(fill);
+```
+
+Mount the editor the same way at `app/api/admin/survey/[[...path]]/route.ts`
+with `toNextJsHandler(editor)`.
+
+Supported adapters are `next`, `node`, `express`, `hono`, `fastify`, `elysia`,
+and `svelte-kit`. Each adapter forwards `handler`. It does not interpret
+SurveyJS JSON.
+
+| Runtime   | Import                                                   |
+| --------- | -------------------------------------------------------- |
+| Express   | `@dimah-survey/server/express` → `toExpressHandler`      |
+| Hono      | `@dimah-survey/server/hono` → `toHonoHandler`            |
+| Fastify   | `@dimah-survey/server/fastify` → `toFastifyHandler`      |
+| Elysia    | `@dimah-survey/server/elysia` → `toElysiaHandler`        |
+| SvelteKit | `@dimah-survey/server/svelte-kit` → `toSvelteKitHandler` |
+| Node.js   | `@dimah-survey/server/node` → `toNodeHandler`            |
+
+<Callout type="warn">
+  Express and Fastify must pass an unread request body to the adapter. Mount the
+  dimah-survey route before `express.json()`, or configure Fastify so its JSON
+  parser does not consume the survey path first.
+</Callout>
+
+<Tabs items={["Express", "Hono", "SvelteKit", "Node.js"]}>
+  <Tab value="Express">
+
+```ts
+import express from "express";
+import { toExpressHandler } from "@dimah-survey/server/express";
+import { fill } from "./survey";
+
+const app = express();
+app.all("/api/survey/*", toExpressHandler(fill));
+app.use(express.json());
+```
+
+  </Tab>
+  <Tab value="Hono">
+
+```ts
+import { Hono } from "hono";
+import { toHonoHandler } from "@dimah-survey/server/hono";
+import { fill } from "./survey";
+
+const app = new Hono();
+app.on(
+  ["GET", "POST", "PUT", "PATCH", "DELETE"],
+  "/api/survey/*",
+  toHonoHandler(fill),
+);
+```
+
+  </Tab>
+  <Tab value="SvelteKit">
+
+```ts title="src/routes/api/survey/[...path]/+server.ts"
+import { toSvelteKitHandler } from "@dimah-survey/server/svelte-kit";
+import { fill } from "$lib/survey";
+
+const handler = toSvelteKitHandler(fill);
+export const GET = handler;
+export const POST = handler;
+export const PUT = handler;
+export const PATCH = handler;
+export const DELETE = handler;
+```
+
+  </Tab>
+  <Tab value="Node.js">
+
+```ts
+import { createServer } from "node:http";
+import { toNodeHandler } from "@dimah-survey/server/node";
+import { fill } from "./survey";
+
+createServer(toNodeHandler(fill)).listen(3000);
+```
+
+  </Tab>
+</Tabs>
+
+Mount the editor handler on its own path. One handler cannot serve both
+audiences.
+
+## Call the API in process
+
+`fill.api` and `editor.api` take `{ body }` or `{ query }`. They do not perform
+an HTTP round trip. Pass `headers` when `guard` needs the incoming request.
+
+The browser client takes flat objects. Do not pass the server instance into
+the client.
+
+```ts
+import { headers } from "next/headers";
+
+await editor.api.publishSurvey({
+  body: { id: "welcome" },
+});
+
+await fill.api.startResponse({
+  body: { surveyId: "welcome" },
+  headers: await headers(),
+});
+```
+
+Pass `headers` from `next/headers`, or a `Request`, when `guard` reads the
+session. Without them the in-process call has no cookie.
+
+```ts
+import { createFillClient } from "@dimah-survey/core";
+
+const fillClient = createFillClient({ baseURL: "/api/survey" });
+await fillClient.startResponse({ surveyId: "welcome" });
+```
+
+Browsers may import `@dimah-survey/react` or `@dimah-survey/core`. Servers
+import `@dimah-survey/server`. The route catalog is in
+[Protocol](/docs/protocol).

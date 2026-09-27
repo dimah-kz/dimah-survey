@@ -3,11 +3,14 @@ import { describe, expect, it } from "vitest";
 import { SURVEY_ERROR_CODES } from "./error-codes";
 import {
   DEFAULT_SURVEY_SETTINGS,
+  assertReopenAllowed,
+  assertResponseLimit,
   assertSurveyAccepting,
   existingResponseForStart,
   readSurveySettings,
+  toPublishedSurvey,
 } from "./settings";
-import type { ResponseRecord } from "./types";
+import type { ResponseRecord, SurveyRecord } from "./types";
 
 const now = Date.parse("2026-09-27T12:00:00.000Z");
 
@@ -25,14 +28,68 @@ function response(id: string): ResponseRecord {
   };
 }
 
-function closed(settings: Parameters<typeof assertSurveyAccepting>[0]) {
-  try {
-    assertSurveyAccepting(settings, now);
-  } catch (error) {
-    return error;
-  }
-  return undefined;
+function survey(patch: Partial<SurveyRecord> = {}): SurveyRecord {
+  return {
+    id: "pulse",
+    slug: "pulse",
+    status: "active",
+    draftJson: { title: "draft" },
+    publishedJson: { title: "live" },
+    publishedAt: "2026-09-27T00:00:00.000Z",
+    settings: DEFAULT_SURVEY_SETTINGS,
+    createdAt: "2026-09-27T00:00:00.000Z",
+    updatedAt: "2026-09-27T00:00:00.000Z",
+    ...patch,
+  };
 }
+
+describe("readSurveySettings", () => {
+  it("fills missing and invalid values from the defaults", () => {
+    expect(readSurveySettings(null)).toEqual(DEFAULT_SURVEY_SETTINGS);
+    expect(readSurveySettings([])).toEqual(DEFAULT_SURVEY_SETTINGS);
+    expect(readSurveySettings("nope")).toEqual(DEFAULT_SURVEY_SETTINGS);
+    expect(
+      readSurveySettings({
+        responses: "single",
+        reopen: false,
+        opensAt: "2026-09-01T00:00:00.000Z",
+        closesAt: "2026-10-01T00:00:00.000Z",
+        maxResponses: 2,
+      }),
+    ).toEqual({
+      responses: "single",
+      reopen: false,
+      opensAt: "2026-09-01T00:00:00.000Z",
+      closesAt: "2026-10-01T00:00:00.000Z",
+      maxResponses: 2,
+    });
+    expect(
+      readSurveySettings({ responses: "single", maxResponses: 0 }),
+    ).toEqual({
+      ...DEFAULT_SURVEY_SETTINGS,
+      responses: "single",
+    });
+    expect(
+      readSurveySettings({ responses: "single", maxResponses: 1.5 }),
+    ).toEqual({
+      ...DEFAULT_SURVEY_SETTINGS,
+      responses: "single",
+    });
+  });
+
+  it("drops the whole object when the window cannot be parsed", () => {
+    expect(
+      readSurveySettings({ responses: "single", opensAt: "yesterday" }),
+    ).toEqual(DEFAULT_SURVEY_SETTINGS);
+    expect(
+      readSurveySettings({
+        responses: "single",
+        opensAt: "2026-10-01T00:00:00.000Z",
+        closesAt: "2026-09-01T00:00:00.000Z",
+      }),
+    ).toEqual(DEFAULT_SURVEY_SETTINGS);
+  });
+});
 
 describe("assertSurveyAccepting", () => {
   it("treats opensAt and closesAt as inclusive", () => {
@@ -43,18 +100,63 @@ describe("assertSurveyAccepting", () => {
         now,
       ),
     ).not.toThrow();
-    expect(
-      closed({
-        ...DEFAULT_SURVEY_SETTINGS,
-        opensAt: new Date(now + 1).toISOString(),
+    expect(() =>
+      assertSurveyAccepting(
+        { ...DEFAULT_SURVEY_SETTINGS, opensAt: "not-a-date" },
+        now,
+      ),
+    ).not.toThrow();
+    expect(() =>
+      assertSurveyAccepting(
+        {
+          ...DEFAULT_SURVEY_SETTINGS,
+          opensAt: new Date(now + 1).toISOString(),
+        },
+        now,
+      ),
+    ).toThrow(
+      expect.objectContaining({ code: SURVEY_ERROR_CODES.SURVEY_CLOSED.code }),
+    );
+    expect(() =>
+      assertSurveyAccepting(
+        {
+          ...DEFAULT_SURVEY_SETTINGS,
+          closesAt: new Date(now - 1).toISOString(),
+        },
+        now,
+      ),
+    ).toThrow(
+      expect.objectContaining({ code: SURVEY_ERROR_CODES.SURVEY_CLOSED.code }),
+    );
+  });
+});
+
+describe("assertResponseLimit", () => {
+  it("counts only a positive cap", () => {
+    expect(() =>
+      assertResponseLimit(DEFAULT_SURVEY_SETTINGS, 100),
+    ).not.toThrow();
+    expect(() =>
+      assertResponseLimit({ ...DEFAULT_SURVEY_SETTINGS, maxResponses: 2 }, 1),
+    ).not.toThrow();
+    expect(() =>
+      assertResponseLimit({ ...DEFAULT_SURVEY_SETTINGS, maxResponses: 2 }, 2),
+    ).toThrow(
+      expect.objectContaining({ code: SURVEY_ERROR_CODES.RESPONSE_LIMIT.code }),
+    );
+  });
+});
+
+describe("assertReopenAllowed", () => {
+  it("rejects a survey that disallows reopen", () => {
+    expect(() => assertReopenAllowed(DEFAULT_SURVEY_SETTINGS)).not.toThrow();
+    expect(() =>
+      assertReopenAllowed({ ...DEFAULT_SURVEY_SETTINGS, reopen: false }),
+    ).toThrow(
+      expect.objectContaining({
+        code: SURVEY_ERROR_CODES.RESPONSE_CLOSED.code,
       }),
-    ).toMatchObject({ code: SURVEY_ERROR_CODES.SURVEY_CLOSED.code });
-    expect(
-      closed({
-        ...DEFAULT_SURVEY_SETTINGS,
-        closesAt: new Date(now - 1).toISOString(),
-      }),
-    ).toMatchObject({ code: SURVEY_ERROR_CODES.SURVEY_CLOSED.code });
+    );
   });
 });
 
@@ -70,6 +172,13 @@ describe("existingResponseForStart", () => {
         latest,
       }),
     ).toBeNull();
+    expect(
+      existingResponseForStart({
+        settings: { ...DEFAULT_SURVEY_SETTINGS, responses: "single" },
+        openDraft,
+        latest,
+      }),
+    ).toBeNull();
   });
 
   it("returns the latest row for a single response and the open draft otherwise", () => {
@@ -81,6 +190,14 @@ describe("existingResponseForStart", () => {
         latest,
       }),
     ).toBe(latest);
+    expect(
+      existingResponseForStart({
+        settings: { ...DEFAULT_SURVEY_SETTINGS, responses: "single" },
+        respondentId: "user-1",
+        openDraft,
+        latest: null,
+      }),
+    ).toBeNull();
     expect(
       existingResponseForStart({
         settings: DEFAULT_SURVEY_SETTINGS,
@@ -100,14 +217,21 @@ describe("existingResponseForStart", () => {
   });
 });
 
-describe("readSurveySettings", () => {
-  it("fills missing and invalid values from the defaults", () => {
-    expect(readSurveySettings(null)).toEqual(DEFAULT_SURVEY_SETTINGS);
-    expect(
-      readSurveySettings({ responses: "single", maxResponses: 0 }),
-    ).toEqual({
-      ...DEFAULT_SURVEY_SETTINGS,
-      responses: "single",
+describe("toPublishedSurvey", () => {
+  it("returns the live document without the editor draft", () => {
+    expect(toPublishedSurvey(survey())).toEqual({
+      id: "pulse",
+      slug: "pulse",
+      publishedJson: { title: "live" },
+      publishedAt: "2026-09-27T00:00:00.000Z",
+      settings: DEFAULT_SURVEY_SETTINGS,
     });
+  });
+
+  it("returns null until the survey is active and published", () => {
+    expect(toPublishedSurvey(survey({ status: "draft" }))).toBeNull();
+    expect(toPublishedSurvey(survey({ status: "archived" }))).toBeNull();
+    expect(toPublishedSurvey(survey({ publishedJson: null }))).toBeNull();
+    expect(toPublishedSurvey(survey({ publishedAt: null }))).toBeNull();
   });
 });

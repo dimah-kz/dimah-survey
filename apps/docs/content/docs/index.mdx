@@ -1,13 +1,104 @@
 ---
-title: Hello World
-description: Your first document
+title: Introduction
+description: Server-authoritative response lifecycle for SurveyJS JSON.
+icon: House
 ---
 
-Welcome to the docs! You can start writing documents in `/content/docs`.
+dimah-survey is the response lifecycle for [SurveyJS](https://surveyjs.io/) JSON.
+SurveyJS owns the survey schema, the renderer, and Creator. This library owns
+the editor draft, the published document, the definition copied onto each
+response, drafts, and submit validation against that snapshot.
 
-## What is Next?
+Your application owns authentication, the SurveyJS UI, and the database.
+
+It is not a form renderer, not a hosted survey product, and not a question-type
+system. Question JSON stays SurveyJS JSON.
+
+<Callout>
+  **Start here:** complete [Quickstart](/docs/quickstart), then prepare for
+  production with [Integration](/docs/integration), [Security](/docs/security),
+  and [Persistence](/docs/persistence). Use [Surveys](/docs/surveys),
+  [Settings](/docs/settings), and [Responses](/docs/responses) for the data
+  model.
+</Callout>
+
+<Callout type="warn">
+  `@dimah-survey/*` is not published yet. These pages describe the API in this
+  repository. Until the first release, run the [Next.js
+  example](https://github.com/dimah-kz/dimah-survey/tree/main/examples/next)
+  with `pnpm example`.
+</Callout>
+
+## The model
+
+<Flow
+  label="One response"
+  steps={[
+    { name: "Draft", kind: "data", note: "Creator writes draftJson" },
+    { name: "Publish", kind: "server", note: "Copy onto publishedJson" },
+    { name: "Start", kind: "server", note: "Freeze the definition" },
+    { name: "Fill", kind: "client", note: "SurveyJS renders" },
+    { name: "Submit", kind: "server", note: "Validate the snapshot" },
+  ]}
+/>
+
+`saveSurvey` stores `draftJson` only. `publishSurvey` copies that JSON onto
+`publishedJson`. `startResponse` copies `publishedJson` into
+`response.definition`. Later publishes do not change that copy.
+
+`settings` is a third column: who may respond, whether a submitted row can
+reopen, the open window, and the response cap. It is not SurveyJS JSON and it
+is not copied onto `definition`.
+
+## What you install
+
+| Need                                     | Package                |
+| ---------------------------------------- | ---------------------- |
+| Server instance, handler, and adapters   | `@dimah-survey/server` |
+| Model and Creator bindings               | `@dimah-survey/react`  |
+| Routes, payloads, and a non-React client | `@dimah-survey/core`   |
+| SQL store                                | `@dimah-survey/db`     |
+
+`database` is required on `dimahSurvey()`. SQL is optional: use
+`memoryAdapter()` for tests and local development, or `db()` from
+`@dimah-survey/db` in production.
+
+Mount two handlers that share that store. `audience: "fill"` serves start,
+partial save, and submit. `audience: "editor"` serves the draft, publish, and
+response lists. Neither handler serves the other audience.
+
+`@dimah-survey/react` binds a `survey-core` `Model` and Creator autosave. It
+does not render `<Survey>` or Creator. Those components stay in your app.
+
+## Choose the right page
 
 <Cards>
-  <Card title="Learn more about Next.js" href="https://nextjs.org/docs" />
-  <Card title="Learn more about Fumadocs" href="https://fumadocs.dev" />
+  <Card
+    title="Quickstart"
+    href="/docs/quickstart"
+    description="Publish a survey and render a fill session in Next.js."
+  />
+  <Card
+    title="Comparison"
+    href="/docs/comparison"
+    description="Choose this library, SurveyJS alone, or a hosted product."
+  />
+  <Card
+    title="Surveys"
+    href="/docs/surveys"
+    description="Separate the editor draft from the published document."
+  />
+  <Card
+    title="Responses"
+    href="/docs/responses"
+    description="Understand snapshots, drafts, and submit validation."
+  />
+  <Card
+    title="Example app"
+    href="https://github.com/dimah-kz/dimah-survey/tree/main/examples/next"
+    description="Creator, fill, and stored snapshots in SQLite."
+  />
 </Cards>
+
+For coding agents, fetch [llms.txt](/llms.txt) for the page index or
+[llms-full.txt](/llms-full.txt) for the complete Markdown corpus.

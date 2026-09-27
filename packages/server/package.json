@@ -79,6 +79,7 @@
   "devDependencies": {
     "@types/node": "catalog:",
     "@workspace/eslint-config": "workspace:*",
+    "@workspace/survey-store-contract": "workspace:*",
     "@workspace/tsup-config": "workspace:*",
     "@workspace/typescript-config": "workspace:*",
     "@workspace/vitest-config": "workspace:*",

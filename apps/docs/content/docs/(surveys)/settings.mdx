@@ -1,0 +1,67 @@
+---
+title: Settings
+description: Collection rules for one survey. Not SurveyJS JSON.
+icon: SlidersHorizontal
+---
+
+`settings` decides who may hold a response, whether a closed row can reopen,
+when the survey accepts writes, and how many submitted rows it allows. It is
+not part of SurveyJS JSON. It is not copied onto `response.definition`.
+
+<Callout>
+  Change settings with `saveSurveySettings`. `saveSurvey` does not update that
+  column.
+</Callout>
+
+## Fields
+
+| Field          | Default      | Meaning                                                                  |
+| -------------- | ------------ | ------------------------------------------------------------------------ |
+| `responses`    | `"one-open"` | How an identified respondent reuses rows. Anonymous starts always insert |
+| `reopen`       | `true`       | When `false`, `reopenResponse` throws `RESPONSE_CLOSED`                  |
+| `opensAt`      | `null`       | Inclusive start of the window. `null` means no opening bound             |
+| `closesAt`     | `null`       | Inclusive end of the window. `null` means no closing bound               |
+| `maxResponses` | `null`       | Maximum `submitted` rows. `null` means no cap                            |
+
+`saveSurvey` inserts these defaults and then leaves the column alone.
+`saveSurveySettings` replaces the whole object. Send every field. `closesAt`
+must be later than `opensAt` when both are set. `maxResponses` is a positive
+integer or `null`.
+
+Dates are ISO strings. Invalid values on a stored object fall back to the
+defaults when the server reads them.
+
+## Who gets a new row
+
+Identified `startResponse` follows `responses`:
+
+| `responses`  | When a row already exists                                         |
+| ------------ | ----------------------------------------------------------------- |
+| `"one-open"` | Return the open draft. Insert only when that draft is missing     |
+| `"single"`   | Return the latest row of any status. Insert only when none exists |
+
+Anonymous starts ignore this field and always insert. The response id is the
+only handle. See [Security](/docs/security).
+
+`"single"` can return a submitted or abandoned row. The fill `Model` opens in
+display mode unless you reopen it. See [React](/docs/react).
+
+## The window and the cap
+
+`opensAt` and `closesAt` are inclusive. Outside that window, start, partial
+save, and submit throw `SURVEY_CLOSED`. Abandon, get, and reopen stay
+available. `GET /survey/published` still returns the document, so the client
+can show that the survey is closed.
+
+`maxResponses` counts rows already stored as `submitted`. The check runs before
+a new insert and before submit. At the cap, both fail with `RESPONSE_LIMIT`.
+Returning an existing identified row does not count as a new insert.
+
+## Reopen
+
+`reopen: true` lets `reopenResponse` move a submitted or abandoned row back to
+`draft`. It clears `submittedAt` and does not change `definition` or `data`.
+
+`reopen: false` throws `RESPONSE_CLOSED`. A second open draft for the same
+identified respondent throws `OPEN_DRAFT` even when reopen is allowed.
+Anonymous rows have no respondent, so that check does not apply to them.

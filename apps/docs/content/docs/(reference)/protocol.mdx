@@ -1,0 +1,86 @@
+---
+title: Protocol
+description: HTTP routes, client methods, and in-process API calls.
+icon: Waypoints
+---
+
+Paths and payloads live in `@dimah-survey/core`. Fill defaults to
+`/api/survey`. The editor defaults to `/api/admin/survey`. The suffixes below
+are appended to that base.
+
+Client methods take flat objects. `fill.api` and `editor.api` take `{ query }`
+or `{ body }`. A method called on the wrong audience is not mounted. The
+handler responds with `NOT_FOUND`.
+
+List endpoints default to 50 rows and cap at 100.
+
+## Fill
+
+| Method | Path                | Client                                              | `fill.api`                      |
+| ------ | ------------------- | --------------------------------------------------- | ------------------------------- |
+| `GET`  | `/survey/published` | `getPublishedSurvey(id)`                            | `getPublishedSurvey({ query })` |
+| `POST` | `/response/start`   | `startResponse({ surveyId, respondentId? })`        | `startResponse({ body })`       |
+| `GET`  | `/response`         | `getResponse(id)`                                   | `getResponse({ query })`        |
+| `GET`  | `/responses`        | `listResponses({ ... })`                            | `listResponses({ query })`      |
+| `POST` | `/response/partial` | `savePartial({ id, data, expectedUpdatedAt? })`     | `savePartial({ body })`         |
+| `POST` | `/response/submit`  | `submitResponse({ id, data?, expectedUpdatedAt? })` | `submitResponse({ body })`      |
+| `POST` | `/response/abandon` | `abandonResponse({ id, expectedUpdatedAt? })`       | `abandonResponse({ body })`     |
+| `POST` | `/response/reopen`  | `reopenResponse({ id, expectedUpdatedAt? })`        | `reopenResponse({ body })`      |
+
+`id` and `surveyId` accept a survey id or a slug, except on response routes,
+where `id` is the response id.
+
+`getPublishedSurvey` returns `publishedJson` and `settings`. It omits
+`draftJson`. It is available to both fill principals and does not stamp a
+respondent.
+
+The fill handler refuses `listResponses` for an anonymous principal, and
+refuses `include: "full"` for an identified principal. See
+[Security](/docs/security).
+
+## Editor
+
+| Method | Path               | Client                                                     | `editor.api`                   |
+| ------ | ------------------ | ---------------------------------------------------------- | ------------------------------ |
+| `GET`  | `/survey`          | `getSurvey(id)`                                            | `getSurvey({ query })`         |
+| `POST` | `/survey`          | `saveSurvey({ id, slug?, draftJson, expectedUpdatedAt? })` | `saveSurvey({ body })`         |
+| `GET`  | `/surveys`         | `listSurveys({ status?, limit?, offset? })`                | `listSurveys({ query })`       |
+| `POST` | `/survey/publish`  | `publishSurvey({ id, expectedUpdatedAt? })`                | `publishSurvey({ body })`      |
+| `POST` | `/survey/archive`  | `archiveSurvey({ id, expectedUpdatedAt? })`                | `archiveSurvey({ body })`      |
+| `POST` | `/survey/settings` | `saveSurveySettings({ id, settings, expectedUpdatedAt? })` | `saveSurveySettings({ body })` |
+| `POST` | `/survey/resume`   | `resumeSurvey({ id, expectedUpdatedAt? })`                 | `resumeSurvey({ body })`       |
+| `GET`  | `/response`        | `getResponse(id)`                                          | `getResponse({ query })`       |
+| `GET`  | `/responses`       | `listResponses({ ... })`                                   | `listResponses({ query })`     |
+
+`saveSurvey` creates the survey when the id is new. `slug` defaults to `id`.
+Pass `expectedUpdatedAt` when updating. A create that includes the token fails
+with `STALE_UPDATE`.
+
+`listSurveys` returns `{ surveys, limit, offset, nextOffset }`.
+`listResponses` returns `{ responses, limit, offset, nextOffset, total }`.
+
+## Lists
+
+`listResponses` query:
+
+| Field           | Role                                                                  |
+| --------------- | --------------------------------------------------------------------- |
+| `surveyId`      | Limit to one survey                                                   |
+| `respondentId`  | Limit to one respondent. Fill overwrites this with the stamped id     |
+| `status`        | `draft`, `submitted`, or `abandoned`                                  |
+| `submittedFrom` | Inclusive lower bound on `submittedAt`. Unsubmitted rows are excluded |
+| `submittedTo`   | Inclusive upper bound on `submittedAt`. Unsubmitted rows are excluded |
+| `updatedAfter`  | Exclusive lower bound on `updatedAt`                                  |
+| `include`       | `"summary"` (default) or `"full"`                                     |
+| `limit`         | 1–100. Default 50                                                     |
+| `offset`        | Default 0                                                             |
+
+`"summary"` omits `definition` and `data`. `"full"` is the editor analytics
+read. `listSurveys` can filter `status` to `draft`, `active`, or `archived`.
+
+## Compare-and-swap
+
+`expectedUpdatedAt` is optional on draft, publish, archive, settings, resume,
+partial save, submit, abandon, and reopen. When it is set, the stored
+`updatedAt` must match or the write fails with `STALE_UPDATE`. The React
+bindings always send the token from the last read.

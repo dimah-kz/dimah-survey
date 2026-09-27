@@ -48,6 +48,8 @@ describe("bindSurveyModel", () => {
       submit: async () => undefined,
       onWriteError,
     });
+    expect(survey.partialSendEnabled).toBe(true);
+    expect(survey.sendResultOnPageNext).toBe(true);
     survey.nextPage();
     await vi.waitFor(() => expect(onWriteError).toHaveBeenCalledOnce());
     expect(survey.state).not.toBe("completed");
@@ -64,6 +66,8 @@ describe("bindSurveyModel", () => {
     const savePartial = vi.fn(async () => undefined);
     const submit = vi.fn(async () => undefined);
     bindSurveyModel(survey, { savePartial, submit }, { partial: "off" });
+    expect(survey.partialSendEnabled).toBe(false);
+    expect(survey.sendResultOnPageNext).toBe(false);
     survey.nextPage();
     await Promise.resolve();
     expect(savePartial).not.toHaveBeenCalled();
@@ -79,5 +83,53 @@ describe("bindSurveyModel", () => {
     });
     survey.doComplete();
     await vi.waitFor(() => expect(survey.state).toBe("completed"));
+  });
+
+  it("stops saving after dispose", async () => {
+    const survey = new Model({
+      pages: [
+        { name: "p1", elements: [{ type: "text", name: "q1" }] },
+        { name: "p2", elements: [{ type: "text", name: "q2" }] },
+      ],
+    });
+    const savePartial = vi.fn(async () => undefined);
+    const dispose = bindSurveyModel(survey, {
+      savePartial,
+      submit: async () => undefined,
+    });
+    dispose();
+    survey.nextPage();
+    await Promise.resolve();
+    expect(savePartial).not.toHaveBeenCalled();
+  });
+
+  it("stores file and signature answers as urls", () => {
+    const survey = new Model({
+      pages: [
+        {
+          name: "p",
+          elements: [
+            { type: "file", name: "upload", storeDataAsText: true },
+            { type: "signaturepad", name: "sign", storeDataAsText: true },
+            { type: "text", name: "q1" },
+          ],
+        },
+      ],
+    });
+    const dispose = bindSurveyModel(survey, {
+      savePartial: async () => undefined,
+      submit: async () => undefined,
+    });
+    expect(survey.getQuestionByName("upload")?.storeDataAsText).toBe(false);
+    expect(survey.getQuestionByName("sign")?.storeDataAsText).toBe(false);
+
+    const page = survey.pages[0];
+    if (!page) throw new Error("Missing page");
+    page.addNewQuestion("file", "later");
+    expect(survey.getQuestionByName("later")?.storeDataAsText).toBe(false);
+
+    dispose();
+    page.addNewQuestion("file", "after");
+    expect(survey.getQuestionByName("after")?.storeDataAsText).toBe(true);
   });
 });

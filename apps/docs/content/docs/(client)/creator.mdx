@@ -1,0 +1,81 @@
+---
+title: Creator
+description: Point Survey Creator autosave at the editor draft.
+icon: PenLine
+---
+
+`useSurveyDraft` turns Creator autosave into `saveSurvey`. That writes
+`draftJson` only. The hook does not construct Creator, does not render it, and
+does not publish.
+
+```tsx title="components/design.tsx"
+"use client";
+
+import { useMemo } from "react";
+import { createEditorClient, useSurveyDraft } from "@dimah-survey/react";
+import { SurveyCreator, SurveyCreatorComponent } from "survey-creator-react";
+
+const editor = createEditorClient({ baseURL: "/api/admin/survey" });
+
+export function Design({
+  surveyId,
+  draftJson,
+  updatedAt,
+}: {
+  surveyId: string;
+  draftJson: object;
+  updatedAt: string;
+}) {
+  const creator = useMemo(() => {
+    const next = new SurveyCreator();
+    next.JSON = draftJson;
+    return next;
+  }, [draftJson]);
+
+  const { saveError, stale } = useSurveyDraft({
+    client: editor,
+    surveyId,
+    creator,
+    updatedAt,
+  });
+
+  return (
+    <>
+      {saveError ? <p>{saveError.message}</p> : null}
+      {stale ? <p>This draft was saved somewhere else.</p> : null}
+      <SurveyCreatorComponent creator={creator} />
+    </>
+  );
+}
+```
+
+Load `draftJson` and `updatedAt` on the server with `editor.api.getSurvey`,
+then pass them in. `createEditorClient` defaults to `/api/admin/survey`.
+
+The hook sets `isAutoSave` and `saveSurveyFunc`. Each save sends
+`expectedUpdatedAt` from the loaded survey, then from the last successful
+write. A new `updatedAt` prop rebinds that token.
+
+`saveError` is a failed draft save. Creator stays mounted. `stale` means
+`STALE_UPDATE`: someone else wrote the draft. Reload the survey from the
+server before saving over it.
+
+## Publish is separate
+
+Autosave must not call `publishSurvey`. Publish copies the current draft onto
+`publishedJson` and is an explicit action:
+
+```ts
+await editor.publishSurvey({ id: surveyId, expectedUpdatedAt });
+```
+
+`editor` here is `createEditorClient()`. On the server, the same call is
+`editor.api.publishSurvey({ body })`. Archive, resume, and settings are editor
+calls too. See [Surveys](/docs/surveys).
+
+`bindSurveyCreator` is the same binding without React state. Pass
+`initialUpdatedAt` from the load that produced the Creator instance. The app
+still constructs Creator.
+
+`survey-creator-core` and `survey-creator-react` stay in your application.
+They are not dependencies of `@dimah-survey/react`.

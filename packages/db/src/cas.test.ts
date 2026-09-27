@@ -18,14 +18,33 @@ const writtenSurvey: SurveyRecord = {
 };
 
 describe("surveyWriteLanded", () => {
-  it("accepts a read-back that matches the written row within one second", () => {
+  it("accepts a read-back within one second, including key order", () => {
     const fresh: SurveyRecord = {
       ...writtenSurvey,
       draftJson: { pages: [], title: "v2" },
       updatedAt: "2020-01-01T00:00:01.000Z",
       publishedAt: "2020-01-01T00:00:01.000Z",
     };
-    expect(surveyWriteLanded(fresh, writtenSurvey)).toBe(true);
+    const written: SurveyRecord = {
+      ...writtenSurvey,
+      updatedAt: "2020-01-01T00:00:01.999Z",
+      publishedAt: "2020-01-01T00:00:01.999Z",
+    };
+    expect(surveyWriteLanded(fresh, written)).toBe(true);
+  });
+
+  it("rejects a timestamp a full second away", () => {
+    const written: SurveyRecord = {
+      ...writtenSurvey,
+      updatedAt: "2020-01-01T00:00:01.999Z",
+      publishedAt: "2020-01-01T00:00:01.999Z",
+    };
+    const fresh: SurveyRecord = {
+      ...written,
+      updatedAt: "2020-01-01T00:00:00.999Z",
+      publishedAt: "2020-01-01T00:00:00.999Z",
+    };
+    expect(surveyWriteLanded(fresh, written)).toBe(false);
   });
 
   it("rejects a row that still has the previous token", () => {

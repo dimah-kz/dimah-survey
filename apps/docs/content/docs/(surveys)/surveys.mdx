@@ -1,0 +1,73 @@
+---
+title: Surveys
+description: Editor draft, published document, and survey status.
+icon: FileJson
+---
+
+A survey has two JSON documents and a status. `draftJson` is what Creator
+edits. `publishedJson` is what new responses copy. `settings` is separate and
+is documented in [Settings](/docs/settings).
+
+<Callout>
+  `saveSurvey` replaces `draftJson`. It does not publish, and it does not change
+  `settings`.
+</Callout>
+
+## Status
+
+| Status     | Meaning                                         | Fill can start                    |
+| ---------- | ----------------------------------------------- | --------------------------------- |
+| `draft`    | `publishedJson` is empty                        | No. Start throws `NOT_PUBLISHED`  |
+| `active`   | `publishedJson` is the document respondents see | Yes, inside the collection window |
+| `archived` | Closed. `publishedJson` is kept                 | No. Start throws `NOT_PUBLISHED`  |
+
+`GET /survey/published` on the fill handler returns `publishedJson` and
+`settings` only, and only while status is `active`. The editor draft is not on
+that payload. Outside the open window the read still returns the document.
+Start, partial save, and submit throw `SURVEY_CLOSED`.
+
+## Writes
+
+| Call                 | Effect                                                                     |
+| -------------------- | -------------------------------------------------------------------------- |
+| `saveSurvey`         | Creates the row, or replaces `draftJson`. Inserts default settings once    |
+| `publishSurvey`      | Copies `draftJson` onto `publishedJson`, sets `active`, sets `publishedAt` |
+| `archiveSurvey`      | Sets `archived`. Leaves both JSON columns                                  |
+| `resumeSurvey`       | Sets an archived survey with `publishedJson` back to `active`              |
+| `saveSurveySettings` | Replaces `settings`. Does not touch either JSON column                     |
+
+`resumeSurvey` does not copy `draftJson`. An already active survey is returned
+unchanged. An archived survey with no published document throws
+`NOT_PUBLISHED`. Resume does not run publish hooks.
+
+Publish runs `onPublish` before the copy and `afterPublish` after the row is
+stored. Throwing from `onPublish` aborts the write. A throw from `afterPublish`
+leaves the published row. See [Configuration](/docs/configuration).
+
+## Identity
+
+`id` is yours. On create, `slug` defaults to `id`. Slug is unique. A second
+survey that takes it throws `SLUG_TAKEN`.
+
+`getSurvey` and `getPublishedSurvey` accept an id or a slug in the `id` query.
+`startResponse` accepts either value in `surveyId`.
+
+## Concurrent edits
+
+Draft, publish, archive, settings, and resume accept `expectedUpdatedAt` from
+the last read. The store writes only when it still matches. Otherwise the
+request fails with `STALE_UPDATE`.
+
+Omit the token only when a last-write-wins update is intentional. Creating a
+survey with `expectedUpdatedAt` set fails with `STALE_UPDATE`, because there is
+no row to compare.
+
+`useSurveyDraft` sends the token it last read. See [Creator](/docs/creator).
+
+## What a publish does not do
+
+A publish does not rewrite `response.definition` on existing drafts or
+submitted rows. Those rows keep the document they started with. The next
+`startResponse` copies the new `publishedJson`.
+
+There is no survey version table. The snapshot on each response is the history.

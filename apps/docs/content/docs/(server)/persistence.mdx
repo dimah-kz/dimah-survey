@@ -1,0 +1,104 @@
+---
+title: Persistence
+description: Use memoryAdapter(), db(), or a custom SurveyStore.
+icon: Database
+---
+
+`database` implements `SurveyStore`. `memoryAdapter()` is the reference and is
+process-local. `@dimah-survey/db` is the SQL store. `@dimah-survey/server` does
+not import it. Pass `db(client)` in as `database`.
+
+## SQL
+
+```ts title="lib/survey.ts"
+import { DimahSurveyDB, db } from "@dimah-survey/db";
+import { dimahSurvey } from "@dimah-survey/server";
+import { drizzleAdapter } from "fumadb/adapters/drizzle";
+
+const database = db(
+  DimahSurveyDB.client(
+    drizzleAdapter({ db: drizzleOrm, provider: "sqlite" }),
+  ),
+);
+
+export const editor = dimahSurvey({
+  audience: "editor",
+  database,
+});
+```
+
+The application owns the tables and the migration. SQL names are `dimah_survey`
+and `dimah_response`. Drizzle export names stay `survey` and `response`,
+because those are the names `db()` queries.
+
+`draft_json`, `published_json`, and `settings` are separate columns. `settings`
+is not null and has no database default. Each response stores a copy of the
+published document in `definition`. `db()` does not update `definition` after
+insert.
+
+Generate the ORM file into the app, then migrate that file:
+
+```ts
+import { createCli } from "fumadb/cli";
+import { DimahSurveyDB } from "@dimah-survey/db";
+import { drizzleAdapter } from "fumadb/adapters/drizzle";
+import { drizzle } from "drizzle-orm/node-sqlite";
+
+await createCli({
+  db: DimahSurveyDB.client(
+    drizzleAdapter({ db: drizzle(":memory:"), provider: "sqlite" }),
+  ),
+  command: "dimah-survey",
+  version: "0.0.0",
+}).main();
+```
+
+`dimah-survey generate 1.0.0 -o ./db/survey.ts` writes the schema. FumaDB does
+not emit secondary indexes. After you generate, keep the partial unique index
+`dimah_response_one_open_draft` in the app schema: one open draft per survey
+and identified respondent. Prisma cannot express that predicate, so apply the
+index SQL after the Prisma tables exist.
+
+These package paths are references. Read them. Do not import them into the
+running schema:
+
+- `@dimah-survey/db/schema/drizzle.ts`
+- `@dimah-survey/db/schema/tables.sql`
+- `@dimah-survey/db/schema/indexes.sql`
+- `@dimah-survey/db/schema/schema.prisma`
+
+There is no survey version table. History is `response.definition`.
+
+## What a store must guarantee
+
+A custom `SurveyStore` follows the same rules as `memoryAdapter()` and `db()`:
+
+- Keep `draftJson`, `publishedJson`, and `settings` apart. `saveSurvey` inserts
+  default settings and does not update that column later.
+- Copy `publishedJson` into `definition` at start, and never write that column
+  again.
+- Reject a stale `expectedUpdatedAt` inside the write, not only in memory.
+- Refuse start unless status is `active` and `publishedJson` is present.
+- Identified start looks up the open draft or the latest row inside the write.
+  `"one-open"` returns the draft. `"single"` returns the latest row of any
+  status. Anonymous start always inserts.
+- Outside `opensAt` and `closesAt`, start, partial save, and submit throw
+  `SURVEY_CLOSED`.
+- `maxResponses` counts `submitted` rows and rejects a new insert and a submit
+  with `RESPONSE_LIMIT`.
+- `reopen: false` makes reopen throw `RESPONSE_CLOSED`. Otherwise reopen throws
+  `OPEN_DRAFT` when another draft exists for that survey and respondent.
+- `resumeSurvey` sets `archived` plus `publishedJson` back to `active` and does
+  not copy `draftJson`.
+- Enforce one open draft per identified respondent in the write. The SQL index
+  is the backstop, not a replacement for that check.
+- `listSurveys` and `listResponses` honor `limit` and `offset` and sort by
+  `updatedAt` descending. Summary rows omit `definition` and `data`.
+
+`startResponse` and `submitResponse` accept lifecycle callbacks. Those
+callbacks are not on the HTTP body. The server passes them. Run them inside
+the same lock as the write. `onStart` runs only before a new insert.
+`afterSubmit` runs after the row is stored. A throw there leaves the row.
+
+Partial save replaces `data`. The HTTP layer may clear invalid values before
+it calls the store. The store persists the object it is given.

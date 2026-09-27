@@ -1,10 +1,8 @@
-import { SURVEY_ERROR_CODES, createFillClient } from "@dimah-survey/core";
+import { SURVEY_ERROR_CODES } from "@dimah-survey/core";
 import { describe, expect, it } from "vitest";
 
-import { dimahSurvey } from "./dimah-survey";
-import { memoryAdapter } from "./memory";
-import { guardAnonymous } from "./respondent";
-import { checkSurveyResult } from "./validate";
+import { createSession } from "./test/session";
+import { checkSurveyResult, clearSurveyResult } from "./validate";
 
 const definition = {
   pages: [
@@ -60,67 +58,74 @@ describe("checkSurveyResult", () => {
     expect(data).toEqual({ q1: "ok", country: "fr" });
   });
 
-  it("stores the cleaned data on submit", async () => {
-    const database = memoryAdapter();
-    const editor = dimahSurvey({ audience: "editor", database });
-    const fill = dimahSurvey({
-      audience: "fill",
-      database,
-      guard: (context) => guardAnonymous()(context),
-    });
-    await editor.api.saveSurvey({
-      body: { id: "pulse", draftJson: definition },
-    });
-    await editor.api.publishSurvey({ body: { id: "pulse" } });
-    const started = await fill.api.startResponse({
-      body: { surveyId: "pulse" },
-    });
-    const submitted = await fill.api.submitResponse({
-      body: {
-        id: started.id,
-        data: { q1: "ok", q2: "nope" },
-        expectedUpdatedAt: started.updatedAt,
+  it("keeps a choicesByUrl answer nested in a panel", () => {
+    const data = checkSurveyResult({
+      definition: {
+        pages: [
+          {
+            name: "p",
+            elements: [
+              { type: "text", name: "q1", isRequired: true },
+              {
+                type: "panel",
+                name: "group",
+                elements: [
+                  {
+                    type: "dropdown",
+                    name: "country",
+                    choicesByUrl: { url: "https://example.invalid/countries" },
+                  },
+                ],
+              },
+            ],
+          },
+        ],
       },
+      data: { q1: "ok", country: "fr", extra: 1 },
+    });
+    expect(data).toEqual({ q1: "ok", country: "fr" });
+  });
+});
+
+describe("clearSurveyResult", () => {
+  it("drops incorrect values without requiring an answer", () => {
+    expect(
+      clearSurveyResult({ definition, data: { q2: "nope", extra: 1 } }),
+    ).toEqual({});
+  });
+});
+
+describe("submit validation", () => {
+  it("stores the cleaned data and returns failed question names", async () => {
+    const { editor, fill } = createSession();
+    await editor.saveSurvey({ id: "pulse", draftJson: definition });
+    await editor.publishSurvey({ id: "pulse" });
+    const started = await fill.startResponse({ surveyId: "pulse" });
+    const submitted = await fill.submitResponse({
+      id: started.id,
+      data: { q1: "ok", q2: "nope" },
+      expectedUpdatedAt: started.updatedAt,
     });
     expect(submitted.data).toEqual({ q1: "ok" });
     expect(submitted.definition).toEqual(definition);
 
-    const replayed = await fill.api.submitResponse({
-      body: {
-        id: started.id,
-        data: { q1: "ok", q2: "nope", extra: 1 },
-        expectedUpdatedAt: started.updatedAt,
-      },
+    const replayed = await fill.submitResponse({
+      id: started.id,
+      data: { q1: "ok", q2: "nope", extra: 1 },
+      expectedUpdatedAt: started.updatedAt,
     });
     expect(replayed).toMatchObject({
       status: "submitted",
       data: { q1: "ok" },
       updatedAt: submitted.updatedAt,
     });
-  });
 
-  it("returns failed question names through the fetch client", async () => {
-    const database = memoryAdapter();
-    const editor = dimahSurvey({ audience: "editor", database });
-    const fill = dimahSurvey({
-      audience: "fill",
-      database,
-      guard: (context) => guardAnonymous()(context),
-    });
-    await editor.api.saveSurvey({
-      body: { id: "pulse", draftJson: definition },
-    });
-    await editor.api.publishSurvey({ body: { id: "pulse" } });
-    const client = createFillClient({
-      baseURL: "http://survey.local/api/survey",
-      fetch: (input, init) => fill.handler(new Request(input, init)),
-    });
-    const started = await client.startResponse({ surveyId: "pulse" });
+    const empty = await fill.startResponse({ surveyId: "pulse" });
     await expect(
-      client.submitResponse({
-        id: started.id,
+      fill.submitResponse({
+        id: empty.id,
         data: {},
-        expectedUpdatedAt: started.updatedAt,
+        expectedUpdatedAt: empty.updatedAt,
       }),
     ).rejects.toMatchObject({
       code: SURVEY_ERROR_CODES.VALIDATION_FAILED.code,

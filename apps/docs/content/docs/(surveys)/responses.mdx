@@ -1,0 +1,98 @@
+---
+title: Responses
+description: Snapshots, drafts, submit validation, and compare-and-swap writes.
+icon: Camera
+---
+
+`startResponse` copies `publishedJson` into `response.definition`. Drafts and
+submit validation use that snapshot. They do not use the live draft or a later
+publish.
+
+<Callout>
+  Editing or publishing a survey never changes an in-flight draft or a submitted
+  response.
+</Callout>
+
+## Lifecycle
+
+| Status      | Meaning                        | Available transitions          |
+| ----------- | ------------------------------ | ------------------------------ |
+| `draft`     | Answers may be incomplete      | Partial save, submit, abandon  |
+| `submitted` | The snapshot accepted the data | Reopen, or a matching resubmit |
+| `abandoned` | Closed without submitting      | Reopen                         |
+
+| Call              | Effect                                                                 |
+| ----------------- | ---------------------------------------------------------------------- |
+| `startResponse`   | Inserts a draft, or returns the row [Settings](/docs/settings) selects |
+| `savePartial`     | Replaces `data` on a draft                                             |
+| `submitResponse`  | Validates the snapshot, then stores `submitted`                        |
+| `abandonResponse` | Marks a draft `abandoned`. Does not change `definition` or `data`      |
+| `reopenResponse`  | Returns a submitted or abandoned row to `draft`                        |
+
+`savePartial` and `abandonResponse` throw `RESPONSE_CLOSED` unless the row is a
+draft. `reopenResponse` throws `RESPONSE_CLOSED` on a draft, and when
+`settings.reopen` is `false`.
+
+`onStart` runs only before a new insert. A start that returns an existing row
+does not call it. `afterStart` runs after that insert. A throw leaves the row.
+
+## Partial save
+
+Fill `sanitizePartial` defaults to `"clear"`. The server runs
+`clearIncorrectValues(true)` on the snapshot and stores that object. It does
+not run `validate`, so required questions may stay empty.
+
+`"replace"` stores the payload as sent.
+
+Questions with `choicesByUrl` keep their posted value through the clear. The
+server does not fetch that URL.
+
+## Submit
+
+Submit loads the stored definition, not the current `publishedJson`. The
+default checker drops values that cannot be assigned, runs `validate`, and
+persists the resulting `survey.data`. Failure is `VALIDATION_FAILED`. The body
+includes `questions`, the names that failed. Branch on `code`. See
+[Errors](/docs/errors).
+
+`onSubmit` runs after that check and before the write, inside the store lock.
+Throwing aborts the write. `afterSubmit` runs after the row is stored, still
+inside that lock. A throw leaves the row.
+
+A repeated submit of a row that is already `submitted` returns that row when
+the cleaned payload equals stored `data`, and does not run either hook. Omit
+`data` on that retry and the stored row is returned as well. A different
+payload is `RESPONSE_CLOSED`.
+
+Replace `validateResult` when you need a check beyond SurveyJS. The function
+still receives the response definition. Return the object to persist, or return
+nothing to keep the data you were given. See
+[Configuration](/docs/configuration).
+
+## Concurrent edits
+
+Partial save, submit, abandon, and reopen accept `expectedUpdatedAt` from the
+last read. The store writes only when it still matches. Otherwise the request
+fails with `STALE_UPDATE`.
+
+`useSurveyResponse` sends the token it last read. On `STALE_UPDATE` it sets
+`stale` and leaves the model mounted. Call `reload` to read the stored snapshot
+again.
+
+Omit the token only when a last-write-wins update is intentional.
+
+## Lists
+
+`listResponses` defaults to a summary. Summary rows omit `definition` and
+`data`. `include: "full"` is the analytics read of the snapshot. The fill
+handler refuses that include. The editor handler allows it.
+
+Both lists default to 50 rows and cap at 100. Results sort by `updatedAt`
+descending. `total` ignores `limit` and `offset`.
+
+`submittedFrom` and `submittedTo` are inclusive bounds on `submittedAt`. Rows
+with no submit time are excluded. `updatedAfter` is an exclusive lower bound on
+`updatedAt`.
+
+Read full rows against `definition` on that row. Do not join them back to the
+live survey.

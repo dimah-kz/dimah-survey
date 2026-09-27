@@ -1,0 +1,118 @@
+---
+title: Configuration
+description: Options for dimahSurvey(), the clients, and the React bindings.
+icon: Settings
+---
+
+`database` is required. `@dimah-survey/db` is not. `memoryAdapter()` ships in
+`@dimah-survey/server`.
+
+Fill and the editor are different config objects. A fill instance cannot take
+publish hooks. An editor instance cannot take `validateResult`.
+
+## Fill
+
+```ts
+import { dimahSurvey, guardAnonymous, memoryAdapter } from "@dimah-survey/server";
+
+export const fill = dimahSurvey({
+  audience: "fill",
+  database: memoryAdapter(),
+  guard: guardAnonymous(),
+});
+```
+
+| Option            | Required | Default             | Role                                                                    |
+| ----------------- | -------- | ------------------- | ----------------------------------------------------------------------- |
+| `audience`        | Yes      | —                   | `"fill"`                                                                |
+| `database`        | Yes      | —                   | `SurveyStore`                                                           |
+| `guard`           | Yes      | —                   | Returns `{ respondentId }` or `{ anonymous: true }`, or throws          |
+| `basePath`        | No       | `"/api/survey"`     | Must match the fill client `baseURL`                                    |
+| `hooks`           | No       | —                   | `onStart`, `afterStart`, `onSubmit`, `afterSubmit`                      |
+| `sanitizePartial` | No       | `"clear"`           | `"clear"` runs `clearIncorrectValues(true)`. `"replace"` stores as sent |
+| `validateResult`  | No       | `checkSurveyResult` | Runs on the response snapshot during submit                             |
+
+`checkSurveyResult` drops values that cannot be assigned, runs `validate`, and
+returns the `survey.data` to persist. Questions with `choicesByUrl` keep their
+posted value. The server does not fetch that list.
+
+A custom `validateResult` receives `{ definition, data }`. Return the object to
+store. Return nothing to keep `data`. Throw `APIError` with `VALIDATION_FAILED`
+to reject the submit. See [Responses](/docs/responses).
+
+### Fill hooks
+
+| Hook          | When                                            | A throw           |
+| ------------- | ----------------------------------------------- | ----------------- |
+| `onStart`     | Inside the store lock, only before a new insert | Aborts the insert |
+| `afterStart`  | After that insert, still inside the lock        | Leaves the row    |
+| `onSubmit`    | After validation, before the submitted write    | Aborts the write  |
+| `afterSubmit` | After the row is stored, still inside the lock  | Leaves the row    |
+
+A start that returns an existing row does not call `onStart` or `afterStart`.
+A replayed submit does not call `onSubmit` or `afterSubmit`. The HTTP body
+cannot carry these hooks.
+
+## Editor
+
+```ts
+import { dimahSurvey } from "@dimah-survey/server";
+
+export const editor = dimahSurvey({
+  audience: "editor",
+  database,
+});
+```
+
+| Option     | Required | Default               | Role                                                 |
+| ---------- | -------- | --------------------- | ---------------------------------------------------- |
+| `audience` | Yes      | —                     | `"editor"`                                           |
+| `database` | Yes      | —                     | Same store as fill                                   |
+| `guard`    | No       | Allows the request    | Returns nothing, or throws. A principal is forbidden |
+| `basePath` | No       | `"/api/admin/survey"` | Must match the editor client `baseURL`               |
+| `hooks`    | No       | —                     | `onPublish`, `afterPublish`                          |
+
+| Hook           | When                              | A throw          |
+| -------------- | --------------------------------- | ---------------- |
+| `onPublish`    | Before `draftJson` is copied      | Aborts the write |
+| `afterPublish` | After the published row is stored | Leaves the row   |
+
+`resumeSurvey` does not call publish hooks.
+
+## Clients
+
+`createFillClient` and `createEditorClient` accept:
+
+| Option        | Role                                                                       |
+| ------------- | -------------------------------------------------------------------------- |
+| `baseURL`     | Fill defaults to `"/api/survey"`. Editor defaults to `"/api/admin/survey"` |
+| `credentials` | Passed to `fetch`. Use `"include"` when the session cookie is cross-site   |
+| `headers`     | A `HeadersInit` value, or a function that returns one                      |
+| `fetch`       | Replace the global `fetch`                                                 |
+
+Browser methods take flat objects. `survey.api` takes `{ body }` or `{ query }`,
+and optional `headers` or `request` so `guard` can see the caller. See
+[Integration](/docs/integration).
+
+## React
+
+`useSurveyResponse({ client, responseId, partial })`
+
+| Option       | Default  | Role                                                   |
+| ------------ | -------- | ------------------------------------------------------ |
+| `client`     | —        | `getResponse`, `savePartial`, `submitResponse`         |
+| `responseId` | —        | The row to load                                        |
+| `partial`    | `"page"` | `"page"` saves on page next. `"off"` saves on complete |
+
+Returned fields are documented in [React](/docs/react).
+
+`useSurveyDraft({ client, surveyId, creator, updatedAt })`
+
+| Option      | Role                                                     |
+| ----------- | -------------------------------------------------------- |
+| `client`    | `saveSurvey`                                             |
+| `surveyId`  | Draft to write                                           |
+| `creator`   | An existing Creator instance. `null` skips the binding   |
+| `updatedAt` | Compare-and-swap token from the load that filled Creator |
+
+The hook does not construct Creator. See [Creator](/docs/creator).

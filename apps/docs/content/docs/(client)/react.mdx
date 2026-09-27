@@ -1,0 +1,99 @@
+---
+title: React
+description: Bind a survey-core Model to partial save and submit.
+icon: Component
+---
+
+`@dimah-survey/react` loads a response snapshot, constructs a `Model`, and
+wires partial save and complete to the fill client. It does not render the
+survey. Your app still mounts `<Survey model={model} />` from `survey-react-ui`.
+
+```tsx title="components/fill.tsx"
+"use client";
+
+import dynamic from "next/dynamic";
+import { createFillClient, useSurveyResponse } from "@dimah-survey/react";
+
+import "survey-core/survey-core.min.css";
+
+const Survey = dynamic(
+  () => import("survey-react-ui").then((mod) => mod.Survey),
+  { ssr: false },
+);
+
+const client = createFillClient({ baseURL: "/api/survey" });
+
+export function Fill({ responseId }: { responseId: string }) {
+  const { model, error, saveError, stale, reload } = useSurveyResponse({
+    client,
+    responseId,
+  });
+
+  if (error) return <p>{error.message}</p>;
+  if (!model) return null;
+
+  return (
+    <>
+      {saveError ? <p>{saveError.message}</p> : null}
+      {stale ? <button onClick={reload}>Reload</button> : null}
+      <Survey model={model} />
+    </>
+  );
+}
+```
+
+The hook reads `getResponse`, builds `new Model(response.definition)`, and
+assigns `response.data`. A row that is not a draft opens in `display` mode and
+does not send writes.
+
+## State
+
+| Field       | When it is set                                             |
+| ----------- | ---------------------------------------------------------- |
+| `model`     | The snapshot loaded. `null` while loading or after `error` |
+| `error`     | The snapshot failed to load. The model stays `null`        |
+| `saveError` | A partial save or submit failed. The model stays mounted   |
+| `stale`     | `saveError` is `STALE_UPDATE`                              |
+| `reload`    | Reads the stored snapshot again and clears the save error  |
+
+Completion waits for the server. If submit throws, the Model does not complete.
+A failed write does not unmount it.
+
+`partial` defaults to `"page"`. That sets `partialSendEnabled` and
+`sendResultOnPageNext`, so the next page calls `savePartial`. Pass
+`partial: "off"` to write only when the respondent completes.
+
+Writes are queued. Each one sends `expectedUpdatedAt` from the last successful
+read. See [Responses](/docs/responses).
+
+## Own the Model
+
+Use `bindSurveyModel` when you already constructed the `Model`. The hook is
+that binding plus the load.
+
+```ts
+import { bindSurveyModel } from "@dimah-survey/react";
+
+const dispose = bindSurveyModel(model, {
+  savePartial: (data) => client.savePartial({ id, data, expectedUpdatedAt }),
+  submit: (data) => client.submitResponse({ id, data, expectedUpdatedAt }),
+  onWriteError: (error) => {
+    console.error(error);
+  },
+});
+```
+
+Call `dispose` on unmount. It removes the SurveyJS handlers it added.
+
+`bindSurveyModel` also sets `storeDataAsText` to `false` on file and signature
+questions, including questions added later.
+
+## Files
+
+File bytes stay in your application. There is no upload route.
+
+Handle `onUploadFiles`, `onDownloadFile`, and `onClearFiles` on the `Model`.
+Give SurveyJS `{ file, content }` where `content` is your URL. Partial save
+writes that locator into `data`. The binding does not store the bytes.
+
+Creator autosave is a different hook. See [Creator](/docs/creator).

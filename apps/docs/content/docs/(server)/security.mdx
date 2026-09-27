@@ -1,0 +1,128 @@
+---
+title: Security
+description: Split fill and editor, and stamp the respondent on the server.
+icon: Shield
+---
+
+dimah-survey does not ship sessions or roles. Your application authorizes each
+request in `guard`. Fill and the editor are separate instances, on separate
+paths, with different return rules.
+
+<Flow
+  label="Fill request"
+  steps={[
+    { name: "Guard", kind: "server", note: "Return a principal" },
+    { name: "Stamp", kind: "protocol", note: "Respondent id" },
+    { name: "Validate", kind: "server", note: "Snapshot" },
+    { name: "Store", kind: "data", note: "Persist" },
+  ]}
+/>
+
+## Two audiences
+
+| Instance | Guard returns                               | Routes                                                |
+| -------- | ------------------------------------------- | ----------------------------------------------------- |
+| `fill`   | `{ respondentId }` or `{ anonymous: true }` | Published read, start, draft, submit, abandon, reopen |
+| `editor` | Nothing. Throw to reject                    | Draft, publish, settings, archive, resume, lists      |
+
+A fill instance requires `guard`. Returning nothing from a fill guard is
+forbidden. An editor guard that returns a principal is forbidden. Do not mount
+both audiences on one handler.
+
+`getPublishedSurvey` is on the fill handler. It does not stamp a respondent and
+does not require a response id. The editor draft is not on that route.
+
+The editor can `getResponse` and `listResponses`, including `include: "full"`.
+It cannot start, save a partial, submit, abandon, or reopen. Put submit hooks
+and `validateResult` on the fill instance. Put publish hooks on the editor.
+
+## Identified fill
+
+`guardRespondent(id)` returns `{ respondentId }`. The server then:
+
+- stamps that id onto `startResponse` and `listResponses`
+- rejects a different id in the body or query
+- rejects `include: "full"`
+- rejects get, partial save, submit, abandon, and reopen when the stored
+  `respondentId` differs
+
+```ts title="lib/survey.ts"
+import {
+  APIError,
+  SURVEY_ERROR_CODES,
+  dimahSurvey,
+  guardRespondent,
+} from "@dimah-survey/server";
+
+export const fill = dimahSurvey({
+  audience: "fill",
+  database,
+  guard: async (context) => {
+    const session = await getSession(context.request);
+    if (!session) {
+      throw APIError.from("FORBIDDEN", SURVEY_ERROR_CODES.FORBIDDEN);
+    }
+    return guardRespondent(session.user.id)(context);
+  },
+});
+```
+
+The browser does not choose the owner. If the client sends `respondentId`, it
+must match the guard. Omit it and the server still stamps the session id.
+
+Identified start follows `settings.responses`. See [Settings](/docs/settings).
+
+## Anonymous fill
+
+`guardAnonymous()` returns `{ anonymous: true }`. Each start inserts a row.
+List is refused. A body `respondentId` is refused. The response id is the
+capability: get, partial save, submit, abandon, and reopen require that id,
+and the row's `respondentId` must be null.
+
+```ts title="lib/survey.ts"
+import { guardAnonymous, guardRespondent } from "@dimah-survey/server";
+
+export const fill = dimahSurvey({
+  audience: "fill",
+  database,
+  guard: (context) => {
+    const userId = userIdFromSession(context.request);
+    if (!userId) return guardAnonymous()(context);
+    return guardRespondent(userId)(context);
+  },
+});
+```
+
+Treat the response id as a secret for anonymous rows. Anyone who has it can
+read and submit that row.
+
+## Editor
+
+```ts title="lib/survey.ts"
+import { APIError, SURVEY_ERROR_CODES, dimahSurvey } from "@dimah-survey/server";
+
+export const editor = dimahSurvey({
+  audience: "editor",
+  database,
+  guard: ({ request }) => {
+    if (!isEditor(request)) {
+      throw APIError.from("FORBIDDEN", SURVEY_ERROR_CODES.FORBIDDEN);
+    }
+  },
+});
+```
+
+Returning `{ respondentId }` from this guard throws. The editor is not a
+respondent.
+
+`include: "full"` belongs here. It returns `definition` and `data` for
+analytics. Do not expose that route on the fill path.
+
+## Side effects
+
+`onSubmit` can still abort the write. `afterSubmit` and `afterStart` run after
+the row exists. A throw does not roll it back, so email, webhooks, and other
+side effects belong in `after*`. A replayed submit does not call submit hooks
+again.
+
+Publish hooks live on the editor. `resumeSurvey` does not call them.

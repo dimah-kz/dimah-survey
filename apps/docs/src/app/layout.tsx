@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { RootProvider } from "fumadocs-ui/provider/next";
 import { Inter } from "next/font/google";
 
-import { appName } from "@/lib/shared";
+import { appName, siteDescription } from "@/lib/shared";
 
 import "./global.css";
 
@@ -15,6 +15,7 @@ export const metadata: Metadata = {
     default: appName,
     template: `%s · ${appName}`,
   },
+  description: siteDescription,
 };
 
 export default function Layout({ children }: LayoutProps<"/">) {

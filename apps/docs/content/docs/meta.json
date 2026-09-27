@@ -1,0 +1,16 @@
+{
+  "title": "dimah-survey",
+  "pages": [
+    "---Get started---",
+    "index",
+    "quickstart",
+    "comparison",
+    "---Guides---",
+    "(surveys)",
+    "(server)",
+    "---Client---",
+    "(client)",
+    "---Resources---",
+    "(reference)"
+  ]
+}
