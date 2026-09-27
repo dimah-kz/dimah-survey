@@ -27,11 +27,6 @@ core:packages:
       - 2026-09-27-muj7l5qa.md
     id: npm:@dimah-survey/server
     updated: true
-npm:mark-latest:
-  - id: npm:@dimah-survey/core
-  - id: npm:@dimah-survey/db
-  - id: npm:@dimah-survey/react
-  - id: npm:@dimah-survey/server
 npm:packages:
   - id: npm:@workspace/survey-store-contract
   - id: npm:example-next

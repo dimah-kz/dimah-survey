@@ -1,6 +1,6 @@
 {
   "name": "@dimah-survey/server",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Server-authoritative response lifecycle for SurveyJS JSON",
   "keywords": [
     "survey",
