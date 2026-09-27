@@ -7,11 +7,27 @@ import {
 } from "./bind-survey-creator";
 import { isStaleUpdate } from "./stale";
 
+/** State returned by `useSurveyDraft`. */
 export type SurveyDraftBinding = {
   /** The last draft save failed. Creator stays mounted. */
   saveError: Error | null;
-  /** `saveError` is a compare-and-swap conflict. */
+  /**
+   * The last save failed with `STALE_UPDATE`.
+   * This hook has no `reload`. Load the survey again before writing.
+   */
   stale: boolean;
+};
+
+/** Options for `useSurveyDraft`. */
+export type UseSurveyDraftOptions = {
+  /** Editor client used for `saveSurvey`. */
+  client: Pick<EditorClient, "saveSurvey">;
+  /** Draft to write. */
+  surveyId: string;
+  /** Existing Creator instance. `null` skips binding. */
+  creator: SurveyCreatorDraft | null;
+  /** Compare-and-swap token from the read that loaded Creator. */
+  updatedAt?: string;
 };
 
 /**
@@ -19,12 +35,9 @@ export type SurveyDraftBinding = {
  * Pass `updatedAt` from the load that produced `creator`. A new value rebinds
  * the compare-and-swap token. This hook does not construct Creator.
  */
-export function useSurveyDraft(options: {
-  client: Pick<EditorClient, "saveSurvey">;
-  surveyId: string;
-  creator: SurveyCreatorDraft | null;
-  updatedAt?: string;
-}): SurveyDraftBinding {
+export function useSurveyDraft(
+  options: UseSurveyDraftOptions,
+): SurveyDraftBinding {
   const { client, surveyId, creator, updatedAt } = options;
   const [saveError, setSaveError] = useState<Error | null>(null);
 

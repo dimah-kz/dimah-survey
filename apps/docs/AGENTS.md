@@ -9,7 +9,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 Fumadocs site for dimah-survey, published at `https://survey.dimah.dev`. Not a published package. Protocol checklists stay in `docs/agents/`; this app is the public documentation site. Production origin is `getSiteUrl()` in `src/lib/site-url.ts`. Preview deploys use `VERCEL_URL` and are not indexed. Agent entry points are `/llms.txt`, `/llms-full.txt`, and `/docs/<page>.md` (`src/lib/llm-intro.ts`). `vercel.json` builds this app from the monorepo root.
 
-Pages in `content/docs` describe this repository: SurveyJS JSON, two audiences, and the response snapshot. Keep snippets aligned with `@dimah-survey/*`. Do not document a renderer, question types, or a plugin system this library does not ship.
+Pages in `content/docs` describe this repository: SurveyJS JSON, two audiences, and the response snapshot. Keep snippets aligned with `@dimah-survey/*`. Do not document a renderer, question types, or a plugin system this library does not ship. Prefer `AutoTypeTable` for public types. Do not hand-maintain a property table that duplicates an exported type; put that description in the type's JSDoc.
 
 Formatting and the `check-types` script follow the repository. `check-types` runs `next typegen` first because routes use Next's typed `LayoutProps` and `PageProps`. Next and `eslint-config-next` come from the default workspace catalog. `eslint` is `catalog:next` (ESLint 9); `eslint-config-next`'s React plugin crashes on the catalog ESLint 10. `typescript` is `catalog:typescript6` so that plugin's TypeScript parser can import a compiler API. `@typescript/native` is the TypeScript 7 `tsc`. Do not add a local Prettier config.
 

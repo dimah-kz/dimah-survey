@@ -4,7 +4,12 @@ export {
   toResponseSummary,
 } from "./list";
 export { createEditorClient, createFillClient } from "./client";
-export type { EditorClient, FillClient, SurveyClient } from "./client";
+export type {
+  CreateSurveyClientOptions,
+  EditorClient,
+  FillClient,
+  SurveyClient,
+} from "./client";
 export { APIError, isAPIError } from "./error";
 export { SURVEY_ERROR_CODES } from "./error-codes";
 export type { SurveyErrorCode } from "./error-codes";

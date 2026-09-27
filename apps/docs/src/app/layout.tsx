@@ -68,7 +68,12 @@ export default function Layout({ children }: LayoutProps<"/">) {
   const jsonLd = siteJsonLd(siteUrl.origin);
 
   return (
-    <html lang="en" className={inter.variable} suppressHydrationWarning>
+    <html
+      lang="en"
+      className={inter.variable}
+      data-scroll-behavior="smooth"
+      suppressHydrationWarning
+    >
       <head>
         <script
           type="application/ld+json"

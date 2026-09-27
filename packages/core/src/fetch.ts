@@ -5,9 +5,16 @@ import { surveyFetchErrorSchema } from "./schema/error";
 
 export type SurveyFetch = BetterFetch<{ throw: true }>;
 
+/** `fetch` options shared by `createFillClient` and `createEditorClient`. */
 export type SurveyClientFetchOptions = {
+  /** Replace the global `fetch` implementation. */
   fetch?: typeof fetch;
+  /**
+   * Forwarded to `fetch`.
+   * Use `"include"` when `baseURL` is cross-site and the guard reads cookies.
+   */
   credentials?: RequestCredentials;
+  /** Static headers, or a function called before each request. */
   headers?: HeadersInit | (() => HeadersInit | Promise<HeadersInit>);
 };
 
@@ -36,6 +43,10 @@ function apiErrorFromFetch(error: {
   return new APIError(error.status, { message: fallbackMessage(error) });
 }
 
+/**
+ * better-fetch client for the survey protocol.
+ * Prefer `createFillClient` or `createEditorClient` unless you need this surface.
+ */
 export function createSurveyFetch(
   base: string,
   options?: SurveyClientFetchOptions,

@@ -6,24 +6,41 @@ import { bindSurveyModel, type SurveyPartialSend } from "./bind-survey-model";
 import { isStaleUpdate } from "./stale";
 import { createWriteQueue } from "./write-queue";
 
+/** State returned by `useSurveyResponse`. */
 export type SurveyResponseBinding = {
+  /** Hydrated snapshot. `null` while loading or after a load error. */
   model: Model | null;
-  /** The snapshot failed to load. `model` is null. */
+  /** The snapshot failed to load. `model` is `null`. */
   error: Error | null;
   /** A partial save or submit failed. `model` stays mounted. */
   saveError: Error | null;
-  /** `saveError` is a compare-and-swap conflict. Call `reload`. */
+  /** The last write failed with `STALE_UPDATE`. Call `reload`. */
   stale: boolean;
-  /** Load the stored snapshot again. */
+  /** Read the stored snapshot again and clear the write error. */
   reload: () => void;
 };
 
-export function useSurveyResponse(options: {
+/** Options for `useSurveyResponse`. */
+export type UseSurveyResponseOptions = {
+  /** Fill client used for load, partial save, and submit. */
   client: Pick<FillClient, "getResponse" | "savePartial" | "submitResponse">;
+  /** Response row to hydrate. */
   responseId: string;
-  /** `"page"` saves on page next. `"off"` saves only on complete. */
+  /**
+   * `"page"` sets `partialSendEnabled` and `sendResultOnPageNext`.
+   * `"off"` writes only on complete.
+   * @default "page"
+   */
   partial?: SurveyPartialSend;
-}): SurveyResponseBinding {
+};
+
+/**
+ * Load a response snapshot into a survey-core `Model` and bind server writes.
+ * Does not render UI. A non-draft response opens in `display` mode.
+ */
+export function useSurveyResponse(
+  options: UseSurveyResponseOptions,
+): SurveyResponseBinding {
   const { client, responseId, partial } = options;
   const [epoch, setEpoch] = useState(0);
   const [model, setModel] = useState<Model | null>(null);

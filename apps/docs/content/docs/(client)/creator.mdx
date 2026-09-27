@@ -62,14 +62,30 @@ Load `draftJson` and `updatedAt` on the server with `editor.api.getSurvey`,
 then pass both into the client component. `createEditorClient()` defaults to
 `/api/admin/survey`.
 
+```ts
+import type { UseSurveyDraftOptions } from "@dimah-survey/react";
+```
+
+<AutoTypeTable
+  path="packages/react/src/use-survey-draft.ts"
+  name="UseSurveyDraftOptions"
+/>
+
 The hook sets `isAutoSave` and `saveSurveyFunc`. Each save sends
 `expectedUpdatedAt` from the loaded survey, then from the last successful
 write. A new `updatedAt` prop rebinds that token.
 
-`saveError` is a failed draft save. Creator stays mounted. `stale` means
-`STALE_UPDATE`: another writer changed the draft. Unlike the fill hook,
-`useSurveyDraft()` has no `reload()` method; reload the survey in your
-application before writing again.
+```ts
+import type { SurveyDraftBinding } from "@dimah-survey/react";
+```
+
+<AutoTypeTable
+  path="packages/react/src/use-survey-draft.ts"
+  name="SurveyDraftBinding"
+/>
+
+Unlike the fill hook, `useSurveyDraft()` has no `reload()` method. Reload the
+survey in your application before writing again.
 
 ## Publish explicitly
 
@@ -89,6 +105,15 @@ calls too. See [Surveys](/docs/surveys).
 `bindSurveyCreator()` exposes the same binding without React state. Pass
 `initialUpdatedAt` from the load that produced the Creator instance. The app
 still constructs, renders, and disposes Creator.
+
+```ts
+import type { SurveyCreatorActions } from "@dimah-survey/react";
+```
+
+<AutoTypeTable
+  path="packages/react/src/bind-survey-creator.ts"
+  name="SurveyCreatorActions"
+/>
 
 `survey-creator-core` and `survey-creator-react` stay in your application.
 They are not dependencies of `@dimah-survey/react`.

@@ -3,7 +3,13 @@ import * as AccordionComponents from "fumadocs-ui/components/accordion";
 import * as TabsComponents from "fumadocs-ui/components/tabs";
 import * as CardComponents from "fumadocs-ui/components/card";
 import * as StepsComponents from "fumadocs-ui/components/steps";
+import { TypeTable } from "fumadocs-ui/components/type-table";
+import { AutoTypeTable, type AutoTypeTableProps } from "fumadocs-typescript/ui";
 import { Flow } from "@/components/flow";
+import {
+  typeTableBasePath,
+  typeTableGeneratorFor,
+} from "@/lib/type-table-generator";
 import type { MDXComponents } from "mdx/types";
 
 export function getMDXComponents(components?: MDXComponents) {
@@ -14,6 +20,14 @@ export function getMDXComponents(components?: MDXComponents) {
     ...TabsComponents,
     ...CardComponents,
     ...StepsComponents,
+    TypeTable,
+    AutoTypeTable: (props: Partial<AutoTypeTableProps>) => (
+      <AutoTypeTable
+        {...props}
+        generator={typeTableGeneratorFor(props.path)}
+        options={{ basePath: typeTableBasePath, ...props.options }}
+      />
+    ),
     ...components,
   } satisfies MDXComponents;
 }

@@ -66,8 +66,17 @@ export type EditorClient = Pick<
   | "getResponse"
 >;
 
+/** Options for `createFillClient` and `createEditorClient`. */
+export type CreateSurveyClientOptions = SurveyClientFetchOptions & {
+  /**
+   * Must match the server `basePath`.
+   * Fill defaults to `/api/survey`. Editor defaults to `/api/admin/survey`.
+   */
+  baseURL?: string;
+};
+
 function createSurveyClient(
-  options: SurveyClientFetchOptions & { baseURL?: string } = {},
+  options: CreateSurveyClientOptions = {},
 ): SurveyClient {
   const { baseURL, ...fetchOptions } = options;
   const $fetch = createSurveyFetch(
@@ -112,8 +121,9 @@ function createSurveyClient(
   };
 }
 
+/** Fill audience client. `baseURL` defaults to `/api/survey`. */
 export function createFillClient(
-  options: SurveyClientFetchOptions & { baseURL?: string } = {},
+  options: CreateSurveyClientOptions = {},
 ): FillClient {
   const client = createSurveyClient(options);
   return {
@@ -128,8 +138,9 @@ export function createFillClient(
   };
 }
 
+/** Editor audience client. `baseURL` defaults to `/api/admin/survey`. */
 export function createEditorClient(
-  options: SurveyClientFetchOptions & { baseURL?: string } = {},
+  options: CreateSurveyClientOptions = {},
 ): EditorClient {
   const client = createSurveyClient({
     ...options,

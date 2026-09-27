@@ -55,23 +55,33 @@ SurveyJS UI components require a browser, so Next.js applications should load
 `<Survey>` dynamically. A submitted or abandoned response opens in `display`
 mode and sends no writes.
 
+## Options
+
+```ts
+import type { UseSurveyResponseOptions } from "@dimah-survey/react";
+```
+
+<AutoTypeTable
+  path="packages/react/src/use-survey-response.ts"
+  name="UseSurveyResponseOptions"
+/>
+
 ## Handle state
 
-| Value       | Meaning                                                       |
-| ----------- | ------------------------------------------------------------- |
-| `model`     | Hydrated snapshot; `null` while loading or after a load error |
-| `error`     | Initial response load failed                                  |
-| `saveError` | Partial save or submit failed; the model remains mounted      |
-| `stale`     | The write failed with `STALE_UPDATE`                          |
-| `reload()`  | Read the stored response again and clear the write error      |
+```ts
+import type { SurveyResponseBinding } from "@dimah-survey/react";
+```
+
+<AutoTypeTable
+  path="packages/react/src/use-survey-response.ts"
+  name="SurveyResponseBinding"
+/>
 
 Completion waits for the server. If submit fails, SurveyJS does not complete
 and the respondent keeps their mounted model.
 
-`partial` defaults to `"page"`. That sets `partialSendEnabled` and
-`sendResultOnPageNext`, so the next page calls `savePartial`. Pass
-`partial: "off"` to write only on completion. Each partial save sends the
-complete `survey.data` object; it is not a key-level patch.
+Each partial save sends the complete `survey.data` object; it is not a
+key-level patch.
 
 Writes are queued. Each one sends `expectedUpdatedAt` from the last successful
 read. See [Responses](/docs/responses).
@@ -92,6 +102,23 @@ const dispose = bindSurveyModel(model, {
   },
 });
 ```
+
+```ts
+import type {
+  SurveyModelActions,
+  SurveyModelBindOptions,
+} from "@dimah-survey/react";
+```
+
+<AutoTypeTable
+  path="packages/react/src/bind-survey-model.ts"
+  name="SurveyModelActions"
+/>
+
+<AutoTypeTable
+  path="packages/react/src/bind-survey-model.ts"
+  name="SurveyModelBindOptions"
+/>
 
 Call `dispose` on unmount. It removes the SurveyJS handlers it added.
 

@@ -96,6 +96,32 @@ There is no survey version table. History is `response.definition`.
 
 ## Implement a custom store
 
+```ts
+import type { SurveyStore } from "@dimah-survey/core";
+```
+
+<AutoTypeTable path="packages/core/src/types.ts" name="SurveyStore" />
+
+Start and submit callbacks are not part of the HTTP body. The server passes
+them into the store write:
+
+```ts
+import type {
+  StartResponseLifecycle,
+  SubmitResponseLifecycle,
+} from "@dimah-survey/core";
+```
+
+<AutoTypeTable
+  path="packages/core/src/types.ts"
+  name="StartResponseLifecycle"
+/>
+
+<AutoTypeTable
+  path="packages/core/src/types.ts"
+  name="SubmitResponseLifecycle"
+/>
+
 A conforming store preserves these invariants:
 
 ### Documents and snapshots
