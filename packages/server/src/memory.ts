@@ -20,6 +20,7 @@ import {
   type StartResponseInput,
   type StartResponseLifecycle,
   type SubmitResponseInput,
+  type SubmitResponseLifecycle,
   type SurveyRecord,
   type SurveyStore,
 } from "@dimah-survey/core";
@@ -292,11 +293,6 @@ export function memoryAdapter(): SurveyStore {
       return slicePage(filtered, query).map(clone);
     },
 
-    async findLatestDraft(query: { surveyId: string; respondentId: string }) {
-      const open = latestDraft(query.surveyId, query.respondentId);
-      return open ? clone(open) : null;
-    },
-
     async startResponse(
       input: StartResponseInput,
       lifecycle?: StartResponseLifecycle,
@@ -348,10 +344,16 @@ export function memoryAdapter(): SurveyStore {
       return clone(next);
     },
 
-    async submitResponse(input: SubmitResponseInput) {
+    async submitResponse(
+      input: SubmitResponseInput,
+      lifecycle?: SubmitResponseLifecycle,
+    ) {
       const existing = requireResponse(input.id);
       return exclusive(surveyKey(existing.surveyId), async () => {
         const current = requireResponse(input.id);
+        if (current.status === "submitted" && lifecycle?.alreadySubmitted) {
+          return lifecycle.alreadySubmitted(current);
+        }
         if (current.status !== "draft") {
           throw errors.responseClosed();
         }
@@ -359,16 +361,21 @@ export function memoryAdapter(): SurveyStore {
         assertSurveyAccepting(survey.settings);
         assertResponseLimit(survey.settings, submittedCount(survey.id));
         assertFresh(current.updatedAt, input.expectedUpdatedAt);
+        const prepared = lifecycle?.prepare
+          ? await lifecycle.prepare(current)
+          : undefined;
         const timestamp = now();
         const next: ResponseRecord = {
           ...current,
-          data: clone(input.data ?? current.data),
+          data: clone(prepared ?? input.data ?? current.data),
           status: "submitted",
           submittedAt: timestamp,
           updatedAt: timestamp,
         };
         responses.set(current.id, next);
-        return clone(next);
+        const saved = clone(next);
+        await lifecycle?.afterSubmit?.(saved);
+        return saved;
       });
     },
 

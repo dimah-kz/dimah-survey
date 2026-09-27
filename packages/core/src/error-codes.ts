@@ -3,7 +3,7 @@ export type ErrorCodeEntry = {
   readonly message: string;
 };
 
-export function defineErrorCodes<const T extends Record<string, string>>(
+function defineErrorCodes<const T extends Record<string, string>>(
   messages: T,
 ): { readonly [K in keyof T]: { readonly code: K; readonly message: T[K] } } {
   const codes = {} as {

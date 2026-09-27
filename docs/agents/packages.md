@@ -30,16 +30,16 @@ Consumer servers import `@dimah-survey/server`. Browsers import `@dimah-survey/r
 - copy `publishedJson` into `response.definition` at start and never update that column on later publishes
 - reject stale `expectedUpdatedAt` in the write
 - refuse start unless status is `active` and `publishedJson` is present
-- `findLatestDraft` returns the newest draft for `surveyId` + `respondentId`, or null
-- identified `startResponse` with `settings.responses: "one-open"` returns that draft instead of inserting. `"single"` returns the latest row of any status for that pair. Anonymous `startResponse` always inserts. `settings` does not change that
+- identified `startResponse` looks up the open draft and the latest row inside the write. There is no separate store method for that lookup. `settings.responses: "one-open"` returns that draft instead of inserting. `"single"` returns the latest row of any status for that pair. Anonymous `startResponse` always inserts. `settings` does not change that
 - `startResponse` calls optional lifecycle callbacks inside the same lock: `onStart` only before a new insert, `afterStart` only after it. The HTTP body does not carry them
+- `submitResponse` optional lifecycle runs inside the same lock as the write. `prepare` runs only for a draft, after the window, cap, and `expectedUpdatedAt` checks, and returns the data to persist. `alreadySubmitted` runs when the row is already submitted and must not call hooks. `afterSubmit` runs after the row is stored; a throw leaves the row. The HTTP body does not carry them
 - outside `opensAt`/`closesAt`, start, partial save, and submit throw `SURVEY_CLOSED`. Abandon, get, and reopen stay available. `maxResponses` counts `submitted` rows and rejects a new insert and a submit with `RESPONSE_LIMIT`. The check runs inside the process lock. There is no extra SQL index for the cap
 - `reopen: false` makes `reopenResponse` throw `RESPONSE_CLOSED`. Otherwise it rejects with `OPEN_DRAFT` when another draft exists for that survey and respondent
 - `resumeSurvey` sets `archived` plus `publishedJson` back to `active` and does not copy `draftJson`. An active survey is returned unchanged. No published document is `NOT_PUBLISHED`
 - the partial unique index `response_one_open_draft` is in `examples/indexes.sql` (`status = 'draft'` and `respondent_id` is not null). Enforce the same rule in the write
 - `listSurveys` / `listResponses` honor `limit` and `offset` and sort by `updatedAt` descending. `countResponses` ignores `limit`, `offset`, and `include`. Summary rows omit `definition` and `data`
 
-`@dimah-survey/db` schema copies stay in lockstep: `src/schema/v1.ts`, `examples/tables.sql`, `examples/drizzle.ts`, and `examples/schema.prisma`. `db()` must not update `response.definition` after insert. Do not add a survey version table. FumaDB does not emit the secondary indexes; those live in `examples/indexes.sql`.
+`@dimah-survey/db` schema copies stay in lockstep: `src/schema/v1.ts`, `examples/tables.sql`, `examples/drizzle.ts`, and `examples/schema.prisma`. The app owns the tables it migrates. Generate that file with FumaDB's CLI; do not import the example schema from the package. `db()` must not update `response.definition` after insert. Do not add a survey version table. FumaDB does not emit the secondary indexes; those live in `examples/indexes.sql` and in the app schema.
 
 Partial save replaces `data`. Fill `sanitizePartial` defaults to `"clear"`: `clearIncorrectValues(true)` without `validate`, then that object is stored. `"replace"` stores the payload as sent. Questions with `choicesByUrl` keep their posted value through the clear. Submit persists the object `validateResult` already accepted. Abandon and reopen do not change `definition` or `data`.
 

@@ -1,8 +1,6 @@
 import {
   SURVEY_API_OPERATIONS,
   SURVEY_ERROR_CODES,
-  assertResponseLimit,
-  assertSurveyAccepting,
   idQuerySchema,
   isAPIError,
   listResponsesQuerySchema,
@@ -205,42 +203,29 @@ export const surveyEndpoints = {
   submitResponse: createSurveyEndpoint(
     submit.path,
     { method: submit.method, body: submitResponseBodySchema },
-    async (ctx) => {
+    (ctx) => {
       const database = ctx.context.config.database;
-      const current = await database.getResponse(ctx.body.id);
-      if (!current) throw errors.responseNotFound();
       const validateResult = ctx.context.config.validateResult;
-      if (current.status === "submitted") {
-        return replaySubmit(current, ctx.body.data, validateResult);
-      }
-      if (current.status !== "draft") throw errors.responseClosed();
-      const survey = await database.getSurvey(current.surveyId);
-      if (!survey) throw errors.surveyNotFound();
-      assertSurveyAccepting(survey.settings);
-      if (survey.settings.maxResponses !== null) {
-        const submitted = await database.countResponses({
-          surveyId: survey.id,
-          status: "submitted",
-        });
-        assertResponseLimit(survey.settings, submitted);
-      }
-      const stored = await cleanedResult(
-        validateResult,
-        current.definition,
-        ctx.body.data ?? current.data,
-      );
       const hooks = fillHooks(ctx.context.config);
       const request = ctx.context.request;
-      await hooks?.onSubmit?.({
-        request,
-        response: { ...current, data: stored },
+      return database.submitResponse(ctx.body, {
+        prepare: async (current) => {
+          const stored = await cleanedResult(
+            validateResult,
+            current.definition,
+            ctx.body.data ?? current.data,
+          );
+          await hooks?.onSubmit?.({
+            request,
+            response: { ...current, data: stored },
+          });
+          return stored;
+        },
+        alreadySubmitted: (current) =>
+          replaySubmit(current, ctx.body.data, validateResult),
+        afterSubmit: (saved) =>
+          hooks?.afterSubmit?.({ request, response: saved }),
       });
-      const saved = await database.submitResponse({
-        ...ctx.body,
-        data: stored,
-      });
-      await hooks?.afterSubmit?.({ request, response: saved });
-      return saved;
     },
   ),
   abandonResponse: createSurveyEndpoint(

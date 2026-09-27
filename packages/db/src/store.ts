@@ -206,32 +206,44 @@ export function db(client: DimahSurveyDbClient): SurveyStore {
       settings: row.settings,
       updatedAt,
     };
+    try {
+      if (expectedUpdatedAt !== undefined) {
+        await orm.updateMany("survey", {
+          set: columns,
+          where: (b) =>
+            b.and(
+              b("id", "=", row.id),
+              b("updatedAt", "=", new Date(expectedUpdatedAt)),
+            ),
+        });
+      } else if (creating) {
+        await orm.create("survey", {
+          id: row.id,
+          ...columns,
+          createdAt: new Date(row.createdAt),
+        });
+      } else {
+        await orm.updateMany("survey", {
+          set: columns,
+          where: (b) => b("id", "=", row.id),
+        });
+      }
+    } catch (error) {
+      if (isUniqueViolation(error)) throw slugTaken();
+      throw error;
+    }
+    const fresh = await readSurvey(row.id);
     if (expectedUpdatedAt !== undefined) {
-      await orm.updateMany("survey", {
-        set: columns,
-        where: (b) =>
-          b.and(
-            b("id", "=", row.id),
-            b("updatedAt", "=", new Date(expectedUpdatedAt)),
-          ),
-      });
-      const fresh = await readSurvey(row.id);
       if (!fresh || !surveyWriteLanded(fresh, row)) throw stale();
       return fresh;
     }
-    if (creating) {
-      await orm.create("survey", {
-        id: row.id,
-        ...columns,
-        createdAt: new Date(row.createdAt),
-      });
-      return row;
+    if (!fresh) {
+      throw APIError.from(
+        "INTERNAL_SERVER_ERROR",
+        SURVEY_ERROR_CODES.INTERNAL_ERROR,
+      );
     }
-    await orm.updateMany("survey", {
-      set: columns,
-      where: (b) => b("id", "=", row.id),
-    });
-    return row;
+    return fresh;
   }
 
   async function latestDraft(query: {
@@ -323,7 +335,14 @@ export function db(client: DimahSurveyDbClient): SurveyStore {
       }
       throw error;
     }
-    return { row, inserted: true };
+    const saved = await readResponse(row.id);
+    if (!saved) {
+      throw APIError.from(
+        "INTERNAL_SERVER_ERROR",
+        SURVEY_ERROR_CODES.INTERNAL_ERROR,
+      );
+    }
+    return { row: saved, inserted: true };
   }
 
   async function beginResponse(
@@ -384,9 +403,6 @@ export function db(client: DimahSurveyDbClient): SurveyStore {
         offset: query?.offset,
       });
       return rows.map((row) => toSurvey(row as SurveyRow));
-    },
-    async findLatestDraft(query) {
-      return latestDraft(query);
     },
     async saveSurvey(input) {
       const existing = await readSurvey(input.id);
@@ -552,31 +568,63 @@ export function db(client: DimahSurveyDbClient): SurveyStore {
         return { ...row, data: input.data };
       });
     },
-    async submitResponse(input) {
+    async submitResponse(input, lifecycle) {
       const existing = await readResponse(input.id);
       if (!existing) {
         throw APIError.from("NOT_FOUND", SURVEY_ERROR_CODES.RESPONSE_NOT_FOUND);
       }
       return exclusive(surveyKey(existing.surveyId), async () => {
-        const survey = await readSurvey(existing.surveyId);
+        const current = await readResponse(input.id);
+        if (!current) {
+          throw APIError.from(
+            "NOT_FOUND",
+            SURVEY_ERROR_CODES.RESPONSE_NOT_FOUND,
+          );
+        }
+        if (current.status === "submitted" && lifecycle?.alreadySubmitted) {
+          return lifecycle.alreadySubmitted(current);
+        }
+        if (current.status !== "draft") {
+          throw APIError.from("CONFLICT", SURVEY_ERROR_CODES.RESPONSE_CLOSED);
+        }
+        const survey = await readSurvey(current.surveyId);
         if (!survey) {
           throw APIError.from("NOT_FOUND", SURVEY_ERROR_CODES.SURVEY_NOT_FOUND);
         }
         assertSurveyAccepting(survey.settings);
         assertResponseLimit(survey.settings, await countSubmitted(survey.id));
-        return updateResponse(input.id, input.expectedUpdatedAt, (current) => {
-          if (current.status !== "draft") {
-            throw APIError.from("CONFLICT", SURVEY_ERROR_CODES.RESPONSE_CLOSED);
-          }
-          const now = new Date().toISOString();
-          return {
-            ...current,
-            data: input.data ?? current.data,
-            status: "submitted",
-            submittedAt: now,
-            updatedAt: now,
-          };
-        });
+        if (
+          input.expectedUpdatedAt !== undefined &&
+          input.expectedUpdatedAt !== current.updatedAt
+        ) {
+          throw stale();
+        }
+        const prepared = lifecycle?.prepare
+          ? await lifecycle.prepare(current)
+          : undefined;
+        const data = prepared ?? input.data ?? current.data;
+        const saved = await updateResponse(
+          input.id,
+          input.expectedUpdatedAt,
+          (row) => {
+            if (row.status !== "draft") {
+              throw APIError.from(
+                "CONFLICT",
+                SURVEY_ERROR_CODES.RESPONSE_CLOSED,
+              );
+            }
+            const now = new Date().toISOString();
+            return {
+              ...row,
+              data,
+              status: "submitted",
+              submittedAt: now,
+              updatedAt: now,
+            };
+          },
+        );
+        await lifecycle?.afterSubmit?.(saved);
+        return saved;
       });
     },
     async abandonResponse(input) {
@@ -675,7 +723,13 @@ export function db(client: DimahSurveyDbClient): SurveyStore {
       set,
       where: (b) => b("id", "=", id),
     });
-    return row;
+    const fresh = await orm.findFirst("response", {
+      where: (b) => b("id", "=", id),
+    });
+    if (!fresh) {
+      throw APIError.from("NOT_FOUND", SURVEY_ERROR_CODES.RESPONSE_NOT_FOUND);
+    }
+    return toResponse(fresh as ResponseRow);
   }
 
   async function assertSlugAvailable(id: string, slug: string) {

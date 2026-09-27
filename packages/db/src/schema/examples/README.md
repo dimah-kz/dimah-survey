@@ -1,6 +1,6 @@
 # Schema examples
 
-Not imported at runtime. `src/schema/v1.ts` is the FumaDB source. These files are the same columns for the ORMs that do not read that source.
+`src/schema/v1.ts` is the FumaDB source. These files are reference copies, not a runtime import. The app owns its schema: generate it with FumaDB's CLI, then keep the indexes FumaDB does not emit.
 
 | File                               | Dialect                      |
 | ---------------------------------- | ---------------------------- |

@@ -42,9 +42,10 @@ export type SurveyPublishContext = {
 };
 
 /**
- * `onSubmit` runs after validation and before persist. Throwing aborts the
- * write. `afterSubmit` runs after the row is stored. A replayed submit does
- * not call either hook. `onStart` runs only before a new insert. `afterStart`
+ * `onSubmit` runs after validation and before persist, inside the store lock.
+ * Throwing aborts the write. `afterSubmit` runs after the row is stored, still
+ * inside that lock. A throw leaves the row stored. A replayed submit does not
+ * call either hook. `onStart` runs only before a new insert. `afterStart`
  * runs after that insert; a throw leaves the row stored.
  */
 export type FillHooks = {
@@ -79,11 +80,6 @@ type DimahSurveyConfigBase = {
    * A fill handler with no guard is refused at startup.
    */
   guard?: Guard;
-  /**
-   * Runs on the response snapshot. Defaults to survey-core
-   * `clearIncorrectValues(true)` plus `validate`. Read on the fill handler.
-   */
-  validateResult?: ValidateResult;
   basePath?: string;
 };
 
@@ -93,6 +89,11 @@ export type DimahFillConfig = DimahSurveyConfigBase & {
   hooks?: FillHooks;
   /** Defaults to `"clear"`. */
   sanitizePartial?: SanitizePartial;
+  /**
+   * Runs on the response snapshot. Defaults to survey-core
+   * `clearIncorrectValues(true)` plus `validate`.
+   */
+  validateResult?: ValidateResult;
 };
 
 export type DimahEditorConfig = DimahSurveyConfigBase & {
@@ -118,11 +119,16 @@ export type DimahEditor = {
   handler: SurveyHandler;
 };
 
-function sanitizePartialOf(
-  config: DimahFillConfig | DimahEditorConfig,
-): SanitizePartial {
+function sanitizePartialOf(config: DimahSurveyConfig): SanitizePartial {
   if (config.audience === "fill") return config.sanitizePartial ?? "clear";
   return "replace";
+}
+
+function validateResultOf(config: DimahSurveyConfig): ValidateResult {
+  if (config.audience === "fill") {
+    return config.validateResult ?? checkSurveyResult;
+  }
+  return checkSurveyResult;
 }
 
 type InstanceFor<A extends SurveyAudience> = A extends "fill"
@@ -144,7 +150,7 @@ export function dimahSurvey<A extends SurveyAudience>(
     database: config.database,
     guard: config.guard,
     hooks: config.hooks,
-    validateResult: config.validateResult ?? checkSurveyResult,
+    validateResult: validateResultOf(config),
     sanitizePartial: sanitizePartialOf(config),
     basePath: normalizeSurveyApiBasePath(
       config.basePath ??

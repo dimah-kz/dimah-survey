@@ -20,7 +20,6 @@ function session(respondentId: string) {
     audience: "editor",
     database,
     basePath: "/api/editor",
-    validateResult: () => undefined,
   });
   const fill = dimahSurvey({
     audience: "fill",
@@ -155,7 +154,6 @@ describe("anonymous fill", () => {
       audience: "editor",
       database,
       basePath: "/api/editor",
-      validateResult: () => undefined,
     });
     const fill = dimahSurvey({
       audience: "fill",

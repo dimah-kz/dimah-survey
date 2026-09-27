@@ -35,7 +35,8 @@
   "scripts": {
     "build": "tsup --config tsup.config.ts && tsc --emitDeclarationOnly -p tsconfig.build.json && tsc-alias",
     "check-types": "tsc --noEmit",
-    "lint": "eslint --max-warnings 0 --cache"
+    "lint": "eslint --max-warnings 0 --cache",
+    "test": "vitest run"
   },
   "dependencies": {
     "@better-fetch/fetch": "catalog:",
@@ -46,10 +47,12 @@
     "@workspace/eslint-config": "workspace:*",
     "@workspace/tsup-config": "workspace:*",
     "@workspace/typescript-config": "workspace:*",
+    "@workspace/vitest-config": "workspace:*",
     "eslint": "catalog:",
     "tsc-alias": "catalog:",
     "tsup": "catalog:",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "vitest": "catalog:"
   },
   "publishConfig": {
     "access": "public"

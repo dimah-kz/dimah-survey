@@ -107,6 +107,24 @@ export type StartResponseLifecycle = {
   afterStart?: (response: ResponseRecord) => void | Promise<void>;
 };
 
+/**
+ * Store callbacks for `submitResponse`. The HTTP body does not carry them.
+ * All of them run inside the store lock. `prepare` runs only for a draft,
+ * after the window, cap, and `expectedUpdatedAt` checks. Throw to skip the
+ * write. `alreadySubmitted` runs when the row is already submitted and must
+ * not call submit hooks. `afterSubmit` runs after the row is stored; a throw
+ * leaves the row stored.
+ */
+export type SubmitResponseLifecycle = {
+  prepare?: (
+    current: ResponseRecord,
+  ) => SurveyResult | void | Promise<SurveyResult | void>;
+  alreadySubmitted?: (
+    current: ResponseRecord,
+  ) => ResponseRecord | Promise<ResponseRecord>;
+  afterSubmit?: (response: ResponseRecord) => void | Promise<void>;
+};
+
 export type ListPageQuery = {
   limit?: number;
   offset?: number;
@@ -221,15 +239,6 @@ export type SurveyStore = {
   resumeSurvey(input: ResumeSurveyInput): Promise<SurveyRecord>;
   getSurvey(idOrSlug: string): Promise<SurveyRecord | null>;
   listSurveys(query?: ListSurveysQuery): Promise<SurveyRecord[]>;
-  /**
-   * Newest draft for this survey and respondent (`updatedAt` descending).
-   * Identified `startResponse` returns this row instead of inserting when
-   * `settings.responses` is `"one-open"`.
-   */
-  findLatestDraft(query: {
-    surveyId: string;
-    respondentId: string;
-  }): Promise<ResponseRecord | null>;
   startResponse(
     input: StartResponseInput,
     lifecycle?: StartResponseLifecycle,
@@ -240,7 +249,10 @@ export type SurveyStore = {
   /** Ignores `limit`, `offset`, and `include`. */
   countResponses(query?: ListResponsesQuery): Promise<number>;
   savePartial(input: SavePartialInput): Promise<ResponseRecord>;
-  submitResponse(input: SubmitResponseInput): Promise<ResponseRecord>;
+  submitResponse(
+    input: SubmitResponseInput,
+    lifecycle?: SubmitResponseLifecycle,
+  ): Promise<ResponseRecord>;
   abandonResponse(input: ResponseMutationInput): Promise<ResponseRecord>;
   reopenResponse(input: ResponseMutationInput): Promise<ResponseRecord>;
   getResponse(id: string): Promise<ResponseRecord | null>;

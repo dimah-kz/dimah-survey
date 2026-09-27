@@ -1,5 +1,9 @@
 import { createSurveyFetch, type SurveyClientFetchOptions } from "./fetch";
-import { normalizeSurveyApiBasePath, SURVEY_API_ROUTES } from "./routes";
+import {
+  normalizeSurveyApiBasePath,
+  SURVEY_API_ROUTES,
+  SURVEY_EDITOR_API_BASE_PATH,
+} from "./routes";
 import type {
   ArchiveSurveyInput,
   ListResponsesQuery,
@@ -127,7 +131,10 @@ export function createFillClient(
 export function createEditorClient(
   options: SurveyClientFetchOptions & { baseURL?: string } = {},
 ): EditorClient {
-  const client = createSurveyClient(options);
+  const client = createSurveyClient({
+    ...options,
+    baseURL: options.baseURL ?? SURVEY_EDITOR_API_BASE_PATH,
+  });
   return {
     saveSurvey: client.saveSurvey,
     publishSurvey: client.publishSurvey,

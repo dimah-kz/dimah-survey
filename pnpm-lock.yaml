@@ -492,6 +492,9 @@ importers:
       '@workspace/typescript-config':
         specifier: workspace:*
         version: link:../../tooling/typescript-config
+      '@workspace/vitest-config':
+        specifier: workspace:*
+        version: link:../../tooling/vitest-config
       eslint:
         specifier: 'catalog:'
         version: 10.11.0(jiti@2.7.0)(supports-color@7.2.0)
@@ -504,6 +507,9 @@ importers:
       typescript:
         specifier: 'catalog:'
         version: 7.0.2
+      vitest:
+        specifier: 'catalog:'
+        version: 5.0.2(@types/node@26.6.2)(vite@8.3.1(@types/node@26.6.2)(esbuild@0.27.7)(jiti@2.7.0)(yaml@2.9.1))
 
   packages/db:
     dependencies:

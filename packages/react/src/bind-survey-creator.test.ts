@@ -94,6 +94,32 @@ describe("bindSurveyCreator", () => {
     expect(saveDraft).toHaveBeenCalledTimes(2);
   });
 
+  it("ignores a save that finishes after dispose", async () => {
+    const draft = creator({ title: "v1" });
+    let release: (value: { updatedAt: string }) => void = () => undefined;
+    const gate = new Promise<{ updatedAt: string }>((resolve) => {
+      release = resolve;
+    });
+    const saveDraft = vi.fn(() => gate);
+    const onWriteError = vi.fn();
+    const calls: boolean[] = [];
+    const dispose = bindSurveyCreator(draft, {
+      initialUpdatedAt: "t0",
+      saveDraft,
+      onWriteError,
+    });
+    draft.saveSurveyFunc(1, (_saveNo, success) => {
+      calls.push(success);
+    });
+    await vi.waitFor(() => expect(saveDraft).toHaveBeenCalledOnce());
+    dispose();
+    release({ updatedAt: "t9" });
+    await vi.waitFor(() => expect(draft.isAutoSave).toBe(false));
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(calls).toEqual([]);
+    expect(onWriteError).not.toHaveBeenCalled();
+  });
+
   it("restores the previous save function", async () => {
     const draft = creator({ title: "v1" });
     const saveDraft = vi.fn(async () => ({ updatedAt: "t1" }));

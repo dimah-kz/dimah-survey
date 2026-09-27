@@ -36,7 +36,6 @@ describe("audience routes", () => {
     const editor = dimahSurvey({
       audience: "editor",
       database: memoryAdapter(),
-      validateResult: () => undefined,
     });
     const response = await editor.handler(
       new Request("http://survey.local/api/admin/survey/response/start", {
@@ -55,7 +54,6 @@ describe("audience routes", () => {
     const editor = dimahSurvey({
       audience: "editor",
       database: memoryAdapter(),
-      validateResult: () => undefined,
       guard: () => ({ respondentId: "user-1" }),
     });
     await expect(

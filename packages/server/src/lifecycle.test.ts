@@ -6,7 +6,7 @@ import {
   type EditorClient,
   type ValidateResult,
 } from "@dimah-survey/core";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { dimahSurvey, type FillHooks } from "./dimah-survey";
 import { memoryAdapter } from "./memory";
@@ -30,7 +30,6 @@ function mount(options?: {
   const editorSurvey = dimahSurvey({
     audience: "editor",
     database,
-    validateResult,
     basePath: "/api/editor",
   });
   const fillSurvey = dimahSurvey({
@@ -129,7 +128,6 @@ describe("published snapshot", () => {
     const survey = dimahSurvey({
       audience: "editor",
       database: memoryAdapter(),
-      validateResult: () => undefined,
       guard: (context) => {
         const body = context.body as { id?: string } | undefined;
         seen.push({ operation: context.operation, id: body?.id });
@@ -313,6 +311,46 @@ describe("idempotent submit", () => {
       }),
     ).rejects.toMatchObject({ code: SURVEY_ERROR_CODES.FORBIDDEN.code });
     expect((await fill.getResponse(started.id)).status).toBe("draft");
+  });
+
+  it("runs onSubmit once when two submits overlap", async () => {
+    let calls = 0;
+    let release: () => void = () => undefined;
+    const gate = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    const { editor, fill } = mount({
+      validateResult: () => undefined,
+      hooks: {
+        onSubmit: async () => {
+          calls += 1;
+          await gate;
+        },
+      },
+    });
+    await publish(editor, "pulse");
+    const started = await fill.startResponse({ surveyId: "pulse" });
+    const body = {
+      id: started.id,
+      data: { q1: "yes" },
+      expectedUpdatedAt: started.updatedAt,
+    };
+    const pending = Promise.all([
+      fill.submitResponse(body),
+      fill.submitResponse(body),
+    ]);
+    await vi.waitFor(() => expect(calls).toBe(1));
+    await new Promise((resolve) => setTimeout(resolve, 30));
+    expect(calls).toBe(1);
+    release();
+    const [first, second] = await pending;
+    expect(calls).toBe(1);
+    expect(first.status).toBe("submitted");
+    expect(second).toMatchObject({
+      id: first.id,
+      status: "submitted",
+      data: first.data,
+    });
   });
 });
 
