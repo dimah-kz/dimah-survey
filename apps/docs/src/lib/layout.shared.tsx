@@ -10,13 +10,5 @@ export function baseOptions(): BaseLayoutProps {
       url: "/",
     },
     githubUrl,
-    links: [
-      {
-        type: "main",
-        text: "Documentation",
-        url: "/docs",
-        active: "nested-url",
-      },
-    ],
   };
 }
