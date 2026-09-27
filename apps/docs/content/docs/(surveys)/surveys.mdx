@@ -57,6 +57,8 @@ unique; a conflicting write throws `SLUG_TAKEN`.
 `getSurvey` and `getPublishedSurvey` accept an id or a slug in the `id` query.
 `startResponse` accepts either value in `surveyId`.
 
+---
+
 ## Protect concurrent changes
 
 Draft, publish, archive, settings, and resume accept `expectedUpdatedAt` from
@@ -69,6 +71,8 @@ no row to compare.
 
 `useSurveyDraft` sends the token it last read. See [Creator](/docs/creator).
 
+---
+
 ## Publish changes the future, not history
 
 Existing drafts, submitted responses, and abandoned responses keep their stored
@@ -77,3 +81,34 @@ Existing drafts, submitted responses, and abandoned responses keep their stored
 
 There is no separate survey-version table. The snapshot on each response is
 the version history that matters.
+
+---
+
+## Frequently asked questions
+
+<Accordions>
+
+<Accordion title="Does saving the Creator draft publish it?">
+
+No. `saveSurvey` replaces `draftJson` only. Respondents see the change after
+`publishSurvey`, and only on responses started after that publish.
+
+</Accordion>
+
+<Accordion title="Can respondents fill a draft that was never published?">
+
+No. Start requires status `active` and a `publishedJson`. A draft or archived
+survey fails with `NOT_PUBLISHED`. `resumeSurvey` restores an archived survey
+that was already published; it does not publish the current draft.
+
+</Accordion>
+
+<Accordion title="Why does creating a survey fail when I send expectedUpdatedAt?">
+
+Create has no stored `updatedAt` to compare, so the token fails with
+`STALE_UPDATE`. Send `expectedUpdatedAt` on updates, from the last read. Omit
+it only for an intentional last-write-wins update.
+
+</Accordion>
+
+</Accordions>

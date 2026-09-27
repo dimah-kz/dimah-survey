@@ -1,0 +1,49 @@
+```sql title="db/schema.sql"
+create table dimah_survey (
+  id varchar(255) primary key,
+  slug varchar(255) not null,
+  status text not null,
+  draft_json jsonb not null,
+  published_json jsonb,
+  published_at timestamptz,
+  settings jsonb not null,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  constraint dimah_survey_slug_unique unique (slug),
+  constraint dimah_survey_status_check check (status in ('draft', 'active', 'archived'))
+);
+
+create table dimah_response (
+  id varchar(255) primary key,
+  survey_id varchar(255) not null,
+  respondent_id varchar(255),
+  status text not null,
+  definition jsonb not null,
+  data jsonb not null,
+  submitted_at timestamptz,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  constraint dimah_response_survey_fk
+    foreign key (survey_id) references dimah_survey (id)
+    on update restrict on delete restrict,
+  constraint dimah_response_status_check check (status in ('draft', 'submitted', 'abandoned'))
+);
+
+create table private_dimah_survey_settings (
+  id varchar(255) primary key,
+  version varchar(255) not null default '1.0.0'
+);
+
+create index if not exists dimah_survey_status_updated_at_idx
+  on dimah_survey (status, updated_at);
+
+create index if not exists dimah_response_survey_id_updated_at_idx
+  on dimah_response (survey_id, updated_at);
+
+create index if not exists dimah_response_respondent_lookup_idx
+  on dimah_response (survey_id, respondent_id, status);
+
+create unique index if not exists dimah_response_one_open_draft
+  on dimah_response (survey_id, respondent_id)
+  where status = 'draft' and respondent_id is not null;
+```

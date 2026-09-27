@@ -170,7 +170,7 @@ export function siteJsonLd(origin: string) {
           "Separate fill and editor audiences",
           "SurveyJS renderer stays in the application",
           "Next.js, Hono, Express, Fastify, Elysia, SvelteKit, and Node adapters",
-          "SQL store or an in-memory adapter",
+          "SQL store through @dimah-survey/db",
         ],
       },
       {

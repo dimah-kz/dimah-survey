@@ -29,6 +29,8 @@ integer or `null`.
 Dates are ISO strings. If legacy storage contains an invalid settings object,
 the reader falls back to defaults rather than exposing malformed policy.
 
+---
+
 ## Reuse identified responses
 
 For an identified principal, `startResponse` applies `responses` inside the
@@ -57,6 +59,8 @@ a new insert and before submit, inside the store lock. At the cap, both fail
 with `RESPONSE_LIMIT`. Returning an existing identified row does not consume
 capacity.
 
+---
+
 ## Reopen a response
 
 `reopen: true` lets `reopenResponse` move a submitted or abandoned row back to
@@ -65,3 +69,45 @@ capacity.
 When reopening would create a second draft for the same survey and identified
 respondent, the write fails with `OPEN_DRAFT`. `reopen: false` instead fails
 with `RESPONSE_CLOSED`.
+
+---
+
+## Frequently asked questions
+
+<Accordions>
+
+<Accordion title="Do collection settings become part of the response snapshot?">
+
+No. `settings` stays on the survey. `response.definition` is only the SurveyJS
+document copied from `publishedJson`. Changing settings does not rewrite
+existing rows, but later start, save, and submit calls follow the current
+policy.
+
+</Accordion>
+
+<Accordion title="Which policy should I use for one submission per person?">
+
+Use an identified guard and `responses: "single"`. Start then returns that
+respondent's latest row of any status. `"one-open"` returns an existing draft
+and allows another response after submit. Anonymous starts always create a new
+row.
+
+</Accordion>
+
+<Accordion title="Why can someone still open a survey after it closes?">
+
+`GET /survey/published` stays available so the client can render a closed
+state. `startResponse`, `savePartial`, and `submitResponse` throw
+`SURVEY_CLOSED` outside `opensAt` and `closesAt`. Abandon, get, and reopen
+stay available.
+
+</Accordion>
+
+<Accordion title="What happens if reopen would create a second draft?">
+
+The write fails with `OPEN_DRAFT`. An identified respondent may have only one
+draft per survey. `reopen: false` fails earlier with `RESPONSE_CLOSED`.
+
+</Accordion>
+
+</Accordions>

@@ -72,6 +72,8 @@ guard; omitting it still stamps the server-established id.
 
 Identified start follows `settings.responses`. See [Settings](/docs/settings).
 
+---
+
 ## Treat anonymous ids as capabilities
 
 `guardAnonymous()` returns `{ anonymous: true }`. Each start inserts a row.
@@ -98,6 +100,8 @@ export const fill = dimahSurvey({
   can read and mutate that response.
 </Callout>
 
+---
+
 ## Protect the editor route
 
 ```ts title="lib/survey.ts"
@@ -120,6 +124,8 @@ allows the request or throws.
 `include: "full"` belongs here. It returns `definition` and `data` for
 analytics. Do not expose that route on the fill path.
 
+---
+
 ## Place side effects deliberately
 
 `onStart`, `onSubmit`, and `onPublish` may abort their write. Their `after*`
@@ -129,3 +135,35 @@ be safe to retry at the application boundary.
 
 A successful idempotent resubmit does not run submit hooks again.
 `resumeSurvey` does not run publish hooks.
+
+---
+
+## Frequently asked questions
+
+<Accordions>
+
+<Accordion title="Can the browser set respondentId?">
+
+Only to repeat the id the guard already established. A different id is
+rejected. Omitting it still stamps the guard's id. Anonymous callers cannot
+send `respondentId` at all.
+
+</Accordion>
+
+<Accordion title="How should I store an anonymous response id?">
+
+Treat it as a secret capability. The row has no `respondentId`, and anyone who
+knows the id can read and mutate that response. Do not put it in a shared log
+or a guessable URL.
+
+</Accordion>
+
+<Accordion title="Can the fill route export every response for analytics?">
+
+No. Fill refuses `include: "full"`. Use the editor audience for that read. A
+respondent can still `getResponse` for their own row, which includes that
+row's `definition` and `data`.
+
+</Accordion>
+
+</Accordions>

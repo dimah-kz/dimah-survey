@@ -87,6 +87,8 @@ import type { SurveyDraftBinding } from "@dimah-survey/react";
 Unlike the fill hook, `useSurveyDraft()` has no `reload()` method. Reload the
 survey in your application before writing again.
 
+---
+
 ## Publish explicitly
 
 Autosave must not call `publishSurvey`. Publish copies the current draft onto
@@ -99,6 +101,8 @@ await editorClient.publishSurvey({ id: surveyId, expectedUpdatedAt });
 On the server, the equivalent call is
 `editor.api.publishSurvey({ body })`. Archive, resume, and settings are editor
 calls too. See [Surveys](/docs/surveys).
+
+---
 
 ## Bind without React state
 
@@ -120,3 +124,34 @@ They are not dependencies of `@dimah-survey/react`.
 
 See [Survey lifecycle](/docs/surveys) for publish, archive, resume, and
 compare-and-swap behavior.
+
+---
+
+## Frequently asked questions
+
+<Accordions>
+
+<Accordion title="Will Creator autosave publish the survey?">
+
+No. `useSurveyDraft` calls `saveSurvey` and replaces `draftJson` only. Call
+`publishSurvey` from an explicit action when respondents should see the draft.
+
+</Accordion>
+
+<Accordion title="How do I recover when the draft is stale?">
+
+`useSurveyDraft` has no `reload()`. Read the survey again with `getSurvey`,
+pass the new `draftJson` and `updatedAt` into the component, and let Creator
+bind to that revision before the next save.
+
+</Accordion>
+
+<Accordion title="Is Survey Creator a dependency of @dimah-survey/react?">
+
+No. Install `survey-creator-core` and `survey-creator-react` in the
+application that renders Creator. The hook only sets `isAutoSave` and
+`saveSurveyFunc`.
+
+</Accordion>
+
+</Accordions>

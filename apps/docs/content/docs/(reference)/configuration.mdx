@@ -11,18 +11,18 @@ validation and only editor accepts publish hooks.
 ## Fill instance
 
 ```ts
-import {
-  dimahSurvey,
-  guardAnonymous,
-  memoryAdapter,
-} from "@dimah-survey/server";
+import { dimahSurvey, guardAnonymous } from "@dimah-survey/server";
+
+import { database } from "@/db";
 
 export const fill = dimahSurvey({
   audience: "fill",
-  database: memoryAdapter(),
+  database,
   guard: guardAnonymous(),
 });
 ```
+
+[Database](/docs/persistence) creates `database` with `@dimah-survey/db`.
 
 ```ts
 import type { DimahFillConfig } from "@dimah-survey/server";
@@ -64,6 +64,8 @@ A start that returns an existing row does not call `onStart` or `afterStart`.
 A replayed submit does not call `onSubmit` or `afterSubmit`. The HTTP body
 cannot carry these hooks.
 
+---
+
 ## Editor instance
 
 ```ts
@@ -90,6 +92,8 @@ import type { EditorHooks } from "@dimah-survey/server";
 
 <AutoTypeTable path="packages/server/src/dimah-survey.ts" name="EditorHooks" />
 
+---
+
 ## Browser clients
 
 `createFillClient` and `createEditorClient` accept the same options. Only the
@@ -107,6 +111,8 @@ import type { CreateSurveyClientOptions } from "@dimah-survey/react";
 Browser methods take flat objects. `fill.api` and `editor.api` take `{ body }`
 or `{ query }`, plus optional `headers` or `request` for guards. See
 [Mount the server](/docs/integration).
+
+---
 
 ## React
 
@@ -131,3 +137,35 @@ import type { UseSurveyDraftOptions } from "@dimah-survey/react";
 />
 
 The hook does not construct Creator. See [Creator](/docs/creator).
+
+---
+
+## Frequently asked questions
+
+<Accordions>
+
+<Accordion title="Why can't the editor configure validateResult?">
+
+Submit validation runs on the fill audience, against the response snapshot.
+Publish hooks run on the editor audience. Each config type exposes only the
+callbacks for its trust boundary.
+
+</Accordion>
+
+<Accordion title="What should validateResult return?">
+
+Return the object to persist. Return nothing to keep the submitted `data`.
+Throw `APIError` with `VALIDATION_FAILED` to reject the submit. The callback
+still receives the stored `definition`. The HTTP body cannot replace it.
+
+</Accordion>
+
+<Accordion title="Why did onStart not run?">
+
+`onStart` and `afterStart` run only before a new insert. A start that returns
+an existing identified response skips them. An idempotent resubmit skips
+`onSubmit` and `afterSubmit` as well.
+
+</Accordion>
+
+</Accordions>

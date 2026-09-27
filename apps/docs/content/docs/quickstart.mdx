@@ -1,72 +1,68 @@
 ---
 title: Quickstart
-description: Publish a survey, mount the API, and render a response.
+description: Publish a survey, store it in your database, and render a response.
 icon: Rocket
 ---
 
-This guide publishes a SurveyJS document, starts a response, renders its frozen
-definition, saves page progress, and submits it.
+Publish a SurveyJS document, store it with `@dimah-survey/db`, and render the
+frozen response.
 
-<Callout type="warn">
-  This quickstart uses process-local memory and a fixed respondent. Before
-  production, use a durable store, derive identity from the session, and guard
-  the editor route.
-</Callout>
-
-<Steps>
-
-<Step>
-
-### Install
+### Install [step]
 
 ```npm
-npm i @dimah-survey/server @dimah-survey/react survey-core survey-react-ui
+npm i @dimah-survey/server @dimah-survey/db @dimah-survey/react survey-core survey-react-ui fumadb
 ```
 
-`survey-react-ui` renders questions. dimah-survey owns the lifecycle around the
-SurveyJS document.
+`survey-react-ui` renders the questions. Add the tables on
+[Database](/docs/persistence).
 
-</Step>
+### Create the server [step]
 
-<Step>
-
-### Create the server
-
-Create a fill instance and an editor instance on one store.
+The guard reads your session. The browser cannot choose the respondent.
 
 ```ts title="lib/survey.ts"
 import {
+  APIError,
+  SURVEY_ERROR_CODES,
   dimahSurvey,
   guardRespondent,
-  memoryAdapter,
 } from "@dimah-survey/server";
 
-const database = memoryAdapter();
+import { database } from "@/db";
 
 export const editor = dimahSurvey({
   audience: "editor",
   database,
+  guard: async ({ request }) => {
+    const session = await getSession(request);
+    if (!session) {
+      throw APIError.from("FORBIDDEN", SURVEY_ERROR_CODES.FORBIDDEN);
+    }
+  },
 });
 
 export const fill = dimahSurvey({
   audience: "fill",
   database,
-  guard: guardRespondent("demo"),
+  guard: async (context) => {
+    const session = await getSession(context.request);
+    if (!session) {
+      throw APIError.from("FORBIDDEN", SURVEY_ERROR_CODES.FORBIDDEN);
+    }
+    return guardRespondent(session.user.id)(context);
+  },
 });
 ```
 
-The guard stamps `"demo"` on every response.
+`getSession` is your application. See [Security](/docs/security).
 
-</Step>
-
-<Step>
-
-### Publish a SurveyJS document
+### Publish a SurveyJS document [step]
 
 Saving writes `draftJson`. Publishing copies that draft to `publishedJson`.
 
 ```ts title="lib/welcome.ts"
 import { isAPIError } from "@dimah-survey/server";
+
 import { editor } from "./survey";
 
 const definition = {
@@ -103,11 +99,7 @@ export async function ensureWelcomeSurvey() {
 
 `getSurvey` throws `SURVEY_NOT_FOUND` when the row is missing.
 
-</Step>
-
-<Step>
-
-### Mount both audiences
+### Mount both audiences [step]
 
 Each audience gets its own route. The handler serves only that audience.
 
@@ -116,6 +108,7 @@ Each audience gets its own route. The handler serves only that audience.
 
 ```ts title="app/api/survey/[[...path]]/route.ts"
 import { toNextJsHandler } from "@dimah-survey/server/next";
+
 import { fill } from "@/lib/survey";
 
 export const { GET, POST, PUT, PATCH, DELETE } = toNextJsHandler(fill);
@@ -123,6 +116,7 @@ export const { GET, POST, PUT, PATCH, DELETE } = toNextJsHandler(fill);
 
 ```ts title="app/api/admin/survey/[[...path]]/route.ts"
 import { toNextJsHandler } from "@dimah-survey/server/next";
+
 import { editor } from "@/lib/survey";
 
 export const { GET, POST, PUT, PATCH, DELETE } = toNextJsHandler(editor);
@@ -132,8 +126,9 @@ export const { GET, POST, PUT, PATCH, DELETE } = toNextJsHandler(editor);
   <Tab value="Express">
 
 ```ts title="server.ts"
-import express from "express";
 import { toExpressHandler } from "@dimah-survey/server/express";
+import express from "express";
+
 import { editor, fill } from "./survey";
 
 const app = express();
@@ -149,8 +144,9 @@ Register these routes before `express.json()` so the adapter can read the body.
   <Tab value="Hono">
 
 ```ts title="server.ts"
-import { Hono } from "hono";
 import { toHonoHandler } from "@dimah-survey/server/hono";
+import { Hono } from "hono";
+
 import { editor, fill } from "./survey";
 
 const app = new Hono();
@@ -164,8 +160,9 @@ app.on(methods, "/api/admin/survey/*", toHonoHandler(editor));
   <Tab value="Fastify">
 
 ```ts title="server.ts"
-import Fastify from "fastify";
 import { toFastifyHandler } from "@dimah-survey/server/fastify";
+import Fastify from "fastify";
+
 import { editor, fill } from "./survey";
 
 const app = Fastify();
@@ -181,6 +178,7 @@ Leave the JSON parser off these paths so the adapter can read the body.
 
 ```ts title="src/routes/api/survey/[...path]/+server.ts"
 import { toSvelteKitHandler } from "@dimah-survey/server/svelte-kit";
+
 import { fill } from "$lib/survey";
 
 const handler = toSvelteKitHandler(fill);
@@ -194,6 +192,7 @@ export const DELETE = handler;
 
 ```ts title="src/routes/api/admin/survey/[...path]/+server.ts"
 import { toSvelteKitHandler } from "@dimah-survey/server/svelte-kit";
+
 import { editor } from "$lib/survey";
 
 const handler = toSvelteKitHandler(editor);
@@ -212,11 +211,7 @@ Fill is `/api/survey`. Editor is `/api/admin/survey`. Set `basePath` when the
 route differs, and pass that same path as the browser client's `baseURL`.
 Elysia and Node are on [Mount the server](/docs/integration).
 
-</Step>
-
-<Step>
-
-### Create the browser client
+### Create the browser client [step]
 
 The fill view below is React. `createFillClient()` calls `/api/survey`.
 
@@ -230,17 +225,14 @@ export const fillClient = createFillClient();
 
 Browser methods take a flat object. `fill.api` takes `{ body }` or `{ query }`.
 
-</Step>
-
-<Step>
-
-### Render the response snapshot
+### Render the response snapshot [step]
 
 ```tsx title="components/fill.tsx"
 "use client";
 
-import dynamic from "next/dynamic";
 import { useSurveyResponse } from "@dimah-survey/react";
+import dynamic from "next/dynamic";
+
 import { fillClient } from "@/lib/fill-client";
 
 import "survey-core/survey-core.min.css";
@@ -273,16 +265,12 @@ The hook builds a `Model` from `response.definition` and saves the full
 `survey.data` on the next page. It does not render questions. Next.js loads
 `<Survey>` in the browser; other React apps can import it directly.
 
-</Step>
-
-<Step>
-
-### Start the response
+### Start the response [step]
 
 ```tsx title="app/page.tsx"
 import { Fill } from "@/components/fill";
-import { fill } from "@/lib/survey";
 import { ensureWelcomeSurvey } from "@/lib/welcome";
+import { fill } from "@/lib/survey";
 
 export default async function Page() {
   await ensureWelcomeSurvey();
@@ -298,15 +286,42 @@ This page is Next.js. Any server runtime calls `fill.api.startResponse` the
 same way. The first call copies the published document onto the response.
 Refreshing resumes that draft. A later publish leaves it unchanged.
 
-</Step>
+## Next
 
-</Steps>
-
-## Make it production-ready
-
-- Replace `memoryAdapter()` with the SQL store or your own durable
-  `SurveyStore`. See [Persistence](/docs/persistence).
-- Read the respondent from your session and protect the editor audience. See
+- Tighten editor and fill guards around your real session. See
   [Security](/docs/security).
 - Add Creator autosave without coupling it to publish. See
   [Survey Creator](/docs/creator).
+- Table setup for Drizzle, Prisma, and Kysely is on
+  [Database](/docs/persistence).
+
+---
+
+## Frequently asked questions
+
+<Accordions>
+
+<Accordion title="Does refreshing this page create another response?">
+
+Not for the same signed-in respondent. New surveys use `responses: "one-open"`,
+so `startResponse` returns the existing draft. A different user gets a separate
+row. Anonymous guards always insert. See [Settings](/docs/settings).
+
+</Accordion>
+
+<Accordion title="Does publishing a newer draft change this response?">
+
+No. The first `startResponse` copies `publishedJson` onto that response. A
+later publish changes only responses started after it.
+
+</Accordion>
+
+<Accordion title="Why does the Survey component load with next/dynamic?">
+
+`survey-react-ui` needs a browser. The hook still runs in the client component
+and builds the `Model` from `response.definition`. Other React setups can
+import `<Survey>` directly.
+
+</Accordion>
+
+</Accordions>

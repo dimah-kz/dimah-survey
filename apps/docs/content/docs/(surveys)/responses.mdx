@@ -63,6 +63,8 @@ A repeated submit of a row that is already `submitted` returns that row when
 the cleaned payload matches stored `data`. Omitting `data` also returns the
 stored row. A different payload fails with `RESPONSE_CLOSED`.
 
+---
+
 ## Lifecycle hooks
 
 `onStart` runs only before a new insert; a resumed response skips both start
@@ -72,6 +74,8 @@ Throwing from either `on*` callback aborts the write.
 `afterStart` and `afterSubmit` run after the row has been stored. A failure
 there leaves the write in place. An idempotent resubmit does not run submit
 hooks again.
+
+---
 
 ## Handle concurrent writes
 
@@ -84,6 +88,8 @@ last read. The comparison happens inside the write. A mismatch fails with
 again.
 
 Omit the token only when a last-write-wins update is intentional.
+
+---
 
 ## Read response lists
 
@@ -100,3 +106,42 @@ with no submit time are excluded. `updatedAfter` is an exclusive lower bound on
 
 Read full rows against `definition` on that row. Do not join them back to the
 live survey document.
+
+---
+
+## Frequently asked questions
+
+<Accordions>
+
+<Accordion title="Why does a partial save accept missing required answers?">
+
+`sanitizePartial: "clear"` runs `clearIncorrectValues(true)` and skips SurveyJS
+`validate()`. Required questions are enforced on submit. `"replace"` stores
+the payload as sent.
+
+</Accordion>
+
+<Accordion title="What happens if the respondent submits twice?">
+
+A second submit returns the stored row when the payload is omitted or matches
+stored `data` after cleaning. A different payload fails with
+`RESPONSE_CLOSED`. The replay does not run submit hooks again.
+
+</Accordion>
+
+<Accordion title="Does the server resolve choicesByUrl while saving?">
+
+No. Those questions keep the posted value through partial clear and submit
+validation. The server does not fetch the URL. Resolve or constrain that data
+in your application if the list must be trusted.
+
+</Accordion>
+
+<Accordion title="How should the client recover from STALE_UPDATE?">
+
+`useSurveyResponse` sets `stale` and leaves the model mounted. Call `reload`
+to read the stored snapshot, then continue from that `definition` and `data`.
+
+</Accordion>
+
+</Accordions>

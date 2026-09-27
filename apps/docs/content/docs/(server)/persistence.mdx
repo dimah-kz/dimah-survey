@@ -1,100 +1,97 @@
----
-title: Persistence
-description: Use memory locally, connect the SQL store, or implement SurveyStore.
+﻿---
+title: Database
+description: Add the tables and connect Drizzle, Prisma, or Kysely.
 icon: Database
 ---
 
-Every server instance requires a `SurveyStore` as `database`.
-`memoryAdapter()` is the process-local reference implementation.
-`@dimah-survey/db` adapts a FumaDB client for durable SQL storage. You may also
-implement the contract directly.
+Paste the schema, migrate it, then pass `database` to both audiences. Model
+keys are `survey` and `response`. SQL tables are `dimah_survey` and
+`dimah_response`.
 
-<Callout>
-  Your application owns its tables, migrations, indexes, and database client.
-  dimah-survey owns the behavioral contract.
-</Callout>
+<Tabs items={["Drizzle", "Prisma", "Kysely"]}>
+<Tab value="Drizzle">
 
-## Choose a store
+```npm
+npm i drizzle-orm
+```
 
-| Store                | Use it for                                 | Persistence         |
-| -------------------- | ------------------------------------------ | ------------------- |
-| `memoryAdapter()`    | Tests and local development                | Process only        |
-| `db(client)`         | Supported SQL databases through FumaDB     | Durable             |
-| Custom `SurveyStore` | Existing data layer or specialized storage | Your implementation |
+<include>../../_includes/db/drizzle.mdx</include>
 
-Pass the same store object to both fill and editor.
-
-## Connect the SQL store
-
-```ts title="lib/survey.ts"
+```ts title="db/index.ts"
 import { DimahSurveyDB, db } from "@dimah-survey/db";
-import { dimahSurvey } from "@dimah-survey/server";
+import { drizzle } from "drizzle-orm/node-sqlite";
 import { drizzleAdapter } from "fumadb/adapters/drizzle";
 
-const database = db(
+import { relations } from "./schema";
+
+const orm = drizzle("survey.db", { relations });
+
+export const database = db(
+  DimahSurveyDB.client(drizzleAdapter({ db: orm, provider: "sqlite" })),
+);
+```
+
+For PostgreSQL or MySQL, use that driver's table builder and set `provider`.
+
+</Tab>
+<Tab value="Prisma">
+
+```npm
+npm i prisma @prisma/client
+```
+
+<include>../../_includes/db/prisma.mdx</include>
+
+Prisma cannot express the partial unique index. Apply this after migrate:
+
+<include>../../_includes/db/indexes.mdx</include>
+
+```ts title="db/index.ts"
+import { DimahSurveyDB, db } from "@dimah-survey/db";
+import { PrismaClient } from "@prisma/client";
+import { prismaAdapter } from "fumadb/adapters/prisma";
+
+const prisma = new PrismaClient();
+
+export const database = db(
   DimahSurveyDB.client(
-    drizzleAdapter({ db: drizzleOrm, provider: "sqlite" }),
+    prismaAdapter({ prisma, provider: "postgresql" }),
   ),
 );
+```
 
-export const editor = dimahSurvey({
-  audience: "editor",
-  database,
+</Tab>
+<Tab value="Kysely">
+
+```npm
+npm i kysely pg
+```
+
+<include>../../_includes/db/sql.mdx</include>
+
+```ts title="db/index.ts"
+import { Pool } from "pg";
+import { DimahSurveyDB, db } from "@dimah-survey/db";
+import { Kysely, PostgresDialect } from "kysely";
+import { kyselyAdapter } from "fumadb/adapters/kysely";
+
+const orm = new Kysely({
+  dialect: new PostgresDialect({
+    pool: new Pool({ connectionString: process.env.DATABASE_URL }),
+  }),
 });
+
+export const database = db(
+  DimahSurveyDB.client(kyselyAdapter({ db: orm, provider: "postgresql" })),
+);
 ```
 
-The SQL table names are `dimah_survey` and `dimah_response`. Drizzle export
-names remain `survey` and `response`, because those are the model keys `db()`
-queries.
+</Tab>
+</Tabs>
 
-`draft_json`, `published_json`, and `settings` are separate columns. `settings`
-is not null and has no database default. Each response stores a copy of the
-published document in `definition`. `db()` does not update `definition` after
-insert.
+`provider` is `"sqlite"`, `"postgresql"`, or `"mysql"`.
 
-## Generate an application-owned schema
-
-Configure the FumaDB CLI in your application:
-
-```ts
-import { createCli } from "fumadb/cli";
-import { DimahSurveyDB } from "@dimah-survey/db";
-import { drizzleAdapter } from "fumadb/adapters/drizzle";
-import { drizzle } from "drizzle-orm/node-sqlite";
-
-await createCli({
-  db: DimahSurveyDB.client(
-    drizzleAdapter({ db: drizzle(":memory:"), provider: "sqlite" }),
-  ),
-  command: "dimah-survey",
-  version: "YOUR_APP_VERSION",
-}).main();
-```
-
-The CLI `version` identifies your wrapper command; the schema version to
-generate is currently `1.0.0`:
-
-```bash
-dimah-survey generate 1.0.0 -o ./db/survey.ts
-```
-
-Migrate the generated file as part of your application. FumaDB does not emit
-secondary indexes, so also apply
-`dimah_response_one_open_draft`: one draft per survey and identified
-respondent. Prisma cannot express that predicate; apply the index SQL after
-creating the tables.
-
-These exported files are readable references to copy or generate from. Do not
-import them as your runtime ORM schema:
-
-- `@dimah-survey/db/schema/drizzle.ts`
-- `@dimah-survey/db/schema/tables.sql`
-- `@dimah-survey/db/schema/indexes.sql`
-- `@dimah-survey/db/schema/schema.prisma`
-
-There is no survey version table. History is `response.definition`.
-
-## Implement a custom store
+## Custom store
 
 ```ts
 import type { SurveyStore } from "@dimah-survey/core";
@@ -151,6 +148,3 @@ A conforming store preserves these invariants:
 - Reopen enforces `reopen` and refuses a second identified draft.
 - Lists honor pagination, sort by `updatedAt` descending, and omit
   `definition` and `data` from summaries.
-
-Use `memoryAdapter()` and the shared store contract tests as the behavioral
-reference when implementing an adapter.
