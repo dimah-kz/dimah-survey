@@ -10,3 +10,19 @@ html > body[data-scroll-locked] {
   margin-right: 0px !important;
   --removed-body-scroll-bar-size: 0px !important;
 }
+
+:root {
+  --color-fd-primary: color-mix(
+    in oklab,
+    var(--color-teal-600) 80%,
+    var(--color-cyan-600) 20%
+  );
+  --color-fd-primary-foreground: var(--color-white);
+  --color-fd-ring: var(--color-fd-primary);
+}
+
+.dark {
+  --color-fd-primary: oklch(0.83 0.1 196);
+  --color-fd-primary-foreground: var(--color-teal-950);
+  --color-fd-ring: var(--color-fd-primary);
+}
