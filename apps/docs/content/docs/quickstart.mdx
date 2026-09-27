@@ -4,49 +4,35 @@ description: Set up the server, publish a survey, and render a frozen response.
 icon: Rocket
 ---
 
-This guide uses Next.js and the SQL store from `@dimah-survey/db`. The same
-server API works with every supported runtime and `SurveyStore`.
+This guide uses Next.js. The same server API works on every supported runtime.
 
 ### Install [step]
 
 ```npm
-npm i @dimah-survey/server @dimah-survey/db @dimah-survey/react react react-dom survey-core survey-react-ui fumadb
+npm i @dimah-survey/server @dimah-survey/db @dimah-survey/react react react-dom survey-core survey-react-ui
 ```
 
 `survey-react-ui` renders the questions.
 
-### Create the store [step]
+### Add the tables [step]
 
-Add the two tables, run a migration, and export a `database` object. The
-database guide has copy-ready setups for Drizzle, Prisma, and Kysely.
+Add `dimah_survey` and `dimah_response` to the database you already use, migrate,
+and export `database`.
 
 <Cards>
   <Card
-    title="Set up the database"
+    title="Drizzle, Prisma, and Kysely"
     href="/docs/persistence"
-    description="Choose an ORM, copy its schema, and create the SQL store."
+    description="Copy the tables into your schema and connect the store."
   />
 </Cards>
 
-If you chose Drizzle, keep the SQL store and its adapters in the Node.js
-runtime:
-
-```ts title="next.config.ts"
-import type { NextConfig } from "next";
-
-const nextConfig: NextConfig = {
-  serverExternalPackages: ["@dimah-survey/db", "drizzle-orm", "fumadb"],
-};
-
-export default nextConfig;
-```
-
-For Prisma or Kysely, replace `drizzle-orm` with that ORM's server packages.
+On Next.js, that page also sets `serverExternalPackages`.
 
 ### Create the server [step]
 
-Create separate instances for respondents and editors. Replace `getSession`
-with your authentication code; the browser never chooses the respondent id.
+Create a fill instance and an editor instance. Replace `getSession` with your
+authentication code. The browser never chooses the respondent id.
 
 ```ts title="lib/survey.ts"
 import {
@@ -84,8 +70,8 @@ export const fill = dimahSurvey({
 });
 ```
 
-Both instances must share the same store. See [Authorization](/docs/security)
-for anonymous responses and production guard patterns.
+Both instances share `database`. See [Authorization](/docs/security) for
+anonymous responses.
 
 ### Publish a SurveyJS document [step]
 
@@ -133,13 +119,12 @@ export async function register() {
 }
 ```
 
-This direct store call is for bootstrap data. Product authoring should use the
-guarded editor API so publish hooks run. In either path, saving and publishing
-remain separate operations.
+This seed calls the store directly. Authoring in the product should use the
+editor API so publish hooks run.
 
 ### Mount both audiences [step]
 
-Each audience gets its own route. The handler serves only that audience.
+Each audience has its own route. The handler serves only that audience.
 
 ```ts title="app/api/survey/[[...path]]/route.ts"
 import { toNextJsHandler } from "@dimah-survey/server/next";
@@ -159,8 +144,7 @@ export const { GET, POST, PUT, PATCH, DELETE } = toNextJsHandler(editor);
 
 Fill is `/api/survey`. Editor is `/api/admin/survey`. Set `basePath` when the
 route differs, and pass that same path as the browser client's `baseURL`.
-Express, Hono, Fastify, Elysia, SvelteKit, and Node adapters are on
-[Mount the server](/docs/integration).
+Other runtimes are on [Mount the server](/docs/integration).
 
 ### Start the response [step]
 
@@ -178,15 +162,13 @@ export async function startWelcomeResponse() {
 }
 ```
 
-Instrumentation seeds the survey before requests arrive. Forwarding headers
-gives the fill guard the respondent's session. The first call copies the
-published document onto the response; later calls return that respondent's open
+Forward `headers()` so the fill guard sees the session. The first call copies
+`publishedJson` onto the response. A later call returns that respondent's open
 draft.
 
 ### Render the response [step]
 
-`createFillClient()` calls `/api/survey`. The hook reads the snapshot;
-`<Survey>` renders it.
+`createFillClient()` calls `/api/survey`. The hook reads the snapshot. `<Survey>` renders it.
 
 ```tsx title="components/fill.tsx"
 "use client";
@@ -233,7 +215,7 @@ export default async function Page() {
 ```
 
 The hook builds a `Model` from `response.definition` and saves the complete
-`survey.data` object on the next page. It does not render SurveyJS itself.
+`survey.data` object on the next page. It does not render SurveyJS.
 
 ## Next
 
