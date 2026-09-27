@@ -1,3 +1,9 @@
+## example-next@0.3.0
+
+### Export the option types the docs render
+
+`SurveyGuard`, `CreateSurveyClientOptions`, `UseSurveyResponseOptions`, and `UseSurveyDraftOptions` are public. Configuration, settings, store, list, and React binding fields document their defaults and write behavior in JSDoc.
+
 ## example-next@0.2.0
 
 ### Initial release
