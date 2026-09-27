@@ -2,6 +2,9 @@
  * Reference copy for reading and pasting into the app.
  * Do not import this module from `@dimah-survey/db`. The app owns the tables
  * it migrates. Refresh them with the FumaDB CLI, then keep the indexes below.
+ *
+ * SQL tables are `dimah_survey` and `dimah_response`. Keep the export names
+ * `survey` and `response`: those are the ORM names `db()` looks up.
  */
 import { defineRelations, sql } from "drizzle-orm";
 import {
@@ -16,7 +19,7 @@ import {
 } from "drizzle-orm/sqlite-core";
 
 export const survey = sqliteTable(
-  "survey",
+  "dimah_survey",
   {
     id: text("id", { length: 255 }).primaryKey().notNull(),
     slug: text("slug", { length: 255 }).notNull(),
@@ -33,17 +36,20 @@ export const survey = sqliteTable(
       .defaultNow(),
   },
   (table) => [
-    uniqueIndex("survey_slug_unique").on(table.slug),
+    uniqueIndex("dimah_survey_slug_unique").on(table.slug),
     check(
-      "survey_status_check",
+      "dimah_survey_status_check",
       sql`${table.status} in ('draft', 'active', 'archived')`,
     ),
-    index("survey_status_updated_at_idx").on(table.status, table.updatedAt),
+    index("dimah_survey_status_updated_at_idx").on(
+      table.status,
+      table.updatedAt,
+    ),
   ],
 );
 
 export const response = sqliteTable(
-  "response",
+  "dimah_response",
   {
     id: text("id", { length: 255 }).primaryKey().notNull(),
     surveyId: text("survey_id", { length: 255 }).notNull(),
@@ -63,24 +69,24 @@ export const response = sqliteTable(
     foreignKey({
       columns: [table.surveyId],
       foreignColumns: [survey.id],
-      name: "response_survey_fk",
+      name: "dimah_response_survey_fk",
     })
       .onUpdate("restrict")
       .onDelete("restrict"),
     check(
-      "response_status_check",
+      "dimah_response_status_check",
       sql`${table.status} in ('draft', 'submitted', 'abandoned')`,
     ),
-    index("response_survey_id_updated_at_idx").on(
+    index("dimah_response_survey_id_updated_at_idx").on(
       table.surveyId,
       table.updatedAt,
     ),
-    index("response_respondent_lookup_idx").on(
+    index("dimah_response_respondent_lookup_idx").on(
       table.surveyId,
       table.respondentId,
       table.status,
     ),
-    uniqueIndex("response_one_open_draft")
+    uniqueIndex("dimah_response_one_open_draft")
       .on(table.surveyId, table.respondentId)
       .where(
         sql`${table.status} = 'draft' and ${table.respondentId} is not null`,

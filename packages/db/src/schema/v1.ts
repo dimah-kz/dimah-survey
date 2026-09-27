@@ -5,9 +5,11 @@ import { column, idColumn, schema, table } from "fumadb/schema";
  * A response copies `published_json` into `definition` at start.
  * There is no survey version table.
  *
+ * SQL names are `dimah_survey` and `dimah_response`. The schema keys
+ * `survey` and `response` are the ORM names `db()` queries.
  * FumaDB does not emit secondary indexes. Those live in `./examples/`.
  */
-const survey = table("survey", {
+const survey = table("dimah_survey", {
   id: idColumn("id", "varchar(255)"),
   slug: column("slug", "varchar(255)").unique(),
   status: column("status", "string"),
@@ -20,7 +22,7 @@ const survey = table("survey", {
   updatedAt: column("updated_at", "timestamp").defaultTo$("now"),
 });
 
-const response = table("response", {
+const response = table("dimah_response", {
   id: idColumn("id", "varchar(255)"),
   surveyId: column("survey_id", "varchar(255)"),
   respondentId: column("respondent_id", "varchar(255)").nullable(),

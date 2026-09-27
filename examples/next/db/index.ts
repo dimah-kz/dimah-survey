@@ -19,8 +19,8 @@ function open() {
   `);
   try {
     // Drizzle applies every migration inside one transaction, so a
-    // PRAGMA foreign_keys inside the SQL never takes effect. The settings
-    // migration rebuilds survey while response still references it.
+    // PRAGMA foreign_keys inside the SQL never takes effect. A migration
+    // may rebuild dimah_survey while dimah_response still references it.
     migrate(sqlite, {
       migrationsFolder: path.join(process.cwd(), "drizzle"),
     });

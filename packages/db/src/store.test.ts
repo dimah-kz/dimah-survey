@@ -7,7 +7,7 @@ import { relations } from "./schema/examples/drizzle";
 import { DimahSurveyDB, db } from "./index";
 
 const schemaSql = `
-create table survey (
+create table dimah_survey (
   id text primary key not null,
   slug text not null,
   status text not null,
@@ -17,11 +17,11 @@ create table survey (
   settings blob not null,
   created_at integer not null,
   updated_at integer not null,
-  constraint survey_status_check check (status in ('draft', 'active', 'archived'))
+  constraint dimah_survey_status_check check (status in ('draft', 'active', 'archived'))
 );
-create unique index survey_slug_unique on survey (slug);
-create index survey_status_updated_at_idx on survey (status, updated_at);
-create table response (
+create unique index dimah_survey_slug_unique on dimah_survey (slug);
+create index dimah_survey_status_updated_at_idx on dimah_survey (status, updated_at);
+create table dimah_response (
   id text primary key not null,
   survey_id text not null,
   respondent_id text,
@@ -31,12 +31,12 @@ create table response (
   submitted_at integer,
   created_at integer not null,
   updated_at integer not null,
-  constraint response_survey_fk foreign key (survey_id) references survey (id),
-  constraint response_status_check check (status in ('draft', 'submitted', 'abandoned'))
+  constraint dimah_response_survey_fk foreign key (survey_id) references dimah_survey (id),
+  constraint dimah_response_status_check check (status in ('draft', 'submitted', 'abandoned'))
 );
-create index response_survey_id_updated_at_idx on response (survey_id, updated_at);
-create index response_respondent_lookup_idx on response (survey_id, respondent_id, status);
-create unique index response_one_open_draft on response (survey_id, respondent_id)
+create index dimah_response_survey_id_updated_at_idx on dimah_response (survey_id, updated_at);
+create index dimah_response_respondent_lookup_idx on dimah_response (survey_id, respondent_id, status);
+create unique index dimah_response_one_open_draft on dimah_response (survey_id, respondent_id)
   where status = 'draft' and respondent_id is not null;
 create table private_dimah_survey_settings (
   id text primary key not null,

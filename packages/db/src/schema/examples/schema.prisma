@@ -11,7 +11,7 @@ datasource db {
 
 model Survey {
   id            String    @id @map("id") @db.VarChar(255)
-  slug          String    @unique(map: "survey_slug_unique") @map("slug") @db.VarChar(255)
+  slug          String    @unique(map: "dimah_survey_slug_unique") @map("slug") @db.VarChar(255)
   status        String    @map("status")
   draftJson     Json      @map("draft_json")
   publishedJson Json?     @map("published_json")
@@ -22,8 +22,8 @@ model Survey {
   updatedAt     DateTime  @default(now()) @map("updated_at")
   responses     Response[]
 
-  @@index([status, updatedAt], map: "survey_status_updated_at_idx")
-  @@map("survey")
+  @@index([status, updatedAt], map: "dimah_survey_status_updated_at_idx")
+  @@map("dimah_survey")
 }
 
 model Response {
@@ -37,14 +37,14 @@ model Response {
   submittedAt  DateTime? @map("submitted_at")
   createdAt    DateTime  @default(now()) @map("created_at")
   updatedAt    DateTime  @default(now()) @map("updated_at")
-  survey       Survey    @relation(fields: [surveyId], references: [id], onUpdate: Restrict, onDelete: Restrict, map: "response_survey_fk")
+  survey       Survey    @relation(fields: [surveyId], references: [id], onUpdate: Restrict, onDelete: Restrict, map: "dimah_response_survey_fk")
 
-  @@index([surveyId, updatedAt], map: "response_survey_id_updated_at_idx")
-  @@index([surveyId, respondentId, status], map: "response_respondent_lookup_idx")
-  // Partial unique index response_one_open_draft is not expressible here.
+  @@index([surveyId, updatedAt], map: "dimah_response_survey_id_updated_at_idx")
+  @@index([surveyId, respondentId, status], map: "dimah_response_respondent_lookup_idx")
+  // Partial unique index dimah_response_one_open_draft is not expressible here.
   // Apply indexes.sql: unique (survey_id, respondent_id)
   // where status = 'draft' and respondent_id is not null.
-  @@map("response")
+  @@map("dimah_response")
 }
 
 /// FumaDB settings row emitted beside the survey tables.

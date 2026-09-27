@@ -60,7 +60,7 @@ export const fillClient = createFillClient({
 });
 ```
 
-A logged-in fill guard returns `{ respondentId }`. The server stamps that id onto start and list, keeps one open draft for that survey and respondent, and refuses another respondent's row and `include: "full"`. `guardAnonymous()` is the public link: each start inserts a row, list is refused, and the response id is the capability. An editor guard returns nothing. Omit `respondentId` from the fill client, or send the same id.
+A logged-in fill guard returns `{ respondentId }`. The server stamps that id onto start and list, refuses another respondent's row, and refuses `include: "full"`. Identified starts follow `settings.responses`: `"one-open"` returns the open draft, and `"single"` returns the latest row. `guardAnonymous()` is the public link: each start inserts a row, list is refused, and the response id is the capability. An editor guard returns nothing. Omit `respondentId` from the fill client, or send the same id.
 
 `settings` on the survey is the collection policy: `responses` (`"one-open"` or `"single"`), `reopen`, `opensAt`, `closesAt`, and `maxResponses`. It is not SurveyJS JSON and it is not copied onto `response.definition`. Change it with `saveSurveySettings`. `GET /survey/published` on the fill handler returns `publishedJson` and `settings` only. `resumeSurvey` opens an archived survey again without copying `draftJson`.
 

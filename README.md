@@ -8,7 +8,7 @@ It is not a form renderer, not a hosted survey product, and not a plugin for dim
 
 ## Status
 
-The lifecycle is usable. Submit validation defaults to `survey-core` (`clearIncorrectValues(true)` then `validate`) against the response snapshot. Mount `audience: "fill"` and `audience: "editor"` as separate handlers. An identified respondent has one open draft. `@dimah-survey/react` binds a `Model` for partial save and complete, and binds Creator autosave to the editor draft. It does not render the survey or Creator. `@dimah-survey/db` is the SQL schema and `db(client)` store.
+The lifecycle is usable. Submit validation defaults to `survey-core` (`clearIncorrectValues(true)` then `validate`) against the response snapshot. Mount `audience: "fill"` and `audience: "editor"` as separate handlers. An identified start follows `settings.responses`: `"one-open"` returns the open draft, and `"single"` returns the latest row. `@dimah-survey/react` binds a `Model` for partial save and complete, and binds Creator autosave to the editor draft. It does not render the survey or Creator. `@dimah-survey/db` is the SQL store. The app owns the tables; the package exports reference schemas to copy.
 
 ## Packages
 

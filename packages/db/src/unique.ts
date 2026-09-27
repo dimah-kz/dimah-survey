@@ -22,7 +22,7 @@ export function isUniqueViolation(error: unknown) {
   const text = errorText(error);
   return (
     text.includes("23505") ||
-    text.includes("response_one_open_draft") ||
+    text.includes("dimah_response_one_open_draft") ||
     /unique constraint/i.test(text)
   );
 }
