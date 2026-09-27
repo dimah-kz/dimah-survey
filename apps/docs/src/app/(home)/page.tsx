@@ -91,76 +91,78 @@ export default function HomePage() {
 
       <section
         aria-labelledby="hero-heading"
-        className="mx-auto grid w-full max-w-5xl flex-1 content-center gap-14 px-6 py-16 sm:py-20 lg:grid-cols-[minmax(0,26rem)_minmax(0,1fr)] lg:items-center lg:gap-20 lg:py-24"
+        className="mx-auto flex w-full max-w-5xl flex-1 flex-col justify-center-safe px-6 py-16 sm:py-20"
       >
-        <div>
-          <h1
-            id="hero-heading"
-            className={cn(
-              display.className,
-              "text-[3.25rem] leading-[0.96] font-normal tracking-[-0.035em] text-fd-foreground sm:text-6xl lg:text-[4.25rem] lg:leading-[0.94]",
-            )}
-          >
-            <HeroHeading />
-          </h1>
-          <p className="mt-6 max-w-md text-base leading-7 text-pretty text-fd-muted-foreground">
-            {siteDescription}
-          </p>
-          <div className="mt-8 flex flex-wrap items-center gap-2.5">
-            <Link
-              href="/docs/quickstart"
-              className="group inline-flex h-10 items-center justify-center gap-2 rounded-md bg-fd-primary px-4 text-sm font-medium text-fd-primary-foreground transition-colors hover:bg-fd-primary/90"
+        <div className="grid w-full gap-14 lg:grid-cols-[max-content_minmax(0,1fr)] lg:items-start lg:gap-x-20">
+          <div className="max-w-lg">
+            <h1
+              id="hero-heading"
+              className={cn(
+                display.className,
+                "text-[3.25rem] leading-[1.02] font-normal tracking-[-0.02em] text-fd-foreground sm:text-6xl lg:text-[4.15rem]",
+              )}
             >
-              Get started
-              <ArrowRight
-                aria-hidden
-                strokeWidth={1.75}
-                className="size-4 transition-transform duration-200 group-hover:translate-x-0.5"
-              />
-            </Link>
-            <a
-              href={githubUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="group inline-flex h-10 items-center justify-center gap-2 rounded-md border border-fd-border px-4 text-sm font-medium text-fd-foreground transition-colors hover:bg-fd-muted"
-            >
-              <GitHubIcon />
-              View on GitHub
-              <ArrowUpRight
-                aria-hidden
-                strokeWidth={1.75}
-                className="size-3.5 text-fd-muted-foreground transition-transform duration-200 group-hover:translate-x-px group-hover:-translate-y-px"
-              />
-            </a>
-          </div>
-        </div>
-
-        <ul className="divide-y divide-fd-border border-t border-fd-border lg:border-t-0 lg:border-l lg:pl-14">
-          {features.map(({ title, description }, index) => (
-            <li
-              key={title}
-              className="grid grid-cols-[2rem_minmax(0,1fr)] gap-x-4 py-5 first:pt-6 last:pb-0 lg:py-6 lg:first:pt-0"
-            >
-              <span
-                aria-hidden
-                className="pt-1 font-mono text-[11px] tracking-[0.16em] text-fd-muted-foreground tabular-nums"
+              <HeroHeading />
+            </h1>
+            <p className="mt-6 max-w-md text-base leading-7 text-pretty text-fd-muted-foreground">
+              {siteDescription}
+            </p>
+            <div className="mt-8 flex flex-wrap items-center gap-2.5">
+              <Link
+                href="/docs/quickstart"
+                className="group inline-flex h-10 items-center justify-center gap-2 rounded-md bg-fd-primary px-4 text-sm font-medium text-fd-primary-foreground transition-colors hover:bg-fd-primary/90"
               >
-                {String(index + 1).padStart(2, "0")}
-              </span>
-              <div>
-                <h2 className="text-[15px] font-medium tracking-[-0.02em] text-fd-foreground">
-                  {title}
-                </h2>
-                <p className="mt-1.5 max-w-md text-sm leading-6 text-pretty text-fd-muted-foreground">
-                  {description}
-                </p>
-              </div>
-            </li>
-          ))}
-        </ul>
+                Get started
+                <ArrowRight
+                  aria-hidden
+                  strokeWidth={1.75}
+                  className="size-4 transition-transform duration-200 group-hover:translate-x-0.5"
+                />
+              </Link>
+              <a
+                href={githubUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="group inline-flex h-10 items-center justify-center gap-2 rounded-md border border-fd-border px-4 text-sm font-medium text-fd-foreground transition-colors hover:bg-fd-muted"
+              >
+                <GitHubIcon />
+                View on GitHub
+                <ArrowUpRight
+                  aria-hidden
+                  strokeWidth={1.75}
+                  className="size-3.5 text-fd-muted-foreground transition-transform duration-200 group-hover:translate-x-px group-hover:-translate-y-px"
+                />
+              </a>
+            </div>
+          </div>
+
+          <ul className="divide-y divide-fd-border border-t border-fd-border lg:border-t-0 lg:border-l lg:pl-14">
+            {features.map(({ title, description }, index) => (
+              <li
+                key={title}
+                className="grid grid-cols-[2rem_minmax(0,1fr)] gap-x-4 py-5 first:pt-6 last:pb-0 lg:py-6 lg:first:pt-0"
+              >
+                <span
+                  aria-hidden
+                  className="pt-1 font-mono text-[11px] tracking-[0.16em] text-fd-muted-foreground tabular-nums"
+                >
+                  {String(index + 1).padStart(2, "0")}
+                </span>
+                <div>
+                  <h2 className="text-[15px] font-medium tracking-[-0.02em] text-fd-foreground">
+                    {title}
+                  </h2>
+                  <p className="mt-1.5 max-w-md text-sm leading-6 text-pretty text-fd-muted-foreground">
+                    {description}
+                  </p>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
       </section>
 
-      <footer className="mt-auto border-t border-fd-border">
+      <footer className="border-t border-fd-border">
         <div className="mx-auto flex w-full max-w-5xl flex-col gap-3 px-6 py-5 text-[13px] text-fd-muted-foreground sm:flex-row sm:items-center sm:justify-between">
           <p>Released under the MIT License.</p>
           <nav aria-label="Footer" className="flex items-center gap-5">
