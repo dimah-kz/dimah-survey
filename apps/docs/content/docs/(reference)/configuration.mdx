@@ -24,15 +24,14 @@ export const fill = dimahSurvey({
 });
 ```
 
-| Option            | Required | Default             | Purpose                                                |
-| ----------------- | -------- | ------------------- | ------------------------------------------------------ |
-| `audience`        | Yes      | —                   | Must be `"fill"`                                       |
-| `database`        | Yes      | —                   | Shared `SurveyStore`                                   |
-| `guard`           | Yes      | —                   | Return an identified or anonymous principal, or throw  |
-| `basePath`        | No       | `"/api/survey"`     | Must match the fill client `baseURL`                   |
-| `hooks`           | No       | —                   | `onStart`, `afterStart`, `onSubmit`, and `afterSubmit` |
-| `sanitizePartial` | No       | `"clear"`           | Clear values invalid for the snapshot or store as sent |
-| `validateResult`  | No       | `checkSurveyResult` | Validate and normalize submit data                     |
+```ts
+import type { DimahFillConfig } from "@dimah-survey/server";
+```
+
+<AutoTypeTable
+  path="packages/server/src/dimah-survey.ts"
+  name="DimahFillConfig"
+/>
 
 `checkSurveyResult` drops values that cannot be assigned, runs `validate`, and
 returns the `survey.data` to persist. Questions with `choicesByUrl` keep their
@@ -42,14 +41,24 @@ A custom `validateResult` receives `{ definition, data }`. Return the object to
 store. Return nothing to keep `data`. Throw `APIError` with `VALIDATION_FAILED`
 to reject the submit. See [Responses](/docs/responses).
 
+### guard
+
+```ts
+import type { GuardContext } from "@dimah-survey/core";
+```
+
+<AutoTypeTable path="packages/core/src/types.ts" name="GuardContext" />
+
+Returning nothing from a fill guard is forbidden. `guardRespondent(id)` returns
+`{ respondentId }`. `guardAnonymous()` returns `{ anonymous: true }`.
+
 ### Lifecycle hooks
 
-| Hook          | Timing                                       | If it throws         |
-| ------------- | -------------------------------------------- | -------------------- |
-| `onStart`     | Inside the store lock, before a new insert   | Abort the insert     |
-| `afterStart`  | After the insert, still inside the lock      | Leave the row stored |
-| `onSubmit`    | After validation, before the submitted write | Abort the write      |
-| `afterSubmit` | After the submitted row is stored            | Leave the row stored |
+```ts
+import type { FillHooks } from "@dimah-survey/server";
+```
+
+<AutoTypeTable path="packages/server/src/dimah-survey.ts" name="FillHooks" />
 
 A start that returns an existing row does not call `onStart` or `afterStart`.
 A replayed submit does not call `onSubmit` or `afterSubmit`. The HTTP body
@@ -66,31 +75,34 @@ export const editor = dimahSurvey({
 });
 ```
 
-| Option     | Required | Default               | Purpose                                         |
-| ---------- | -------- | --------------------- | ----------------------------------------------- |
-| `audience` | Yes      | —                     | Must be `"editor"`                              |
-| `database` | Yes      | —                     | Same store used by fill                         |
-| `guard`    | No       | Allow                 | Return nothing or throw; principals are invalid |
-| `basePath` | No       | `"/api/admin/survey"` | Must match the editor client `baseURL`          |
-| `hooks`    | No       | —                     | `onPublish` and `afterPublish`                  |
+```ts
+import type { DimahEditorConfig } from "@dimah-survey/server";
+```
 
-| Hook           | Timing                            | If it throws         |
-| -------------- | --------------------------------- | -------------------- |
-| `onPublish`    | Before `draftJson` is promoted    | Abort the write      |
-| `afterPublish` | After the published row is stored | Leave the row stored |
+<AutoTypeTable
+  path="packages/server/src/dimah-survey.ts"
+  name="DimahEditorConfig"
+/>
 
-`resumeSurvey` does not call publish hooks.
+```ts
+import type { EditorHooks } from "@dimah-survey/server";
+```
+
+<AutoTypeTable path="packages/server/src/dimah-survey.ts" name="EditorHooks" />
 
 ## Browser clients
 
-`createFillClient` and `createEditorClient` accept:
+`createFillClient` and `createEditorClient` accept the same options. Only the
+default `baseURL` differs.
 
-| Option        | Purpose                                                       |
-| ------------- | ------------------------------------------------------------- |
-| `baseURL`     | Fill defaults to `/api/survey`; editor to `/api/admin/survey` |
-| `credentials` | Forwarded to `fetch`; use `"include"` for cross-site cookies  |
-| `headers`     | Static `HeadersInit` or a function that returns headers       |
-| `fetch`       | Replace the global fetch implementation                       |
+```ts
+import type { CreateSurveyClientOptions } from "@dimah-survey/react";
+```
+
+<AutoTypeTable
+  path="packages/core/src/client.ts"
+  name="CreateSurveyClientOptions"
+/>
 
 Browser methods take flat objects. `fill.api` and `editor.api` take `{ body }`
 or `{ query }`, plus optional `headers` or `request` for guards. See
@@ -98,23 +110,24 @@ or `{ query }`, plus optional `headers` or `request` for guards. See
 
 ## React
 
-`useSurveyResponse({ client, responseId, partial })`
+```ts
+import type { UseSurveyResponseOptions } from "@dimah-survey/react";
+```
 
-| Option       | Default  | Purpose                                                 |
-| ------------ | -------- | ------------------------------------------------------- |
-| `client`     | —        | Fill client used for load, partial save, and submit     |
-| `responseId` | —        | Response row to hydrate                                 |
-| `partial`    | `"page"` | Save on page next, or `"off"` to write only on complete |
+<AutoTypeTable
+  path="packages/react/src/use-survey-response.ts"
+  name="UseSurveyResponseOptions"
+/>
 
-Returned fields are documented in [React](/docs/react).
+Returned state is documented in [React](/docs/react).
 
-`useSurveyDraft({ client, surveyId, creator, updatedAt })`
+```ts
+import type { UseSurveyDraftOptions } from "@dimah-survey/react";
+```
 
-| Option      | Purpose                                                  |
-| ----------- | -------------------------------------------------------- |
-| `client`    | Editor client used for `saveSurvey`                      |
-| `surveyId`  | Draft to write                                           |
-| `creator`   | Existing Creator instance; `null` skips binding          |
-| `updatedAt` | Compare-and-swap token from the read that loaded Creator |
+<AutoTypeTable
+  path="packages/react/src/use-survey-draft.ts"
+  name="UseSurveyDraftOptions"
+/>
 
 The hook does not construct Creator. See [Creator](/docs/creator).

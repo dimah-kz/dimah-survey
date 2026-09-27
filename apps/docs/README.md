@@ -5,7 +5,9 @@ Public documentation for dimah-survey, built with
 <https://survey.dimah.dev>. This application is not an npm package.
 
 Maintainer protocol checklists stay in [`docs/agents`](../../docs/agents);
-consumer guides live in `content/docs`.
+consumer guides live in `content/docs`. Prefer `AutoTypeTable` over a
+hand-maintained property table for a public type, and keep the description in
+that type's JSDoc.
 
 ## Local development
 

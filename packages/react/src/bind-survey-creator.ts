@@ -15,11 +15,14 @@ export type SurveyCreatorDraft = {
   ) => void;
 };
 
+/** Callbacks `bindSurveyCreator` uses to persist a draft. */
 export type SurveyCreatorActions = {
   /** `updatedAt` from the survey loaded into Creator. */
   initialUpdatedAt?: string;
+  /** Replace `draftJson`. Return the stored `updatedAt`. */
   saveDraft: (input: {
     draftJson: SurveyJson;
+    /** Compare-and-swap token from the previous read or save. */
     expectedUpdatedAt?: string;
   }) => Promise<{ updatedAt: string }>;
   /** Creator save failed. Creator stays on the page. */

@@ -2,12 +2,10 @@ import { createGetUrl } from "fumadocs-core/source";
 
 export const appName = "dimah-survey";
 /** Landing H1, browser tab, and Open Graph title — keep these in sync. */
-export const siteHeadline = "Own the SurveyJS lifecycle";
-export const siteHeadlineAccent = "on your server.";
-const siteTagline = `${siteHeadline} ${siteHeadlineAccent}`;
-export const siteTitle = `${appName} — ${siteTagline}`;
+export const siteHeadline = "The backend for SurveyJS";
+export const siteTitle = `${appName} — ${siteHeadline}`;
 export const siteDescription =
-  "Publish SurveyJS JSON, freeze the definition each response starts with, and validate submissions against that same snapshot.";
+  "Publish surveys, save progress as people answer, and validate every submission against the exact version they saw.";
 
 /** Site-wide terms for the homepage, layout, and JSON-LD. */
 export const siteKeywords = [

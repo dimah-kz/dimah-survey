@@ -15,13 +15,11 @@ can reopen, when writes are accepted, and how many submissions are allowed.
 
 ## Fields
 
-| Field          | Default      | Behavior                                                     |
-| -------------- | ------------ | ------------------------------------------------------------ |
-| `responses`    | `"one-open"` | Reuse policy for identified respondents                      |
-| `reopen`       | `true`       | Whether submitted or abandoned responses may return to draft |
-| `opensAt`      | `null`       | Inclusive start of collection                                |
-| `closesAt`     | `null`       | Inclusive end of collection                                  |
-| `maxResponses` | `null`       | Maximum number of submitted responses                        |
+```ts
+import type { SurveySettings } from "@dimah-survey/core";
+```
+
+<AutoTypeTable path="packages/core/src/types.ts" name="SurveySettings" />
 
 `saveSurvey` inserts these defaults and then leaves the column alone.
 `saveSurveySettings` replaces the whole object. Send every field. `closesAt`

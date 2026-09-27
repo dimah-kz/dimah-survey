@@ -8,6 +8,7 @@ export type {
   EditorHooks,
   FillHooks,
   SanitizePartial,
+  SurveyGuard,
   SurveyAudience,
   SurveyHookContext,
   SurveyPublishContext,
@@ -31,6 +32,7 @@ export {
   isAPIError,
 } from "@dimah-survey/core";
 export type {
+  CreateSurveyClientOptions,
   EditorClient,
   FillClient,
   ResponseRecord,

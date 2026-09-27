@@ -89,6 +89,7 @@ function surveyKey(surveyId: string) {
   return `survey\0${surveyId}`;
 }
 
+/** Process-local `SurveyStore`. Rows are dropped when the process exits. */
 export function memoryAdapter(): SurveyStore {
   const surveys = new Map<string, SurveyRecord>();
   const slugToId = new Map<string, string>();

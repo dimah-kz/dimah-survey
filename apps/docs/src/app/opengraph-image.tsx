@@ -1,6 +1,8 @@
 import { ImageResponse } from "next/og";
 
-export const alt = "dimah-survey — own the SurveyJS lifecycle on your server";
+import { siteDescription, siteHeadline, siteTitle } from "@/lib/shared";
+
+export const alt = siteTitle;
 
 export const size = {
   width: 1200,
@@ -70,8 +72,7 @@ export default function OpenGraphImage() {
             maxWidth: "940px",
           }}
         >
-          <span>Own the SurveyJS lifecycle</span>
-          <span style={{ color: "#0f766e" }}>on your server.</span>
+          <span>{siteHeadline}</span>
         </div>
         <div
           style={{
@@ -82,8 +83,7 @@ export default function OpenGraphImage() {
             maxWidth: "850px",
           }}
         >
-          Freeze the definition each response starts with. Validate the same
-          snapshot on submit.
+          {siteDescription}
         </div>
       </div>
 

@@ -8,6 +8,7 @@ import type {
   SurveySettings,
 } from "./types";
 
+/** Settings `saveSurvey` inserts once. Later draft saves do not change them. */
 export const DEFAULT_SURVEY_SETTINGS: SurveySettings = {
   responses: "one-open",
   reopen: true,

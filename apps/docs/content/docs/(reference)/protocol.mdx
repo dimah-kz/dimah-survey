@@ -65,22 +65,24 @@ with `STALE_UPDATE`.
 
 ## List queries
 
-`listResponses` query:
+`listResponses` accepts:
 
-| Field           | Meaning                                                           |
-| --------------- | ----------------------------------------------------------------- |
-| `surveyId`      | Filter to one survey                                              |
-| `respondentId`  | Filter to one respondent; fill replaces it with the guarded id    |
-| `status`        | `draft`, `submitted`, or `abandoned`                              |
-| `submittedFrom` | Inclusive lower bound on `submittedAt`; excludes unsubmitted rows |
-| `submittedTo`   | Inclusive upper bound on `submittedAt`; excludes unsubmitted rows |
-| `updatedAfter`  | Exclusive lower bound on `updatedAt`                              |
-| `include`       | `"summary"` by default, or `"full"` for editor                    |
-| `limit`         | 1–100; default 50                                                 |
-| `offset`        | Default 0                                                         |
+```ts
+import type { ListResponsesQuery } from "@dimah-survey/core";
+```
+
+<AutoTypeTable path="packages/core/src/types.ts" name="ListResponsesQuery" />
 
 `"summary"` omits `definition` and `data`. `"full"` is the editor analytics
-read. `listSurveys` can filter `status` to `draft`, `active`, or `archived`.
+read. Rows sort by `updatedAt` descending.
+
+`listSurveys` accepts:
+
+```ts
+import type { ListSurveysQuery } from "@dimah-survey/core";
+```
+
+<AutoTypeTable path="packages/core/src/types.ts" name="ListSurveysQuery" />
 
 ## Compare-and-swap inputs
 

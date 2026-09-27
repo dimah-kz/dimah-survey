@@ -1,5 +1,6 @@
 export { createEditorClient, createFillClient } from "@dimah-survey/core";
 export type {
+  CreateSurveyClientOptions,
   EditorClient,
   FillClient,
   SurveyClient,
@@ -17,6 +18,12 @@ export type {
 } from "./bind-survey-model";
 export { isStaleUpdate } from "./stale";
 export { useSurveyDraft } from "./use-survey-draft";
-export type { SurveyDraftBinding } from "./use-survey-draft";
+export type {
+  SurveyDraftBinding,
+  UseSurveyDraftOptions,
+} from "./use-survey-draft";
 export { useSurveyResponse } from "./use-survey-response";
-export type { SurveyResponseBinding } from "./use-survey-response";
+export type {
+  SurveyResponseBinding,
+  UseSurveyResponseOptions,
+} from "./use-survey-response";

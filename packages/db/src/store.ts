@@ -178,6 +178,7 @@ function surveyKey(surveyId: string) {
   return `survey\0${surveyId}`;
 }
 
+/** Adapt a FumaDB client to `SurveyStore`. The application owns migrations. */
 export function db(client: DimahSurveyDbClient): SurveyStore {
   const orm = client.orm(v1.version);
   const exclusive = createKeyLock();

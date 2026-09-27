@@ -1,17 +1,26 @@
 import type { SurveyResult } from "@dimah-survey/core";
 import type { Model } from "survey-core";
 
+/** Callbacks `bindSurveyModel` attaches to a survey-core `Model`. */
 export type SurveyModelActions = {
+  /** Persist the full `survey.data` object for a draft. */
   savePartial: (data: SurveyResult) => Promise<void>;
+  /** Persist a completed response. Completion waits for this promise. */
   submit: (data: SurveyResult) => Promise<void>;
   /** Partial save or submit failed. The Model stays on the page. */
   onWriteError?: (error: unknown) => void;
 };
 
+/** `"page"` saves on page next. `"off"` saves only on complete. */
 export type SurveyPartialSend = "page" | "off";
 
+/** Options for `bindSurveyModel`. */
 export type SurveyModelBindOptions = {
-  /** `"page"` saves on page next. `"off"` saves only on complete. */
+  /**
+   * `"page"` sets `partialSendEnabled` and `sendResultOnPageNext`.
+   * `"off"` writes only on complete.
+   * @default "page"
+   */
   partial?: SurveyPartialSend;
 };
 

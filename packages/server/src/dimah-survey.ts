@@ -19,85 +19,120 @@ export type SurveyAudience = "fill" | "editor";
 export type ResolvedDimahSurveyConfig = {
   audience: SurveyAudience;
   database: SurveyStore;
-  guard?: Guard;
+  guard?: SurveyGuard;
   hooks?: FillHooks | EditorHooks;
   validateResult: ValidateResult;
   basePath: string;
   sanitizePartial: SanitizePartial;
 };
 
+/** `onSubmit` and `afterSubmit` argument. `afterStart` receives this too. */
 export type SurveyHookContext = {
+  /** Present for HTTP calls. Absent for in-process calls without a request. */
   request?: Request;
   response: ResponseRecord;
 };
 
+/** `onStart` argument. Runs only before a new insert. */
 export type SurveyStartContext = {
+  /** Present for HTTP calls. Absent for in-process calls without a request. */
   request?: Request;
+  /** Survey the response is about to start from. */
   survey: SurveyRecord;
 };
 
+/** `onPublish` and `afterPublish` argument. */
 export type SurveyPublishContext = {
+  /** Present for HTTP calls. Absent for in-process calls without a request. */
   request?: Request;
+  /** Survey whose `draftJson` is being promoted. */
   survey: SurveyRecord;
 };
 
 /**
- * `onSubmit` runs after validation and before persist, inside the store lock.
- * Throwing aborts the write. `afterSubmit` runs after the row is stored, still
- * inside that lock. A throw leaves the row stored. A replayed submit does not
- * call either hook. `onStart` runs only before a new insert. `afterStart`
- * runs after that insert; a throw leaves the row stored.
+ * Fill lifecycle hooks.
+ * `on*` throwing aborts the write. `after*` throwing leaves the row stored.
+ * A resumed start and a replayed submit skip these hooks.
  */
 export type FillHooks = {
-  onSubmit?: (context: SurveyHookContext) => void | Promise<void>;
-  afterSubmit?: (context: SurveyHookContext) => void | Promise<void>;
+  /** Inside the store lock, before a new insert. */
   onStart?: (context: SurveyStartContext) => void | Promise<void>;
+  /** After the insert, still inside the lock. A throw leaves the row stored. */
   afterStart?: (context: SurveyHookContext) => void | Promise<void>;
+  /** After validation, before the submitted write. */
+  onSubmit?: (context: SurveyHookContext) => void | Promise<void>;
+  /** After the submitted row is stored. A throw leaves the row stored. */
+  afterSubmit?: (context: SurveyHookContext) => void | Promise<void>;
 };
 
 /**
- * `onPublish` runs before `draftJson` is copied onto `publishedJson`.
- * Throwing aborts the write. `afterPublish` runs after the row is stored.
- * `resumeSurvey` does not call either hook.
+ * Editor lifecycle hooks.
+ * `onPublish` throwing aborts the write. `afterPublish` throwing leaves the
+ * row stored. `resumeSurvey` does not call either hook.
  */
 export type EditorHooks = {
+  /** Before `draftJson` is copied onto `publishedJson`. */
   onPublish?: (context: SurveyPublishContext) => void | Promise<void>;
+  /** After the published row is stored. A throw leaves the row stored. */
   afterPublish?: (context: SurveyPublishContext) => void | Promise<void>;
 };
 
-/** `"clear"` runs `clearIncorrectValues(true)` and skips `validate`. */
+/**
+ * How partial save treats values the snapshot cannot keep.
+ * `"clear"` runs `clearIncorrectValues(true)` and skips `validate`.
+ * `"replace"` stores the payload as sent.
+ */
 export type SanitizePartial = "clear" | "replace";
 
-type Guard = (
+/**
+ * Authorize one request.
+ * Fill must return `{ respondentId }` or `{ anonymous: true }`.
+ * Editor returns nothing. Throw to reject.
+ */
+export type SurveyGuard = (
   context: GuardContext,
 ) => void | FillPrincipal | Promise<void | FillPrincipal>;
 
 type DimahSurveyConfigBase = {
+  /** Shared `SurveyStore`. Fill and editor must use the same instance. */
   database: SurveyStore;
   /**
-   * Authorize the caller. Fill must return `{ respondentId }` or
-   * `{ anonymous: true }`. Editor returns nothing, or throws to reject.
-   * A fill handler with no guard is refused at startup.
+   * Authorize the caller, or throw.
+   * Fill returns `{ respondentId }` or `{ anonymous: true }`.
+   * Editor returns nothing. A returned principal is invalid.
    */
-  guard?: Guard;
+  guard?: SurveyGuard;
+  /**
+   * HTTP path prefix. Must match the browser client's `baseURL`.
+   * Fill defaults to `/api/survey`. Editor defaults to `/api/admin/survey`.
+   */
   basePath?: string;
 };
 
+/** `dimahSurvey({ audience: "fill" })` options. `guard` is required. */
 export type DimahFillConfig = DimahSurveyConfigBase & {
+  /** Must be `"fill"`. */
   audience: "fill";
-  guard: Guard;
+  guard: SurveyGuard;
+  /** `onStart`, `afterStart`, `onSubmit`, and `afterSubmit`. */
   hooks?: FillHooks;
-  /** Defaults to `"clear"`. */
+  /**
+   * How a partial save treats values the snapshot rejects.
+   * @default "clear"
+   */
   sanitizePartial?: SanitizePartial;
   /**
-   * Runs on the response snapshot. Defaults to survey-core
-   * `clearIncorrectValues(true)` plus `validate`.
+   * Validate and normalize submit data against the response snapshot.
+   * @default checkSurveyResult
    */
   validateResult?: ValidateResult;
 };
 
+/** `dimahSurvey({ audience: "editor" })` options. */
 export type DimahEditorConfig = DimahSurveyConfigBase & {
+  /** Must be `"editor"`. */
   audience: "editor";
+  /** `onPublish` and `afterPublish`. `resumeSurvey` does not call them. */
   hooks?: EditorHooks;
 };
 
@@ -139,6 +174,12 @@ type ConfigFor<A extends SurveyAudience> = A extends "fill"
   ? DimahFillConfig
   : DimahEditorConfig;
 
+/**
+ * Create a fill or editor server.
+ *
+ * Pass the same `database` to both. Fill requires `guard` and owns response
+ * writes. Editor owns drafts, publish, and analytics reads.
+ */
 export function dimahSurvey<A extends SurveyAudience>(
   config: ConfigFor<A> & { audience: A },
 ): InstanceFor<A> {

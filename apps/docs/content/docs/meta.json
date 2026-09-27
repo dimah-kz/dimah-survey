@@ -1,7 +1,6 @@
 {
   "title": "dimah-survey",
   "pages": [
-    "---Get started---",
     "index",
     "quickstart",
     "comparison",
