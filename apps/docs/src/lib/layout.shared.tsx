@@ -17,11 +17,6 @@ export function baseOptions(): BaseLayoutProps {
         url: "/docs",
         active: "nested-url",
       },
-      {
-        type: "main",
-        text: "Example",
-        url: "/docs/example",
-      },
     ],
   };
 }

@@ -2,7 +2,7 @@ import { createGetUrl } from "fumadocs-core/source";
 
 export const appName = "dimah-survey";
 export const siteDescription =
-  "Server-authoritative response lifecycle for SurveyJS JSON. Publish a document, snapshot it on every response, and validate submit against that copy.";
+  "A backend lifecycle layer for SurveyJS. Publish survey JSON, freeze each response definition, and validate submissions on your server.";
 export const docsRoute = "/docs";
 export const docsImageRoute = "/og/docs";
 export const docsContentRoute = "/llms.mdx/docs";

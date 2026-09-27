@@ -5,8 +5,11 @@ Protocol primitives for the dimah-survey response lifecycle.
 It owns route constants, Zod payload schemas, stable errors, fill/editor
 clients, settings helpers, list helpers, and the `SurveyStore` contract.
 
-> **Pre-release:** this package is not on npm yet. The code in this repository
-> is the current API.
+## Install
+
+```bash
+npm i @dimah-survey/core
+```
 
 ## Use it when
 

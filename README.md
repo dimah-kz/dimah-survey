@@ -1,12 +1,6 @@
 # dimah-survey
 
-Server-authoritative response lifecycle for [SurveyJS](https://surveyjs.io/) JSON.
-
-## Status
-
-Pre-release. The API documented in this repository is the current design;
-`@dimah-survey/*` packages are not on npm yet. Run the reference app locally to
-evaluate the complete flow.
+The backend lifecycle layer for [SurveyJS](https://surveyjs.io/) JSON.
 
 ## What it owns
 
@@ -31,19 +25,14 @@ renderer, hosted survey product, SurveyJS plugin, or dimah-form integration.
 | `@dimah-survey/react`  | SurveyJS Model and Creator bindings; no renderer            |
 | `@dimah-survey/db`     | SQL `SurveyStore` and schema references for your app        |
 
-## Try the reference app
-
-[`examples/next`](./examples/next) demonstrates Creator, fill, durable SQLite
-storage, anonymous and identified flows, and snapshot-based response reads.
+## Install
 
 ```bash
-pnpm install
-pnpm example
+npm i @dimah-survey/server @dimah-survey/react survey-core survey-react-ui
 ```
 
-The example mounts fill at `/api/survey` and editor at `/api/admin/survey`.
-Its editor is intentionally open for exploration; production applications must
-protect it with an editor guard.
+Install `@dimah-survey/db` when you want the SQL store, or `@dimah-survey/core`
+for a non-React client and shared protocol types.
 
 ## Documentation
 
@@ -55,8 +44,8 @@ pnpm dev:docs
 ```
 
 Then open <http://localhost:3001>. Its [content](./apps/docs/content/docs)
-covers the example, minimal integration, server setup, collection lifecycle,
-React bindings, persistence, and protocol reference.
+covers backend integration, collection lifecycle, React bindings, persistence,
+and the protocol reference.
 
 ## Development
 

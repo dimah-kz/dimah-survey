@@ -1,17 +1,17 @@
 ---
 title: Overview
-description: Keep SurveyJS responses tied to the definition they started with.
+description: Add a server-owned lifecycle around SurveyJS JSON.
 icon: House
 ---
 
-dimah-survey is the server-side lifecycle for
-[SurveyJS](https://surveyjs.io/) JSON. It separates the document an editor is
-working on from the document a respondent actually started.
+dimah-survey is a backend lifecycle layer for
+[SurveyJS](https://surveyjs.io/) JSON. It gives your server the responsibilities
+that sit around the SurveyJS schema and renderer: publish, response ownership,
+draft persistence, immutable definitions, and submit validation.
 
-SurveyJS still owns the schema, Creator, and renderer. Your application still
-owns authentication, database migrations, and UI composition. This library
-owns the boundary between them: draft, publish, response snapshot, partial
-save, and submit.
+SurveyJS continues to own the schema, Creator, and renderer. Your application
+continues to own authentication, database migrations, and UI composition.
+dimah-survey coordinates the server-side lifecycle between them.
 
 <Flow
   label="One response"
@@ -35,7 +35,7 @@ save, and submit.
 | --------------------------------------------- | --------------------------------------------- |
 | Question JSON, `<Survey>`, Creator            | SurveyJS and your application                 |
 | Auth, sessions, roles, SQL migrations         | Your application                              |
-| Draft/publish boundary and response snapshots | dimah-survey                                  |
+| Publish, snapshots, drafts, submit validation | dimah-survey                                  |
 | Browser client and React bindings             | `@dimah-survey/core` or `@dimah-survey/react` |
 | Durable SQL `SurveyStore`                     | `@dimah-survey/db` or your own adapter        |
 
@@ -50,14 +50,9 @@ The server runs two isolated audiences against one shared store:
 
 <Cards>
   <Card
-    title="Run the example"
-    href="/docs/example"
-    description="Explore the full Next.js, SQLite, Creator, and fill workflow."
-  />
-  <Card
-    title="Minimal integration"
+    title="Quickstart"
     href="/docs/quickstart"
-    description="Publish and render a small in-memory fill session."
+    description="Mount the backend layer and start a SurveyJS response."
   />
   <Card
     title="Server integration"

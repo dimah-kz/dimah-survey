@@ -1,13 +1,12 @@
 ---
-title: Minimal integration
-description: Publish a SurveyJS document and render one in-memory fill session.
+title: Quickstart
+description: Add a backend lifecycle around a SurveyJS response in Next.js.
 icon: Rocket
 ---
 
-This is the smallest useful Next.js integration. It uses process-local memory
-and a fixed demo respondent so the same draft is resumed on every start. The
-full [example app](/docs/example) adds SQLite, a cookie-derived identity,
-Creator, and an editor workflow.
+This is a small Next.js integration. It uses process-local memory and a fixed
+demo respondent so the same draft is resumed on every start. Replace both with
+your database and session-derived identity before production.
 
 <Callout>
   `memoryAdapter()` is for local development and tests. Use a durable store and
@@ -18,15 +17,14 @@ Creator, and an editor workflow.
 
 <Step>
 
-### Install after publication
+### Install
 
 ```npm
 npm i @dimah-survey/server @dimah-survey/react survey-core survey-react-ui
 ```
 
-Until the packages are published, run [`pnpm example`](/docs/example) from this
-repository instead. `survey-react-ui` renders the survey; dimah-survey does
-not.
+`survey-react-ui` renders the survey. dimah-survey supplies the backend
+lifecycle; it does not render questions.
 
 </Step>
 
@@ -69,7 +67,7 @@ export const fill = dimahSurvey({
 inserting another row. A production guard reads the id from the session. See
 [Security](/docs/security).
 
-The editor in this example has no guard. Throw from `guard` before you expose
+This minimal setup has no editor guard. Add one before exposing
 `/api/admin/survey`.
 
 </Step>
@@ -304,5 +302,5 @@ capability: list is refused, and a body `respondentId` is refused. See
 
 </Accordions>
 
-For Creator, discard, reopen, and SQLite, explore the
-[Next.js example](/docs/example).
+Next, configure [Persistence](/docs/persistence), [Security](/docs/security),
+and [Survey Creator](/docs/creator) for your application.

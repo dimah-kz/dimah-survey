@@ -5,8 +5,11 @@ SQL `SurveyStore` and schema references for the dimah-survey lifecycle.
 `draft_json` and `published_json` are separate columns. Every response stores a
 copy of the published document in `definition`.
 
-> **Pre-release:** this package is not on npm yet. The code in this repository
-> is the current API.
+## Install
+
+```bash
+npm i @dimah-survey/db fumadb
+```
 
 Do not import this package from `@dimah-survey/server`. Create `db(client)` in
 your application and pass it to both server audiences.
@@ -70,7 +73,7 @@ creates its tables.
 
 ## Documentation
 
-Read the persistence guide and the Next.js reference app in
+Read the persistence guide and package map in
 [apps/docs](https://github.com/dimah-kz/dimah-survey/tree/main/apps/docs).
 
 ## License

@@ -7,8 +7,11 @@ reference store for dimah-survey.
 `api` for server code. Submit validation runs on the response definition that
 was frozen at start.
 
-> **Pre-release:** this package is not on npm yet. The code in this repository
-> is the current API.
+## Install
+
+```bash
+npm i @dimah-survey/server survey-core
+```
 
 ## Create two audiences
 

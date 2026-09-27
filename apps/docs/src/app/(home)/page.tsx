@@ -1,6 +1,7 @@
 import Link from "next/link";
 import {
   ArrowRight,
+  ArrowUpRight,
   Braces,
   Camera,
   Database,
@@ -24,21 +25,21 @@ function GitHubIcon() {
 const features = [
   {
     icon: Camera,
-    kicker: "Snapshot",
-    title: "The document stays put",
-    body: "Start copies publishedJson onto the response. Later publishes do not rewrite that draft or a submitted row.",
+    kicker: "Response snapshots",
+    title: "Keep each response reproducible",
+    body: "Starting a response copies the published SurveyJS JSON into a durable definition that later publishes cannot change.",
   },
   {
     icon: Split,
-    kicker: "Two handlers",
-    title: "Fill and editor stay apart",
-    body: "Respondents start and submit. The editor saves the draft and publishes. Neither route serves the other audience.",
+    kicker: "Server boundaries",
+    title: "Separate authoring from collection",
+    body: "Editor routes own drafts and publish. Fill routes own respondent access, drafts, and submit.",
   },
   {
     icon: ShieldCheck,
-    kicker: "SurveyJS check",
-    title: "Submit uses the snapshot",
-    body: "The server runs clearIncorrectValues and validate on the stored definition, then saves that data.",
+    kicker: "Server validation",
+    title: "Validate the survey that started",
+    body: "Submit runs SurveyJS validation on the stored response definition before the server accepts its data.",
   },
 ] as const;
 
@@ -72,24 +73,26 @@ export default function HomePage() {
         aria-labelledby="hero-heading"
         className="home-grid relative overflow-hidden pt-16 pb-14 text-center sm:pt-24 sm:pb-20"
       >
-        <Link
-          href="/docs/responses"
+        <a
+          href="https://surveyjs.io/"
+          target="_blank"
+          rel="noreferrer"
           className="group relative inline-flex items-center gap-2 rounded-full border border-fd-primary/20 bg-fd-background/85 px-3.5 py-1.5 text-xs font-medium text-fd-muted-foreground shadow-sm transition-colors hover:border-fd-primary/40 hover:text-fd-foreground"
         >
           <span className="size-1.5 rounded-full bg-fd-primary" />
-          <span className="font-semibold text-fd-primary">Snapshot model</span>
-          A later publish cannot rewrite a response
-          <ArrowRight className="size-3 transition-transform group-hover:translate-x-0.5" />
-        </Link>
+          <span className="font-semibold text-fd-primary">
+            Built for SurveyJS
+          </span>
+          Schema, Creator, and renderer stay yours
+          <ArrowUpRight className="size-3 transition-transform group-hover:translate-x-0.5" />
+        </a>
 
         <h1
           id="hero-heading"
           className="relative mx-auto mt-7 max-w-4xl text-4xl font-semibold tracking-[-0.045em] text-balance text-fd-foreground sm:text-6xl sm:leading-[1.03]"
         >
-          <span className="block">The survey can change.</span>
-          <span className="block text-fd-primary">
-            The response should not.
-          </span>
+          <span className="block">The backend lifecycle layer</span>
+          <span className="block text-fd-primary">for SurveyJS.</span>
         </h1>
 
         <p className="relative mx-auto mt-6 max-w-2xl text-base leading-relaxed text-balance text-fd-muted-foreground sm:text-lg">
@@ -98,32 +101,26 @@ export default function HomePage() {
 
         <div className="relative mt-8 flex flex-wrap items-center justify-center gap-3">
           <Link
-            href="/docs/example"
+            href="/docs/quickstart"
             className="inline-flex h-10 items-center gap-2 rounded-lg bg-fd-primary px-4 text-sm font-medium text-fd-primary-foreground shadow-sm transition-colors hover:bg-fd-primary/90"
           >
-            Run the example
+            Get started
             <ArrowRight className="size-4" />
-          </Link>
-          <Link
-            href="/docs/quickstart"
-            className="inline-flex h-10 items-center gap-2 rounded-lg border border-fd-border bg-fd-background/85 px-4 text-sm font-medium text-fd-foreground transition-colors hover:bg-fd-muted"
-          >
-            Minimal integration
           </Link>
           <Link
             href={githubUrl}
             target="_blank"
             rel="noreferrer"
-            className="inline-flex h-10 items-center gap-2 rounded-lg px-2 text-sm font-medium text-fd-muted-foreground transition-colors hover:text-fd-foreground"
+            className="inline-flex h-10 items-center gap-2 rounded-lg border border-fd-border bg-fd-background/85 px-4 text-sm font-medium text-fd-foreground transition-colors hover:bg-fd-muted"
           >
             <GitHubIcon />
-            GitHub
+            View on GitHub
           </Link>
         </div>
 
-        <p className="relative mt-6 text-sm text-fd-muted-foreground">
-          SurveyJS renders the survey and Creator. Your application owns auth,
-          storage, and UI composition.
+        <p className="relative mx-auto mt-6 max-w-2xl text-sm leading-relaxed text-fd-muted-foreground">
+          Keep SurveyJS in your application. Move publishing, response
+          snapshots, collection rules, and submit validation to your server.
         </p>
       </section>
 
@@ -134,13 +131,13 @@ export default function HomePage() {
         <div className="grid gap-8 lg:grid-cols-[15rem_minmax(0,1fr)] lg:items-center lg:gap-12">
           <div>
             <p className="font-mono text-xs font-medium tracking-[0.12em] text-fd-primary uppercase">
-              One durable flow
+              Backend lifecycle
             </p>
             <h2
               id="lifecycle-title"
               className="mt-3 text-2xl font-semibold tracking-tight text-balance text-fd-foreground sm:text-3xl"
             >
-              Publish once. Freeze on start. Validate on submit.
+              Put the lifecycle around SurveyJS on your server.
             </h2>
           </div>
           <div className="rounded-2xl border border-fd-border bg-fd-card/55 px-5 py-1 sm:px-6">
@@ -181,13 +178,13 @@ export default function HomePage() {
       <section aria-labelledby="features-title" className="py-16 sm:py-20">
         <div className="max-w-2xl">
           <p className="font-mono text-xs font-medium tracking-[0.12em] text-fd-primary uppercase">
-            Server-owned history
+            What the backend adds
           </p>
           <h2
             id="features-title"
             className="mt-3 text-2xl font-semibold tracking-tight text-balance text-fd-foreground sm:text-3xl"
           >
-            The guarantees a client-only survey cannot make.
+            Publish, collect, and validate without changing SurveyJS.
           </h2>
         </div>
 
@@ -225,13 +222,13 @@ export default function HomePage() {
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div className="max-w-2xl">
             <p className="font-mono text-xs font-medium tracking-[0.12em] text-fd-primary uppercase">
-              Small by design
+              One protocol, four packages
             </p>
             <h2
               id="packages-title"
               className="mt-3 text-2xl font-semibold tracking-tight text-balance text-fd-foreground sm:text-3xl"
             >
-              Use only the layer your application needs.
+              Keep your renderer. Add only the backend layer you need.
             </h2>
           </div>
           <Link
@@ -274,32 +271,35 @@ export default function HomePage() {
         className="border-t border-fd-border py-16 text-center sm:py-20"
       >
         <p className="font-mono text-xs font-medium tracking-[0.12em] text-fd-muted-foreground uppercase">
-          Start with a working flow
+          Ready to integrate
         </p>
         <h2
           id="closing-cta-title"
           className="mt-3 text-2xl font-semibold tracking-tight text-balance text-fd-foreground sm:text-3xl"
         >
-          See Creator, fill, and stored snapshots together.
+          Add a server lifecycle to your SurveyJS application.
         </h2>
         <p className="mx-auto mt-3 max-w-xl text-sm leading-relaxed text-fd-muted-foreground sm:text-base">
-          Run the reference app locally, then connect your own auth and database
-          through the integration guide.
+          Configure two handlers, connect your store, and keep the SurveyJS
+          renderer in your application.
         </p>
         <div className="mt-7 flex flex-wrap items-center justify-center gap-3">
           <Link
-            href="/docs/example"
+            href="/docs/quickstart"
             className="inline-flex h-10 items-center gap-2 rounded-lg bg-fd-primary px-4 text-sm font-medium text-fd-primary-foreground transition-colors hover:bg-fd-primary/90"
           >
-            Run the example
+            Read the quickstart
             <ArrowRight className="size-4" />
           </Link>
-          <Link
-            href="/docs/integration"
+          <a
+            href="https://surveyjs.io/"
+            target="_blank"
+            rel="noreferrer"
             className="inline-flex h-10 items-center gap-2 rounded-lg border border-fd-border bg-fd-background px-4 text-sm font-medium text-fd-foreground transition-colors hover:bg-fd-muted"
           >
-            Mount the handlers
-          </Link>
+            Visit SurveyJS
+            <ArrowUpRight className="size-4" />
+          </a>
         </div>
       </section>
     </div>

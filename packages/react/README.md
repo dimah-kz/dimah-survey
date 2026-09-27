@@ -3,8 +3,11 @@
 Binds SurveyJS `Model` and Creator instances to the dimah-survey lifecycle.
 It does not render the survey or Creator; those components stay in your app.
 
-> **Pre-release:** this package is not on npm yet. The code in this repository
-> is the current API.
+## Install
+
+```bash
+npm i @dimah-survey/react react survey-core
+```
 
 ## Bind a fill session
 

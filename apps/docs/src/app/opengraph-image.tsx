@@ -1,7 +1,6 @@
 import { ImageResponse } from "next/og";
 
-export const alt =
-  "dimah-survey — server-authoritative response lifecycle for SurveyJS JSON";
+export const alt = "dimah-survey — backend lifecycle layer for SurveyJS";
 
 export const size = {
   width: 1200,
@@ -71,8 +70,8 @@ export default function OpenGraphImage() {
             maxWidth: "940px",
           }}
         >
-          <span>The survey can change.</span>
-          <span style={{ color: "#0f766e" }}>The response should not.</span>
+          <span>The backend lifecycle layer</span>
+          <span style={{ color: "#0f766e" }}>for SurveyJS.</span>
         </div>
         <div
           style={{
@@ -83,7 +82,8 @@ export default function OpenGraphImage() {
             maxWidth: "850px",
           }}
         >
-          Server-authoritative response lifecycle for SurveyJS JSON.
+          Publish, snapshot, collect, and validate SurveyJS responses on your
+          server.
         </div>
       </div>
 
