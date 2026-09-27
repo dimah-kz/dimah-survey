@@ -1,104 +1,80 @@
 ---
-title: Introduction
-description: Server-authoritative response lifecycle for SurveyJS JSON.
+title: Overview
+description: Keep SurveyJS responses tied to the definition they started with.
 icon: House
 ---
 
-dimah-survey is the response lifecycle for [SurveyJS](https://surveyjs.io/) JSON.
-SurveyJS owns the survey schema, the renderer, and Creator. This library owns
-the editor draft, the published document, the definition copied onto each
-response, drafts, and submit validation against that snapshot.
+dimah-survey is the server-side lifecycle for
+[SurveyJS](https://surveyjs.io/) JSON. It separates the document an editor is
+working on from the document a respondent actually started.
 
-Your application owns authentication, the SurveyJS UI, and the database.
-
-It is not a form renderer, not a hosted survey product, and not a question-type
-system. Question JSON stays SurveyJS JSON.
-
-<Callout>
-  **Start here:** complete [Quickstart](/docs/quickstart), then prepare for
-  production with [Integration](/docs/integration), [Security](/docs/security),
-  and [Persistence](/docs/persistence). Use [Surveys](/docs/surveys),
-  [Settings](/docs/settings), and [Responses](/docs/responses) for the data
-  model.
-</Callout>
-
-<Callout type="warn">
-  `@dimah-survey/*` is not published yet. These pages describe the API in this
-  repository. Until the first release, run the [Next.js
-  example](https://github.com/dimah-kz/dimah-survey/tree/main/examples/next)
-  with `pnpm example`.
-</Callout>
-
-## The model
+SurveyJS still owns the schema, Creator, and renderer. Your application still
+owns authentication, database migrations, and UI composition. This library
+owns the boundary between them: draft, publish, response snapshot, partial
+save, and submit.
 
 <Flow
   label="One response"
   steps={[
     { name: "Draft", kind: "data", note: "Creator writes draftJson" },
-    { name: "Publish", kind: "server", note: "Copy onto publishedJson" },
-    { name: "Start", kind: "server", note: "Freeze the definition" },
-    { name: "Fill", kind: "client", note: "SurveyJS renders" },
-    { name: "Submit", kind: "server", note: "Validate the snapshot" },
+    { name: "Publish", kind: "server", note: "Copy to publishedJson" },
+    { name: "Start", kind: "server", note: "Freeze a definition" },
+    { name: "Fill", kind: "client", note: "SurveyJS renders it" },
+    { name: "Submit", kind: "server", note: "Validate that snapshot" },
   ]}
 />
 
-`saveSurvey` stores `draftJson` only. `publishSurvey` copies that JSON onto
-`publishedJson`. `startResponse` copies `publishedJson` into
-`response.definition`. Later publishes do not change that copy.
+<Callout>
+  A later publish never changes an existing `response.definition`. Submit
+  validation always receives that stored definition, not the live draft.
+</Callout>
 
-`settings` is a third column: who may respond, whether a submitted row can
-reopen, the open window, and the response cap. It is not SurveyJS JSON and it
-is not copied onto `definition`.
+## What belongs where
 
-## What you install
+| Concern                                       | Owner                                         |
+| --------------------------------------------- | --------------------------------------------- |
+| Question JSON, `<Survey>`, Creator            | SurveyJS and your application                 |
+| Auth, sessions, roles, SQL migrations         | Your application                              |
+| Draft/publish boundary and response snapshots | dimah-survey                                  |
+| Browser client and React bindings             | `@dimah-survey/core` or `@dimah-survey/react` |
+| Durable SQL `SurveyStore`                     | `@dimah-survey/db` or your own adapter        |
 
-| Need                                     | Package                |
-| ---------------------------------------- | ---------------------- |
-| Server instance, handler, and adapters   | `@dimah-survey/server` |
-| Model and Creator bindings               | `@dimah-survey/react`  |
-| Routes, payloads, and a non-React client | `@dimah-survey/core`   |
-| SQL store                                | `@dimah-survey/db`     |
+The server runs two isolated audiences against one shared store:
 
-`database` is required on `dimahSurvey()`. SQL is optional: use
-`memoryAdapter()` for tests and local development, or `db()` from
-`@dimah-survey/db` in production.
+- **Fill** starts, saves, submits, abandons, and reopens responses. It requires
+  a guard that establishes the respondent.
+- **Editor** edits drafts, publishes, controls collection settings, and reads
+  full response snapshots.
 
-Mount two handlers that share that store. `audience: "fill"` serves start,
-partial save, and submit. `audience: "editor"` serves the draft, publish, and
-response lists. Neither handler serves the other audience.
-
-`@dimah-survey/react` binds a `survey-core` `Model` and Creator autosave. It
-does not render `<Survey>` or Creator. Those components stay in your app.
-
-## Choose the right page
+## Choose a path
 
 <Cards>
   <Card
-    title="Quickstart"
+    title="Run the example"
+    href="/docs/example"
+    description="Explore the full Next.js, SQLite, Creator, and fill workflow."
+  />
+  <Card
+    title="Minimal integration"
     href="/docs/quickstart"
-    description="Publish a survey and render a fill session in Next.js."
+    description="Publish and render a small in-memory fill session."
   />
   <Card
-    title="Comparison"
-    href="/docs/comparison"
-    description="Choose this library, SurveyJS alone, or a hosted product."
+    title="Server integration"
+    href="/docs/integration"
+    description="Mount fill and editor handlers in your runtime."
   />
   <Card
-    title="Surveys"
-    href="/docs/surveys"
-    description="Separate the editor draft from the published document."
-  />
-  <Card
-    title="Responses"
+    title="Lifecycle model"
     href="/docs/responses"
-    description="Understand snapshots, drafts, and submit validation."
+    description="Learn how snapshot, partial save, and submit work."
   />
   <Card
-    title="Example app"
-    href="https://github.com/dimah-kz/dimah-survey/tree/main/examples/next"
-    description="Creator, fill, and stored snapshots in SQLite."
+    title="Package reference"
+    href="/docs/packages"
+    description="Choose the core, server, React, or database package."
   />
 </Cards>
 
-For coding agents, fetch [llms.txt](/llms.txt) for the page index or
-[llms-full.txt](/llms-full.txt) for the complete Markdown corpus.
+For coding agents, [llms.txt](/llms.txt) indexes the site and
+[llms-full.txt](/llms-full.txt) exposes the complete Markdown corpus.

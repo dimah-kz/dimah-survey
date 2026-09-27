@@ -1,12 +1,17 @@
 ---
-title: Creator
-description: Point Survey Creator autosave at the editor draft.
+title: Autosave Survey Creator
+description: Send Creator autosave to the editor draft and publish explicitly.
 icon: PenLine
 ---
 
-`useSurveyDraft` turns Creator autosave into `saveSurvey`. That writes
-`draftJson` only. The hook does not construct Creator, does not render it, and
-does not publish.
+`useSurveyDraft` turns Creator autosave into `saveSurvey`. It writes
+`draftJson` only. The hook does not construct Creator, render it, or publish a
+survey.
+
+<Callout>
+  Autosave and publish are separate actions. Publishing is the explicit point
+  where new responses begin using the draft.
+</Callout>
 
 ```tsx title="components/design.tsx"
 "use client";
@@ -60,7 +65,7 @@ write. A new `updatedAt` prop rebinds that token.
 `STALE_UPDATE`: someone else wrote the draft. Reload the survey from the
 server before saving over it.
 
-## Publish is separate
+## Publish explicitly
 
 Autosave must not call `publishSurvey`. Publish copies the current draft onto
 `publishedJson` and is an explicit action:

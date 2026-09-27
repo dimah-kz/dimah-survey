@@ -1,14 +1,21 @@
 ---
-title: Persistence
-description: Use memoryAdapter(), db(), or a custom SurveyStore.
+title: Persist the lifecycle
+description: Use memory for local work, SQL through db(), or your own SurveyStore.
 icon: Database
 ---
 
-`database` implements `SurveyStore`. `memoryAdapter()` is the reference and is
-process-local. `@dimah-survey/db` is the SQL store. `@dimah-survey/server` does
-not import it. Pass `db(client)` in as `database`.
+`database` implements `SurveyStore`. `memoryAdapter()` is the process-local
+reference for tests and local work. `@dimah-survey/db` provides the SQL store;
+`@dimah-survey/server` deliberately does not import it. Pass `db(client)` to
+each server instance.
 
-## SQL
+<Callout>
+  Your application owns its tables, migrations, and indexes. The schema exports
+  in `@dimah-survey/db` are references to copy or generate, not runtime models
+  to import.
+</Callout>
+
+## Use SQL
 
 ```ts title="lib/survey.ts"
 import { DimahSurveyDB, db } from "@dimah-survey/db";
@@ -69,7 +76,7 @@ running schema:
 
 There is no survey version table. History is `response.definition`.
 
-## What a store must guarantee
+## Implement a custom store
 
 A custom `SurveyStore` follows the same rules as `memoryAdapter()` and `db()`:
 

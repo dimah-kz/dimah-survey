@@ -1,11 +1,16 @@
 ---
-title: Integration
-description: Create dimahSurvey(), mount both handlers, and call the in-process API.
+title: Mount the server
+description: Create two handlers, mount them separately, and call the in-process API.
 icon: Server
 ---
 
-`@dimah-survey/server` creates one instance per audience. Each instance has an
-HTTP `handler` and an in-process `api`. Persistence is required. SQL is not.
+`@dimah-survey/server` creates one instance per audience. Each has an HTTP
+`handler` and an in-process `api`. A `SurveyStore` is required; SQL is optional.
+
+<Callout>
+  Create exactly two instances against the same store. The fill handler is for
+  respondents; the editor handler is for authoring and response analysis.
+</Callout>
 
 ```ts title="lib/survey.ts"
 import {
@@ -42,7 +47,7 @@ nothing, or throws. See [Security](/docs/security).
 `memoryAdapter()` is for tests and local development. Choose SQL or a custom
 `SurveyStore` in [Persistence](/docs/persistence).
 
-## Mount the handlers
+## Mount each handler
 
 ```ts title="app/api/survey/[[...path]]/route.ts"
 import { toNextJsHandler } from "@dimah-survey/server/next";
@@ -134,7 +139,7 @@ createServer(toNodeHandler(fill)).listen(3000);
 Mount the editor handler on its own path. One handler cannot serve both
 audiences.
 
-## Call the API in process
+## Call the API on the server
 
 `fill.api` and `editor.api` take `{ body }` or `{ query }`. They do not perform
 an HTTP round trip. Pass `headers` when `guard` needs the incoming request.

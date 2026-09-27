@@ -1,14 +1,17 @@
 # @dimah-survey/db
 
-SQL shape and `db(client)` store for the dimah-survey lifecycle. `draft_json` and `published_json` are separate columns. Each response stores a copy of the published document in `definition`.
+SQL `SurveyStore` and schema references for the dimah-survey lifecycle.
 
-Do not import this package from `@dimah-survey/server`. Pass `db(client)` as the `database` option.
+`draft_json` and `published_json` are separate columns. Every response stores a
+copy of the published document in `definition`.
 
-## Install
+> **Pre-release:** this package is not on npm yet. The code in this repository
+> is the current API.
 
-```bash
-pnpm add @dimah-survey/db fumadb
-```
+Do not import this package from `@dimah-survey/server`. Create `db(client)` in
+your application and pass it to both server audiences.
+
+## Create the store
 
 ```ts
 import { DimahSurveyDB, db } from "@dimah-survey/db";
@@ -25,9 +28,20 @@ const editor = dimahSurvey({
 });
 ```
 
-The app owns the tables. Write them in the app schema and migrate that file. SQL names are `dimah_survey` and `dimah_response`. Drizzle export names stay `survey` and `response`, because those are the ORM names `db()` looks up. Generate a fresh copy with FumaDB's CLI when the library schema changes, then keep any indexes or extra columns you added.
+## Own your schema and migrations
 
-These package paths are references for you and for agents. Read them. Do not import them into the running app:
+Your application owns the tables, migrations, indexes, and extensions. SQL names
+are `dimah_survey` and `dimah_response`; the Drizzle export names remain
+`survey` and `response` because those are the models `db()` queries.
+
+Generate or copy the reference schema into the application, then migrate that
+application-owned file. Keep
+`dimah_response_one_open_draft`: one draft per identified respondent and
+survey depends on that partial unique index.
+
+## Reference files
+
+These exports are source references, not runtime models:
 
 - `@dimah-survey/db/schema/drizzle.ts`
 - `@dimah-survey/db/schema/tables.sql`
@@ -49,7 +63,15 @@ await createCli({
 }).main();
 ```
 
-`dimah-survey generate 1.0.0 -o ./db/survey.ts` writes the ORM schema into the app. FumaDB does not emit secondary indexes. Keep `dimah_response_one_open_draft` in the app schema after you generate; one open draft per survey and identified respondent depends on it. Prisma cannot express that predicate, so apply `@dimah-survey/db/schema/indexes.sql` after the Prisma tables exist.
+`dimah-survey generate 1.0.0 -o ./db/survey.ts` writes the ORM schema into the
+app. FumaDB does not emit secondary indexes. Prisma cannot express the partial
+open-draft rule, so apply `@dimah-survey/db/schema/indexes.sql` after Prisma
+creates its tables.
+
+## Documentation
+
+Read the persistence guide and the Next.js reference app in
+[apps/docs](https://github.com/dimah-kz/dimah-survey/tree/main/apps/docs).
 
 ## License
 

@@ -2,48 +2,72 @@
 
 Server-authoritative response lifecycle for [SurveyJS](https://surveyjs.io/) JSON.
 
-SurveyJS owns the survey schema, the renderer, and Creator. This library owns the part SurveyJS leaves to your server: an editor draft, a published document, a definition snapshot on every response, drafts, and submit validation against that snapshot.
-
-It is not a form renderer, not a hosted survey product, and not a plugin for dimah-form.
-
 ## Status
 
-The lifecycle is usable. Submit validation defaults to `survey-core` (`clearIncorrectValues(true)` then `validate`) against the response snapshot. Mount `audience: "fill"` and `audience: "editor"` as separate handlers. An identified start follows `settings.responses`: `"one-open"` returns the open draft, and `"single"` returns the latest row. `@dimah-survey/react` binds a `Model` for partial save and complete, and binds Creator autosave to the editor draft. It does not render the survey or Creator. `@dimah-survey/db` is the SQL store. The app owns the tables; the package exports reference schemas to copy.
+Pre-release. The API documented in this repository is the current design;
+`@dimah-survey/*` packages are not on npm yet. Run the reference app locally to
+evaluate the complete flow.
+
+## What it owns
+
+SurveyJS owns the schema, renderer, and Creator. Your application owns auth,
+database migrations, and UI composition. dimah-survey owns:
+
+- an editable `draftJson` and an explicit `publishedJson`
+- a frozen `response.definition` for every started response
+- partial save, submit, reopen, and response collection policy
+- submit validation against the stored definition
+- separate fill and editor HTTP audiences over one shared store
+
+A later publish never rewrites an existing response. This is not a form
+renderer, hosted survey product, SurveyJS plugin, or dimah-form integration.
 
 ## Packages
 
-| Package                | Role                                                          |
-| ---------------------- | ------------------------------------------------------------- |
-| `@dimah-survey/core`   | Routes, payloads, errors, fill and editor clients             |
-| `@dimah-survey/server` | `dimahSurvey({ audience })`, Fetch handler, `memoryAdapter()` |
-| `@dimah-survey/react`  | Binds a Model and Creator autosave. Does not render           |
-| `@dimah-survey/db`     | SQL schema and `db(client)` store                             |
+| Package                | Role                                                        |
+| ---------------------- | ----------------------------------------------------------- |
+| `@dimah-survey/core`   | Protocol, browser clients, schemas, errors, and store types |
+| `@dimah-survey/server` | Server factory, guards, validation, handlers, and adapters  |
+| `@dimah-survey/react`  | SurveyJS Model and Creator bindings; no renderer            |
+| `@dimah-survey/db`     | SQL `SurveyStore` and schema references for your app        |
 
-## Workspace
+## Try the reference app
+
+[`examples/next`](./examples/next) demonstrates Creator, fill, durable SQLite
+storage, anonymous and identified flows, and snapshot-based response reads.
 
 ```bash
 pnpm install
-pnpm check-types
-pnpm test
-```
-
-Node 24 or newer. Versions are cut with Tegami; see [docs/agents/release.md](./docs/agents/release.md).
-
-## Example
-
-[`examples/next`](./examples/next) is a Next.js app: Creator, fill, and stored snapshots in SQLite.
-
-```bash
 pnpm example
 ```
 
-## Docs
+The example mounts fill at `/api/survey` and editor at `/api/admin/survey`.
+Its editor is intentionally open for exploration; production applications must
+protect it with an editor guard.
 
-[`apps/docs`](./apps/docs) is the Fumadocs site.
+## Documentation
+
+The Fumadocs site lives in [`apps/docs`](./apps/docs). Start it from the
+repository root:
 
 ```bash
 pnpm dev:docs
 ```
+
+Then open <http://localhost:3001>. Its [content](./apps/docs/content/docs)
+covers the example, minimal integration, server setup, collection lifecycle,
+React bindings, persistence, and protocol reference.
+
+## Development
+
+Node 24+ and pnpm 12+ are required.
+
+```bash
+pnpm check-types
+pnpm test
+```
+
+Release workflow details live in [`docs/agents/release.md`](./docs/agents/release.md).
 
 ## License
 

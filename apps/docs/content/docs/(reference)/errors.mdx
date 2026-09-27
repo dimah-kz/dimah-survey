@@ -1,14 +1,14 @@
 ---
-title: Errors
-description: Stable error codes and the JSON error body.
+title: Error reference
+description: Stable error codes, status codes, and the JSON response body.
 icon: CircleAlert
 ---
 
-Failed requests return JSON `{ message, code?, questions? }` and an HTTP status.
+Failed requests return an HTTP status and JSON
+`{ message, code?, questions? }`.
 
 Throw with `APIError.from` and a code from `SURVEY_ERROR_CODES`. A plain
-`Error` becomes `INTERNAL_ERROR`. Callers branch on `code`. Do not branch on
-`message`.
+`Error` becomes `INTERNAL_ERROR`. Branch on `code`, never on `message`.
 
 ```ts
 import {
@@ -29,7 +29,7 @@ if (isAPIError(error)) {
 `isAPIError` is also exported from `@dimah-survey/core`. There is no
 `UNAUTHORIZED` code. Reject an anonymous caller with `FORBIDDEN`.
 
-## Catalog
+## Error catalog
 
 | `code`               | HTTP | When                                                                 |
 | -------------------- | ---- | -------------------------------------------------------------------- |
@@ -52,7 +52,7 @@ if (isAPIError(error)) {
 survey. The editor `getSurvey` uses the same code when the id is missing, and
 returns the draft when the row exists.
 
-## Validation body
+## Validation failures
 
 `VALIDATION_FAILED` adds `questions`: the SurveyJS question names that failed.
 `message` lists those names. It is not a localized string.

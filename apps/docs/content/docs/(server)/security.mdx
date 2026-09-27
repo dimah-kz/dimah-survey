@@ -1,12 +1,12 @@
 ---
-title: Security
-description: Split fill and editor, and stamp the respondent on the server.
+title: Secure the two audiences
+description: Authorize fill and editor requests independently, then stamp identity on the server.
 icon: Shield
 ---
 
-dimah-survey does not ship sessions or roles. Your application authorizes each
-request in `guard`. Fill and the editor are separate instances, on separate
-paths, with different return rules.
+dimah-survey does not provide sessions or roles. Your application authorizes
+every request in `guard`. Fill and editor are separate instances on separate
+paths, with intentionally different guard contracts.
 
 <Flow
   label="Fill request"
@@ -18,7 +18,7 @@ paths, with different return rules.
   ]}
 />
 
-## Two audiences
+## Keep fill and editor separate
 
 | Instance | Guard returns                               | Routes                                                |
 | -------- | ------------------------------------------- | ----------------------------------------------------- |
@@ -36,7 +36,7 @@ The editor can `getResponse` and `listResponses`, including `include: "full"`.
 It cannot start, save a partial, submit, abandon, or reopen. Put submit hooks
 and `validateResult` on the fill instance. Put publish hooks on the editor.
 
-## Identified fill
+## Identify a respondent on the server
 
 `guardRespondent(id)` returns `{ respondentId }`. The server then:
 
@@ -72,7 +72,7 @@ must match the guard. Omit it and the server still stamps the session id.
 
 Identified start follows `settings.responses`. See [Settings](/docs/settings).
 
-## Anonymous fill
+## Use an anonymous capability carefully
 
 `guardAnonymous()` returns `{ anonymous: true }`. Each start inserts a row.
 List is refused. A body `respondentId` is refused. The response id is the
@@ -93,10 +93,12 @@ export const fill = dimahSurvey({
 });
 ```
 
-Treat the response id as a secret for anonymous rows. Anyone who has it can
-read and submit that row.
+<Callout type="warn">
+  Treat an anonymous response id as a secret. Anyone who has it can read and
+  submit that row.
+</Callout>
 
-## Editor
+## Protect the editor
 
 ```ts title="lib/survey.ts"
 import { APIError, SURVEY_ERROR_CODES, dimahSurvey } from "@dimah-survey/server";

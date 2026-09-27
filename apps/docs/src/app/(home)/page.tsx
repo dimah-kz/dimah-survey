@@ -1,6 +1,16 @@
 import Link from "next/link";
-import { ArrowRight, Camera, ShieldCheck, Split } from "lucide-react";
+import {
+  ArrowRight,
+  Braces,
+  Camera,
+  Database,
+  Layers3,
+  Server,
+  ShieldCheck,
+  Split,
+} from "lucide-react";
 
+import { Flow } from "@/components/flow";
 import { githubUrl, siteDescription } from "@/lib/shared";
 
 function GitHubIcon() {
@@ -32,75 +42,156 @@ const features = [
   },
 ] as const;
 
+const packages = [
+  {
+    icon: Braces,
+    name: "@dimah-survey/core",
+    body: "Protocol, browser clients, schemas, errors, and store types.",
+  },
+  {
+    icon: Server,
+    name: "@dimah-survey/server",
+    body: "Handlers, guards, validation, adapters, and local memory storage.",
+  },
+  {
+    icon: Layers3,
+    name: "@dimah-survey/react",
+    body: "SurveyJS Model and Creator bindings without a renderer wrapper.",
+  },
+  {
+    icon: Database,
+    name: "@dimah-survey/db",
+    body: "The SQL store and schema references that your app owns.",
+  },
+] as const;
+
 export default function HomePage() {
   return (
-    <div className="mx-auto w-full max-w-5xl px-4 sm:px-6">
+    <div className="mx-auto w-full max-w-7xl px-4 sm:px-6">
       <section
         aria-labelledby="hero-heading"
-        className="pt-16 pb-12 text-center sm:pt-24 sm:pb-16"
+        className="home-grid relative overflow-hidden pt-16 pb-14 text-center sm:pt-24 sm:pb-20"
       >
         <Link
           href="/docs/responses"
-          className="group inline-flex items-center gap-2 rounded-full border border-fd-foreground/10 px-3.5 py-1.5 text-xs font-medium text-fd-muted-foreground transition-colors hover:border-fd-foreground/20 hover:text-fd-foreground"
+          className="group relative inline-flex items-center gap-2 rounded-full border border-fd-primary/20 bg-fd-background/85 px-3.5 py-1.5 text-xs font-medium text-fd-muted-foreground shadow-sm transition-colors hover:border-fd-primary/40 hover:text-fd-foreground"
         >
+          <span className="size-1.5 rounded-full bg-fd-primary" />
           <span className="font-semibold text-fd-primary">Snapshot model</span>
-          A later publish does not rewrite a response
+          A later publish cannot rewrite a response
           <ArrowRight className="size-3 transition-transform group-hover:translate-x-0.5" />
         </Link>
 
         <h1
           id="hero-heading"
-          className="mx-auto mt-7 max-w-3xl text-4xl font-semibold tracking-[-0.04em] text-balance text-fd-foreground sm:text-6xl sm:leading-[1.05]"
+          className="relative mx-auto mt-7 max-w-4xl text-4xl font-semibold tracking-[-0.045em] text-balance text-fd-foreground sm:text-6xl sm:leading-[1.03]"
         >
-          <span className="block">Response lifecycle for SurveyJS.</span>
+          <span className="block">The survey can change.</span>
           <span className="block text-fd-primary">
-            The renderer stays yours.
+            The response should not.
           </span>
         </h1>
 
-        <p className="mx-auto mt-5 max-w-2xl text-base leading-relaxed text-balance text-fd-muted-foreground sm:text-lg">
+        <p className="relative mx-auto mt-6 max-w-2xl text-base leading-relaxed text-balance text-fd-muted-foreground sm:text-lg">
           {siteDescription}
         </p>
 
-        <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+        <div className="relative mt-8 flex flex-wrap items-center justify-center gap-3">
+          <Link
+            href="/docs/example"
+            className="inline-flex h-10 items-center gap-2 rounded-lg bg-fd-primary px-4 text-sm font-medium text-fd-primary-foreground shadow-sm transition-colors hover:bg-fd-primary/90"
+          >
+            Run the example
+            <ArrowRight className="size-4" />
+          </Link>
           <Link
             href="/docs/quickstart"
-            className="inline-flex h-10 items-center gap-2 rounded-full bg-fd-primary px-5 text-sm font-medium text-fd-primary-foreground transition-colors hover:bg-fd-primary/90"
+            className="inline-flex h-10 items-center gap-2 rounded-lg border border-fd-border bg-fd-background/85 px-4 text-sm font-medium text-fd-foreground transition-colors hover:bg-fd-muted"
           >
-            Start building
-            <ArrowRight className="size-4" />
+            Minimal integration
           </Link>
           <Link
             href={githubUrl}
             target="_blank"
             rel="noreferrer"
-            className="inline-flex h-10 items-center gap-2 rounded-full border border-fd-border bg-fd-background px-5 text-sm font-medium text-fd-foreground transition-colors hover:bg-fd-muted"
+            className="inline-flex h-10 items-center gap-2 rounded-lg px-2 text-sm font-medium text-fd-muted-foreground transition-colors hover:text-fd-foreground"
           >
             <GitHubIcon />
-            View on GitHub
+            GitHub
           </Link>
         </div>
 
-        <p className="mt-5 text-xs text-fd-muted-foreground">
-          SurveyJS renders the survey and Creator. You own auth and the
-          database.
+        <p className="relative mt-6 text-sm text-fd-muted-foreground">
+          SurveyJS renders the survey and Creator. Your application owns auth,
+          storage, and UI composition.
         </p>
       </section>
 
-      <section aria-labelledby="features-title" className="pb-16 sm:pb-20">
-        <div className="mx-auto max-w-2xl text-center">
-          <p className="font-mono text-xs font-medium tracking-[0.12em] text-fd-muted-foreground uppercase">
-            Built for surveys that outlive the draft
+      <section
+        aria-labelledby="lifecycle-title"
+        className="border-b border-fd-border py-14 sm:py-18"
+      >
+        <div className="grid gap-8 lg:grid-cols-[15rem_minmax(0,1fr)] lg:items-center lg:gap-12">
+          <div>
+            <p className="font-mono text-xs font-medium tracking-[0.12em] text-fd-primary uppercase">
+              One durable flow
+            </p>
+            <h2
+              id="lifecycle-title"
+              className="mt-3 text-2xl font-semibold tracking-tight text-balance text-fd-foreground sm:text-3xl"
+            >
+              Publish once. Freeze on start. Validate on submit.
+            </h2>
+          </div>
+          <div className="rounded-2xl border border-fd-border bg-fd-card/55 px-5 py-1 sm:px-6">
+            <Flow
+              label="Survey lifecycle"
+              steps={[
+                {
+                  name: "Draft",
+                  kind: "data",
+                  note: "Creator writes draftJson",
+                },
+                {
+                  name: "Publish",
+                  kind: "server",
+                  note: "Copy to publishedJson",
+                },
+                {
+                  name: "Start",
+                  kind: "server",
+                  note: "Freeze definition",
+                },
+                {
+                  name: "Fill",
+                  kind: "client",
+                  note: "SurveyJS renders",
+                },
+                {
+                  name: "Submit",
+                  kind: "server",
+                  note: "Validate snapshot",
+                },
+              ]}
+            />
+          </div>
+        </div>
+      </section>
+
+      <section aria-labelledby="features-title" className="py-16 sm:py-20">
+        <div className="max-w-2xl">
+          <p className="font-mono text-xs font-medium tracking-[0.12em] text-fd-primary uppercase">
+            Server-owned history
           </p>
           <h2
             id="features-title"
             className="mt-3 text-2xl font-semibold tracking-tight text-balance text-fd-foreground sm:text-3xl"
           >
-            Every response keeps the document it started with.
+            The guarantees a client-only survey cannot make.
           </h2>
         </div>
 
-        <div className="mx-auto mt-10 overflow-hidden rounded-2xl border border-fd-border bg-fd-card">
+        <div className="mt-10 overflow-hidden rounded-2xl border border-fd-border bg-fd-card/50">
           <div className="grid divide-y divide-fd-border lg:grid-cols-3 lg:divide-x lg:divide-y-0">
             {features.map((feature) => {
               const Icon = feature.icon;
@@ -128,33 +219,84 @@ export default function HomePage() {
       </section>
 
       <section
+        aria-labelledby="packages-title"
+        className="border-t border-fd-border py-16 sm:py-20"
+      >
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div className="max-w-2xl">
+            <p className="font-mono text-xs font-medium tracking-[0.12em] text-fd-primary uppercase">
+              Small by design
+            </p>
+            <h2
+              id="packages-title"
+              className="mt-3 text-2xl font-semibold tracking-tight text-balance text-fd-foreground sm:text-3xl"
+            >
+              Use only the layer your application needs.
+            </h2>
+          </div>
+          <Link
+            href="/docs/packages"
+            className="group inline-flex shrink-0 items-center gap-1.5 text-sm font-medium text-fd-primary transition-colors hover:text-fd-foreground"
+          >
+            Explore the package map
+            <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
+          </Link>
+        </div>
+
+        <div className="mt-10 grid gap-3 sm:grid-cols-2">
+          {packages.map((pkg) => {
+            const Icon = pkg.icon;
+
+            return (
+              <article
+                key={pkg.name}
+                className="rounded-xl border border-fd-border bg-fd-card/45 p-5 transition-colors hover:border-fd-primary/30 hover:bg-fd-card"
+              >
+                <div className="flex items-center gap-3">
+                  <span className="flex size-8 items-center justify-center rounded-md bg-fd-background text-fd-primary ring-1 ring-fd-border">
+                    <Icon className="size-4" aria-hidden />
+                  </span>
+                  <code className="font-mono text-xs font-medium text-fd-foreground">
+                    {pkg.name}
+                  </code>
+                </div>
+                <p className="mt-4 text-sm leading-relaxed text-fd-muted-foreground">
+                  {pkg.body}
+                </p>
+              </article>
+            );
+          })}
+        </div>
+      </section>
+
+      <section
         aria-labelledby="closing-cta-title"
         className="border-t border-fd-border py-16 text-center sm:py-20"
       >
         <p className="font-mono text-xs font-medium tracking-[0.12em] text-fd-muted-foreground uppercase">
-          Start with one survey
+          Start with a working flow
         </p>
         <h2
           id="closing-cta-title"
           className="mt-3 text-2xl font-semibold tracking-tight text-balance text-fd-foreground sm:text-3xl"
         >
-          Publish, then render with SurveyJS.
+          See Creator, fill, and stored snapshots together.
         </h2>
         <p className="mx-auto mt-3 max-w-xl text-sm leading-relaxed text-fd-muted-foreground sm:text-base">
-          Use in-memory persistence locally. Add a fill guard and a durable
-          store before production.
+          Run the reference app locally, then connect your own auth and database
+          through the integration guide.
         </p>
         <div className="mt-7 flex flex-wrap items-center justify-center gap-3">
           <Link
-            href="/docs/quickstart"
-            className="inline-flex h-10 items-center gap-2 rounded-full bg-fd-primary px-5 text-sm font-medium text-fd-primary-foreground transition-colors hover:bg-fd-primary/90"
+            href="/docs/example"
+            className="inline-flex h-10 items-center gap-2 rounded-lg bg-fd-primary px-4 text-sm font-medium text-fd-primary-foreground transition-colors hover:bg-fd-primary/90"
           >
-            Open the quickstart
+            Run the example
             <ArrowRight className="size-4" />
           </Link>
           <Link
             href="/docs/integration"
-            className="inline-flex h-10 items-center gap-2 rounded-full border border-fd-border px-5 text-sm font-medium text-fd-foreground transition-colors hover:bg-fd-muted"
+            className="inline-flex h-10 items-center gap-2 rounded-lg border border-fd-border bg-fd-background px-4 text-sm font-medium text-fd-foreground transition-colors hover:bg-fd-muted"
           >
             Mount the handlers
           </Link>

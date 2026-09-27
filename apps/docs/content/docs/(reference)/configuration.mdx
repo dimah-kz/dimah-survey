@@ -1,16 +1,16 @@
 ---
-title: Configuration
-description: Options for dimahSurvey(), the clients, and the React bindings.
+title: Configuration reference
+description: Options for the server factory, browser clients, and React bindings.
 icon: Settings
 ---
 
-`database` is required. `@dimah-survey/db` is not. `memoryAdapter()` ships in
-`@dimah-survey/server`.
+`database` is required. `@dimah-survey/db` is optional:
+`memoryAdapter()` ships in `@dimah-survey/server` for tests and local work.
 
-Fill and the editor are different config objects. A fill instance cannot take
-publish hooks. An editor instance cannot take `validateResult`.
+Fill and editor configurations intentionally differ. A fill instance cannot
+take publish hooks; an editor instance cannot take `validateResult`.
 
-## Fill
+## Fill instance
 
 ```ts
 import { dimahSurvey, guardAnonymous, memoryAdapter } from "@dimah-survey/server";
@@ -40,7 +40,7 @@ A custom `validateResult` receives `{ definition, data }`. Return the object to
 store. Return nothing to keep `data`. Throw `APIError` with `VALIDATION_FAILED`
 to reject the submit. See [Responses](/docs/responses).
 
-### Fill hooks
+### Lifecycle hooks
 
 | Hook          | When                                            | A throw           |
 | ------------- | ----------------------------------------------- | ----------------- |
@@ -53,7 +53,7 @@ A start that returns an existing row does not call `onStart` or `afterStart`.
 A replayed submit does not call `onSubmit` or `afterSubmit`. The HTTP body
 cannot carry these hooks.
 
-## Editor
+## Editor instance
 
 ```ts
 import { dimahSurvey } from "@dimah-survey/server";
@@ -79,7 +79,7 @@ export const editor = dimahSurvey({
 
 `resumeSurvey` does not call publish hooks.
 
-## Clients
+## Browser clients
 
 `createFillClient` and `createEditorClient` accept:
 

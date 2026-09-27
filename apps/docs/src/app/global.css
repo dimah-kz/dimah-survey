@@ -2,8 +2,20 @@
 @import "fumadocs-ui/css/neutral.css";
 @import "fumadocs-ui/css/preset.css";
 
+@theme inline {
+  --font-sans: var(--font-inter);
+  --font-mono: ui-monospace, "SFMono-Regular", Consolas, monospace;
+}
+
 html {
+  scroll-behavior: smooth;
   scrollbar-gutter: stable;
+}
+
+body {
+  background: var(--color-fd-background);
+  color: var(--color-fd-foreground);
+  font-synthesis: none;
 }
 
 html > body[data-scroll-locked] {
@@ -25,4 +37,44 @@ html > body[data-scroll-locked] {
   --color-fd-primary: oklch(0.83 0.1 196);
   --color-fd-primary-foreground: var(--color-teal-950);
   --color-fd-ring: var(--color-fd-primary);
+}
+
+::selection {
+  background: color-mix(in oklab, var(--color-fd-primary) 23%, transparent);
+  color: var(--color-fd-foreground);
+}
+
+:where(a, button, input, select, textarea):focus-visible {
+  outline: 2px solid var(--color-fd-ring);
+  outline-offset: 3px;
+}
+
+.home-grid {
+  background-image:
+    linear-gradient(
+      to right,
+      color-mix(in oklab, var(--color-fd-primary) 7%, transparent) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      to bottom,
+      color-mix(in oklab, var(--color-fd-primary) 7%, transparent) 1px,
+      transparent 1px
+    );
+  background-size: 2rem 2rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
 }

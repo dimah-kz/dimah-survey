@@ -1,29 +1,32 @@
 ---
-title: Quickstart
-description: Publish a SurveyJS document and render a fill session in Next.js.
+title: Minimal integration
+description: Publish a SurveyJS document and render one in-memory fill session.
 icon: Rocket
 ---
 
-A fill session in the Next.js App Router. The editor publishes once. Fill
-resumes the open draft for a fixed respondent, saves on page next, and
-validates submit against the stored definition.
+This is the smallest useful Next.js integration. It uses process-local memory
+and a fixed demo respondent so the same draft is resumed on every start. The
+full [example app](/docs/example) adds SQLite, a cookie-derived identity,
+Creator, and an editor workflow.
 
-<Callout type="warn">
-  The packages are not on npm yet. The snippets below are the API. Run `pnpm
-  example` in this repository to see the same flow with SQL.
+<Callout>
+  `memoryAdapter()` is for local development and tests. Use a durable store and
+  a guard derived from your session before shipping this pattern.
 </Callout>
 
 <Steps>
 
 <Step>
 
-### Install
+### Install after publication
 
 ```npm
 npm i @dimah-survey/server @dimah-survey/react survey-core survey-react-ui
 ```
 
-`survey-react-ui` renders the survey. This library does not.
+Until the packages are published, run [`pnpm example`](/docs/example) from this
+repository instead. `survey-react-ui` renders the survey; dimah-survey does
+not.
 
 </Step>
 
@@ -58,7 +61,8 @@ export const fill = dimahSurvey({
 });
 ```
 
-`memoryAdapter()` is process-local. For SQL, see [Persistence](/docs/persistence).
+`memoryAdapter()` is process-local. For SQL, see
+[Persistence](/docs/persistence).
 
 `guardRespondent("demo")` stamps that id onto every start. The default
 `settings.responses` of `"one-open"` then returns the open draft instead of
@@ -241,11 +245,11 @@ draft. The next request returns that same draft. See
 
 </Steps>
 
-## Frequently asked questions
+## Continue building
 
 <Accordions>
 
-<Accordion title="How do I require a signed-in respondent?">
+<Accordion title="Require a signed-in respondent">
 
 Read the session inside `guard`, then return `guardRespondent` with that id.
 Pass the guard context through so the helper can see the operation. The server
@@ -272,25 +276,25 @@ export const fill = dimahSurvey({
 });
 ```
 
-Details: [Security](/docs/security).
+See [Security](/docs/security) for the full access model.
 
 </Accordion>
 
-<Accordion title="How do I keep rows after a restart?">
+<Accordion title="Persist rows across restarts">
 
 Replace `memoryAdapter()` with `db()` from `@dimah-survey/db`. See
 [Persistence](/docs/persistence).
 
 </Accordion>
 
-<Accordion title="How do I autosave Creator?">
+<Accordion title="Autosave Survey Creator">
 
 `useSurveyDraft` points Creator autosave at `saveSurvey`. That writes
 `draftJson` only. Publish stays a separate call. See [Creator](/docs/creator).
 
 </Accordion>
 
-<Accordion title="How do I let anyone respond without an account?">
+<Accordion title="Support anonymous respondents">
 
 Use `guardAnonymous()`. Each start inserts a new row. The response id is the
 capability: list is refused, and a body `respondentId` is refused. See
@@ -300,7 +304,5 @@ capability: list is refused, and a body `respondentId` is refused. See
 
 </Accordions>
 
-## Continue
-
-Creator, discard, reopen, and SQLite are in the
-[Next.js example](https://github.com/dimah-kz/dimah-survey/tree/main/examples/next).
+For Creator, discard, reopen, and SQLite, explore the
+[Next.js example](/docs/example).

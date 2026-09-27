@@ -1,12 +1,27 @@
 import type { BaseLayoutProps } from "fumadocs-ui/layouts/shared";
 
-import { appName, githubUrl } from "@/lib/shared";
+import { BrandTitle } from "@/components/brand";
+import { githubUrl } from "@/lib/shared";
 
 export function baseOptions(): BaseLayoutProps {
   return {
     nav: {
-      title: appName,
+      title: <BrandTitle />,
+      url: "/",
     },
     githubUrl,
+    links: [
+      {
+        type: "main",
+        text: "Documentation",
+        url: "/docs",
+        active: "nested-url",
+      },
+      {
+        type: "main",
+        text: "Example",
+        url: "/docs/example",
+      },
+    ],
   };
 }

@@ -1,19 +1,19 @@
 ---
-title: Surveys
-description: Editor draft, published document, and survey status.
-icon: FileJson
+title: Author and publish
+description: Keep the editable draft separate from the document respondents start.
+icon: FileText
 ---
 
-A survey has two JSON documents and a status. `draftJson` is what Creator
-edits. `publishedJson` is what new responses copy. `settings` is separate and
-is documented in [Settings](/docs/settings).
+A survey has an **editor draft**, a **published document**, and a status.
+Creator changes `draftJson`. New responses copy `publishedJson`. Collection
+rules live in a separate `settings` object; they are not SurveyJS JSON.
 
 <Callout>
-  `saveSurvey` replaces `draftJson`. It does not publish, and it does not change
+  `saveSurvey` replaces `draftJson` only. It never publishes and never changes
   `settings`.
 </Callout>
 
-## Status
+## Survey states
 
 | Status     | Meaning                                         | Fill can start                    |
 | ---------- | ----------------------------------------------- | --------------------------------- |
@@ -26,7 +26,7 @@ is documented in [Settings](/docs/settings).
 that payload. Outside the open window the read still returns the document.
 Start, partial save, and submit throw `SURVEY_CLOSED`.
 
-## Writes
+## Write operations
 
 | Call                 | Effect                                                                     |
 | -------------------- | -------------------------------------------------------------------------- |
@@ -44,7 +44,7 @@ Publish runs `onPublish` before the copy and `afterPublish` after the row is
 stored. Throwing from `onPublish` aborts the write. A throw from `afterPublish`
 leaves the published row. See [Configuration](/docs/configuration).
 
-## Identity
+## Address a survey
 
 `id` is yours. On create, `slug` defaults to `id`. Slug is unique. A second
 survey that takes it throws `SLUG_TAKEN`.
@@ -52,7 +52,7 @@ survey that takes it throws `SLUG_TAKEN`.
 `getSurvey` and `getPublishedSurvey` accept an id or a slug in the `id` query.
 `startResponse` accepts either value in `surveyId`.
 
-## Concurrent edits
+## Protect concurrent edits
 
 Draft, publish, archive, settings, and resume accept `expectedUpdatedAt` from
 the last read. The store writes only when it still matches. Otherwise the
@@ -64,7 +64,7 @@ no row to compare.
 
 `useSurveyDraft` sends the token it last read. See [Creator](/docs/creator).
 
-## What a publish does not do
+## A publish does not rewrite history
 
 A publish does not rewrite `response.definition` on existing drafts or
 submitted rows. Those rows keep the document they started with. The next

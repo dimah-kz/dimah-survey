@@ -1,0 +1,69 @@
+---
+title: Package map
+description: Choose the package that owns the part of the lifecycle you need.
+icon: PackageOpen
+---
+
+The packages are deliberately small. Most applications use `server` and
+`react`; add `db` for the bundled SQL store. `core` is the protocol layer for
+non-React clients, custom stores, and shared types.
+
+| Package                | Use it for                                                             | Keep out of it                    |
+| ---------------------- | ---------------------------------------------------------------------- | --------------------------------- |
+| `@dimah-survey/core`   | Routes, schemas, clients, errors, and `SurveyStore` types              | SurveyJS runtime and rendering    |
+| `@dimah-survey/server` | `dimahSurvey()`, guards, validation, in-memory store, runtime adapters | SQL ORM and UI                    |
+| `@dimah-survey/react`  | SurveyJS `Model` and Creator bindings                                  | `<Survey>` and Creator components |
+| `@dimah-survey/db`     | FumaDB schema references and a SQL `SurveyStore`                       | Your application migrations       |
+
+## `@dimah-survey/server`
+
+Start here on the server. It exports:
+
+- `dimahSurvey()` for fill and editor instances
+- `guardRespondent()` and `guardAnonymous()` for fill guards
+- `memoryAdapter()` for local development and tests
+- `checkSurveyResult()` and `clearSurveyResult()` for validation behavior
+- adapters for Next.js, Node, Express, Hono, Fastify, Elysia, and SvelteKit
+
+It re-exports the common client and error utilities from `core` for
+convenience. Browser code should normally import clients from `react` or
+`core`.
+
+## `@dimah-survey/react`
+
+Use this only in a React client. It exports:
+
+- `useSurveyResponse()` and `bindSurveyModel()` for fill sessions
+- `useSurveyDraft()` and `bindSurveyCreator()` for Creator autosave
+- `createFillClient()` and `createEditorClient()` from `core`
+
+It requires React and `survey-core` as peers. Your application imports
+`survey-react-ui` and `survey-creator-react`, constructs their objects, and
+renders their components.
+
+## `@dimah-survey/core`
+
+Use the protocol package when the client is not React or when a custom store
+needs shared domain types. It exports the fill and editor clients, route and
+base-path constants, Zod payload schemas, stable error codes, list helpers,
+settings helpers, and the `SurveyStore` contract.
+
+Use `createSurveyFetch()` only when you need advanced control of the
+better-fetch client. Most applications call `createFillClient()` or
+`createEditorClient()` instead.
+
+## `@dimah-survey/db`
+
+`db(client)` turns a FumaDB client into a `SurveyStore`. The package also
+exports `DimahSurveyDB` and reference copies of Drizzle, SQL, and Prisma
+schemas.
+
+<Callout type="warn">
+  Copy or generate those schema references into your application, then migrate
+  the application-owned file. Do not import a reference schema into a running
+  application.
+</Callout>
+
+The database layer is optional. A custom store must preserve the behavior in
+[Persistence](/docs/persistence), especially immutable response definitions,
+in-write compare-and-swap, and the identified open-draft rule.

@@ -1,12 +1,12 @@
 # @dimah-survey/react
 
-Binds a survey-core `Model` to the dimah-survey lifecycle. It does not render the survey. The app still mounts `<Survey model={model} />`.
+Binds SurveyJS `Model` and Creator instances to the dimah-survey lifecycle.
+It does not render the survey or Creator; those components stay in your app.
 
-## Install
+> **Pre-release:** this package is not on npm yet. The code in this repository
+> is the current API.
 
-```bash
-pnpm add @dimah-survey/react survey-core react
-```
+## Bind a fill session
 
 ```tsx
 import { createFillClient, useSurveyResponse } from "@dimah-survey/react";
@@ -31,52 +31,35 @@ export function Fill({ responseId }: { responseId: string }) {
 }
 ```
 
-`error` means the snapshot did not load. A failed partial save or submit sets `saveError` and leaves the model mounted. `stale` is `STALE_UPDATE`; `reload` reads the stored snapshot again.
+The hook fetches the stored response, builds a `Model` from
+`response.definition`, and binds partial save and submit. A non-draft response
+opens in display mode.
 
-`partial` defaults to `"page"` (`partialSendEnabled` and `sendResultOnPageNext`). Pass `partial: "off"` to submit only when the respondent completes. `createFillClient` also exposes `getPublishedSurvey` for the published document before start.
+- `partial: "page"` is the default; it saves on SurveyJS page next.
+- `partial: "off"` only writes when the respondent completes.
+- `saveError` leaves the Model mounted, and `stale` means the last
+  compare-and-swap write lost to another update. Call `reload()` to hydrate the
+  stored record again.
 
-`survey-react-ui` stays in the app. Partial save and complete go through the client.
+## Bind Creator autosave
 
-Creator stays in the app too. `bindSurveyCreator` / `useSurveyDraft` point autosave at `saveSurvey` (`draftJson` only) and send `expectedUpdatedAt` from the loaded survey. Publish is a separate `publishSurvey` call.
+`useSurveyDraft()` and `bindSurveyCreator()` point Creator autosave at
+`saveSurvey`. They update `draftJson` only; `publishSurvey` remains a separate,
+explicit action.
 
-```tsx
-import { useMemo } from "react";
-import { createEditorClient, useSurveyDraft } from "@dimah-survey/react";
-import { SurveyCreator, SurveyCreatorComponent } from "survey-creator-react";
+Pass the `updatedAt` from the server read that created the Creator instance so
+the binding can protect writes with `expectedUpdatedAt`.
 
-const editor = createEditorClient({ baseURL: "/api/admin/survey" });
+## Files
 
-export function Design({
-  surveyId,
-  draftJson,
-  updatedAt,
-}: {
-  surveyId: string;
-  draftJson: object;
-  updatedAt: string;
-}) {
-  const creator = useMemo(() => {
-    const next = new SurveyCreator();
-    next.JSON = draftJson;
-    return next;
-  }, [draftJson]);
-  const { saveError, stale } = useSurveyDraft({
-    client: editor,
-    surveyId,
-    creator,
-    updatedAt,
-  });
-  return (
-    <>
-      {saveError ? <p>{saveError.message}</p> : null}
-      {stale ? <p>This draft was saved somewhere else.</p> : null}
-      <SurveyCreatorComponent creator={creator} />
-    </>
-  );
-}
-```
+File and signature questions set `storeDataAsText` to `false`. Handle file
+upload, download, and deletion on the SurveyJS model in your application; the
+response data stores the URL or locator your handler returns, never file bytes.
 
-File and signature questions set `storeDataAsText` to `false`. Handle `onUploadFiles`, `onDownloadFile`, and `onClearFiles` on this `model`. Give SurveyJS `{ file, content }` where `content` is your URL. That URL is what partial save writes into `data`. This package does not store file bytes.
+## Documentation
+
+Read the React Model and Creator guides in
+[apps/docs](https://github.com/dimah-kz/dimah-survey/tree/main/apps/docs).
 
 ## License
 

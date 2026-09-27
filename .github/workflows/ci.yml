@@ -76,3 +76,36 @@ jobs:
       - name: Build, test, and typecheck packages
         if: steps.filter.outputs.packages == 'true'
         run: pnpm turbo run build test check-types --affected --filter="./packages/*"
+
+  docs:
+    name: Build & Typecheck Docs
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - uses: dorny/paths-filter@v4
+        id: filter
+        with:
+          filters: |
+            docs:
+              - 'apps/docs/**'
+              - 'pnpm-lock.yaml'
+              - 'pnpm-workspace.yaml'
+              - 'turbo.json'
+              - 'package.json'
+              - 'prettier.config.mjs'
+
+      - name: Setup
+        if: steps.filter.outputs.docs == 'true'
+        uses: ./.github/actions/setup
+
+      - name: Typecheck docs
+        if: steps.filter.outputs.docs == 'true'
+        run: pnpm --filter docs check-types
+
+      - name: Build docs
+        if: steps.filter.outputs.docs == 'true'
+        run: pnpm --filter docs build

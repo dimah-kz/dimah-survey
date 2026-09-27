@@ -1,19 +1,20 @@
 ---
-title: Settings
-description: Collection rules for one survey. Not SurveyJS JSON.
+title: Control collection
+description: Set response ownership, reopening, collection windows, and capacity.
 icon: SlidersHorizontal
 ---
 
-`settings` decides who may hold a response, whether a closed row can reopen,
-when the survey accepts writes, and how many submitted rows it allows. It is
-not part of SurveyJS JSON. It is not copied onto `response.definition`.
+`settings` controls collection policy for one survey: who may hold a response,
+whether a closed row can reopen, when the survey accepts writes, and how many
+submitted rows it allows. It is not SurveyJS JSON and is never copied onto
+`response.definition`.
 
 <Callout>
-  Change settings with `saveSurveySettings`. `saveSurvey` does not update that
-  column.
+  Use `saveSurveySettings` to replace the complete object. `saveSurvey` leaves
+  it unchanged.
 </Callout>
 
-## Fields
+## Collection policy
 
 | Field          | Default      | Meaning                                                                  |
 | -------------- | ------------ | ------------------------------------------------------------------------ |
@@ -31,7 +32,7 @@ integer or `null`.
 Dates are ISO strings. Invalid values on a stored object fall back to the
 defaults when the server reads them.
 
-## Who gets a new row
+## Decide whether start creates a row
 
 Identified `startResponse` follows `responses`:
 
@@ -46,7 +47,7 @@ only handle. See [Security](/docs/security).
 `"single"` can return a submitted or abandoned row. The fill `Model` opens in
 display mode unless you reopen it. See [React](/docs/react).
 
-## The window and the cap
+## Apply a window and a cap
 
 `opensAt` and `closesAt` are inclusive. Outside that window, start, partial
 save, and submit throw `SURVEY_CLOSED`. Abandon, get, and reopen stay

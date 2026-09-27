@@ -1,19 +1,19 @@
 ---
-title: Responses
-description: Snapshots, drafts, submit validation, and compare-and-swap writes.
+title: Collect responses
+description: Start from a frozen definition, save drafts, and validate on submit.
 icon: Camera
 ---
 
-`startResponse` copies `publishedJson` into `response.definition`. Drafts and
-submit validation use that snapshot. They do not use the live draft or a later
+`startResponse` copies `publishedJson` into `response.definition`. Every draft
+and every submit check uses that snapshot—not the live draft and not a later
 publish.
 
 <Callout>
-  Editing or publishing a survey never changes an in-flight draft or a submitted
+  Editing or publishing a survey never changes an in-flight or submitted
   response.
 </Callout>
 
-## Lifecycle
+## Response lifecycle
 
 | Status      | Meaning                        | Available transitions          |
 | ----------- | ------------------------------ | ------------------------------ |
@@ -36,7 +36,7 @@ draft. `reopenResponse` throws `RESPONSE_CLOSED` on a draft, and when
 `onStart` runs only before a new insert. A start that returns an existing row
 does not call it. `afterStart` runs after that insert. A throw leaves the row.
 
-## Partial save
+## Save a draft
 
 Fill `sanitizePartial` defaults to `"clear"`. The server runs
 `clearIncorrectValues(true)` on the snapshot and stores that object. It does
@@ -47,7 +47,7 @@ not run `validate`, so required questions may stay empty.
 Questions with `choicesByUrl` keep their posted value through the clear. The
 server does not fetch that URL.
 
-## Submit
+## Validate and submit
 
 Submit loads the stored definition, not the current `publishedJson`. The
 default checker drops values that cannot be assigned, runs `validate`, and
@@ -69,7 +69,7 @@ still receives the response definition. Return the object to persist, or return
 nothing to keep the data you were given. See
 [Configuration](/docs/configuration).
 
-## Concurrent edits
+## Handle concurrent writes
 
 Partial save, submit, abandon, and reopen accept `expectedUpdatedAt` from the
 last read. The store writes only when it still matches. Otherwise the request
@@ -81,7 +81,7 @@ again.
 
 Omit the token only when a last-write-wins update is intentional.
 
-## Lists
+## Read response lists
 
 `listResponses` defaults to a summary. Summary rows omit `definition` and
 `data`. `include: "full"` is the analytics read of the snapshot. The fill
