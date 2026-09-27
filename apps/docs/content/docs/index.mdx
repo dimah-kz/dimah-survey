@@ -4,17 +4,16 @@ description: Understand the server-owned lifecycle around SurveyJS JSON.
 icon: House
 ---
 
-dimah-survey adds a server-owned lifecycle around
-[SurveyJS](https://surveyjs.io/) JSON. It publishes survey definitions, creates
-durable response drafts, and validates each submission against the exact
-definition that response started with.
+dimah-survey adds a server-side lifecycle to
+[SurveyJS](https://surveyjs.io/) JSON. It separates authoring from publishing,
+stores the exact definition each response starts with, and validates submission
+against that snapshot.
 
-It does not replace SurveyJS. Your application still owns the renderer,
-Creator, authentication, database migrations, and UI.
+SurveyJS still owns the schema, Creator, and renderer. Your application owns
+authentication, migrations, files, and UI.
 
 <Callout>
-  The central guarantee is simple: publishing a new survey never changes an
-  existing `response.definition`.
+  Publishing a new survey never changes an existing `response.definition`.
 </Callout>
 
 ## The lifecycle
@@ -30,61 +29,27 @@ Creator, authentication, database migrations, and UI.
   ]}
 />
 
-`draftJson` is the editable document. `publishedJson` is the document new
-responses may start. At start, the server copies `publishedJson` into
-`response.definition`; every save and submit stays attached to that copy.
+`draftJson` is the editor copy. Publishing promotes it to `publishedJson`.
+Starting a response copies that document to `response.definition`; every save
+and submit stays attached to the copy.
 
-## Clear ownership
+## Ownership
 
-| Owner            | Responsibilities                                                              |
-| ---------------- | ----------------------------------------------------------------------------- |
-| SurveyJS         | Survey schema, `Model`, `<Survey>`, Creator, and question behavior            |
-| Your application | Authentication, authorization, migrations, file storage, and UI               |
-| dimah-survey     | Publish, collection policy, response snapshots, drafts, and submit validation |
+| Owner            | Responsibility                                                    |
+| ---------------- | ----------------------------------------------------------------- |
+| SurveyJS         | Schema, `Model`, renderer, Creator, and question behavior         |
+| Your application | Authentication, authorization, migrations, file storage, and UI   |
+| dimah-survey     | Publishing, collection policy, response drafts, and submit checks |
 
 The backend exposes two isolated audiences over one shared `SurveyStore`:
 
-| Audience | Intended caller          | Capabilities                                                                |
-| -------- | ------------------------ | --------------------------------------------------------------------------- |
-| Fill     | Respondents              | Read published JSON; start, save, submit, abandon, and reopen responses     |
-| Editor   | Trusted application code | Edit and publish surveys, change settings, and read full response snapshots |
+| Audience | Caller                   | Access                                                   |
+| -------- | ------------------------ | -------------------------------------------------------- |
+| Fill     | Respondents              | Published surveys and their own response lifecycle       |
+| Editor   | Trusted application code | Drafts, publishing, settings, and complete response data |
 
-The fill audience always requires a guard. The editor audience has a separate
-guard and route, so respondent traffic never gains authoring access.
-
----
-
-## Frequently asked questions
-
-<Accordions>
-
-<Accordion title="Does dimah-survey replace SurveyJS?">
-
-No. SurveyJS still owns the survey schema, `Model`, `<Survey>`, Creator, and
-question behavior. dimah-survey owns publish, the response snapshot, partial
-saves, and submit validation.
-
-</Accordion>
-
-<Accordion title="Does publishing change responses that already started?">
-
-No. `publishSurvey` replaces `publishedJson` for future `startResponse` calls.
-Each existing response keeps the `definition` copied when it started.
-
-</Accordion>
-
-<Accordion title="Why are fill and editor separate handlers?">
-
-They share one `SurveyStore` and not one trust boundary. Fill serves
-respondents and always requires a guard. Editor serves trusted application
-code: drafts, publish, settings, and full response reads. A fill handler does
-not mount editor operations.
-
-</Accordion>
-
-</Accordions>
-
----
+The audiences share one `SurveyStore`, but each has its own handler and guard.
+Editor operations are never mounted on the fill route.
 
 ## Start here
 

@@ -4,9 +4,8 @@ description: Start from a frozen definition, save drafts, and validate the same 
 icon: Camera
 ---
 
-`startResponse` copies `publishedJson` into `response.definition`. Every draft
-write and submit check remains tied to that snapshot—not the current survey
-draft and not a later publish.
+`startResponse` copies `publishedJson` into `response.definition`. Every write
+and submit check stays tied to that snapshot.
 
 <Callout>
   A response is both the answer data and the SurveyJS definition needed to
@@ -29,23 +28,22 @@ draft and not a later publish.
 | `abandonResponse` | Close a draft without changing `definition` or `data`                 |
 | `reopenResponse`  | Move a submitted or abandoned response back to draft                  |
 
-`savePartial` and `abandonResponse` throw `RESPONSE_CLOSED` unless the row is a
-draft. `reopenResponse` throws `RESPONSE_CLOSED` on a draft, and when
-`settings.reopen` is `false`.
+Partial save and abandon require a draft. Reopen requires a submitted or
+abandoned response and `settings.reopen: true`.
 
 ## Save a draft
 
 Partial save replaces the entire `data` object; it is not a key patch.
 
-With the default `sanitizePartial: "clear"`, the server loads the stored
-definition, assigns the posted data, runs `clearIncorrectValues(true)`, and
-persists the resulting `survey.data`. It does not run required-question
-validation, so an incomplete draft remains valid.
+By default, the server loads the stored definition, assigns the posted data,
+runs `clearIncorrectValues(true)`, and persists the resulting `survey.data`.
+Required-question validation waits until submit, so incomplete drafts remain
+valid.
 
-`"replace"` stores the payload as sent.
+Set `sanitizePartial: "replace"` to store the payload as sent.
 
-Questions with `choicesByUrl` keep their posted value through the clear. The
-server does not fetch that URL.
+Questions with `choicesByUrl` keep their posted value during partial cleaning
+and submit validation. The server does not fetch that URL.
 
 ## Submit against the snapshot
 
@@ -54,9 +52,9 @@ cannot be assigned, runs SurveyJS `validate()`, and returns the resulting
 `survey.data` to persist. An invalid result throws `VALIDATION_FAILED` with the
 failing question names in `questions`.
 
-Replace `validateResult` for application-specific checks. It still receives the
+Use `validateResult` for application-specific checks. It always receives the
 stored definition. Return the object to persist, return nothing to keep the
-input, or throw an `APIError` to reject the submit. See
+input, or throw an `APIError` to reject. See
 [Configuration](/docs/configuration).
 
 A repeated submit of a row that is already `submitted` returns that row when
@@ -67,9 +65,8 @@ stored row. A different payload fails with `RESPONSE_CLOSED`.
 
 ## Lifecycle hooks
 
-`onStart` runs only before a new insert; a resumed response skips both start
-hooks. `onSubmit` runs after validation and before the submitted write.
-Throwing from either `on*` callback aborts the write.
+`onStart` runs only before a new insert. `onSubmit` runs after validation and
+before the submitted write. Throwing from either callback aborts the write.
 
 `afterStart` and `afterSubmit` run after the row has been stored. A failure
 there leaves the write in place. An idempotent resubmit does not run submit
@@ -91,57 +88,10 @@ Omit the token only when a last-write-wins update is intentional.
 
 ---
 
-## Read response lists
+## Read responses
 
-`listResponses` defaults to a summary. Summary rows omit `definition` and
-`data`. `include: "full"` returns the complete analytics snapshot and is only
-available to the editor audience.
+`listResponses` returns summaries by default. `include: "full"` adds
+`definition` and `data` and is available only to the editor audience. Always
+interpret a full row against its own `definition`, not the current survey.
 
-Both lists default to 50 rows and cap at 100. Results sort by `updatedAt`
-descending. `total` ignores `limit` and `offset`.
-
-`submittedFrom` and `submittedTo` are inclusive bounds on `submittedAt`. Rows
-with no submit time are excluded. `updatedAfter` is an exclusive lower bound on
-`updatedAt`.
-
-Read full rows against `definition` on that row. Do not join them back to the
-live survey document.
-
----
-
-## Frequently asked questions
-
-<Accordions>
-
-<Accordion title="Why does a partial save accept missing required answers?">
-
-`sanitizePartial: "clear"` runs `clearIncorrectValues(true)` and skips SurveyJS
-`validate()`. Required questions are enforced on submit. `"replace"` stores
-the payload as sent.
-
-</Accordion>
-
-<Accordion title="What happens if the respondent submits twice?">
-
-A second submit returns the stored row when the payload is omitted or matches
-stored `data` after cleaning. A different payload fails with
-`RESPONSE_CLOSED`. The replay does not run submit hooks again.
-
-</Accordion>
-
-<Accordion title="Does the server resolve choicesByUrl while saving?">
-
-No. Those questions keep the posted value through partial clear and submit
-validation. The server does not fetch the URL. Resolve or constrain that data
-in your application if the list must be trusted.
-
-</Accordion>
-
-<Accordion title="How should the client recover from STALE_UPDATE?">
-
-`useSurveyResponse` sets `stale` and leaves the model mounted. Call `reload`
-to read the stored snapshot, then continue from that `definition` and `data`.
-
-</Accordion>
-
-</Accordions>
+Pagination and filters are listed in the [HTTP protocol](/docs/protocol).

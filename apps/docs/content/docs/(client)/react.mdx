@@ -4,12 +4,12 @@ description: Hydrate a SurveyJS Model from the response snapshot and bind server
 icon: Component
 ---
 
-`useSurveyResponse()` reads a response, constructs a SurveyJS `Model` from its
+`useSurveyResponse()` loads a response, creates a SurveyJS `Model` from its
 stored definition, restores its data, and binds partial save and submit. Your
-application still renders the model with `survey-react-ui`.
+application renders the model with `survey-react-ui`.
 
 ```npm
-npm i @dimah-survey/react react survey-core survey-react-ui
+npm i @dimah-survey/react react react-dom survey-core survey-react-ui
 ```
 
 <Callout>
@@ -51,9 +51,9 @@ export function Fill({ responseId }: { responseId: string }) {
 }
 ```
 
-SurveyJS UI components require a browser, so Next.js applications should load
-`<Survey>` dynamically. A submitted or abandoned response opens in `display`
-mode and sends no writes.
+SurveyJS UI requires a browser, so Next.js applications should load `<Survey>`
+dynamically. Submitted and abandoned responses open in `display` mode and send
+no writes.
 
 ## Options
 
@@ -77,8 +77,8 @@ import type { SurveyResponseBinding } from "@dimah-survey/react";
   name="SurveyResponseBinding"
 />
 
-Completion waits for the server. If submit fails, SurveyJS does not complete
-and the respondent keeps their mounted model.
+Completion waits for the server. If submit fails, SurveyJS stays open and the
+mounted model is preserved.
 
 Each partial save sends the complete `survey.data` object; it is not a
 key-level patch.
@@ -96,14 +96,33 @@ Use `bindSurveyModel()` when your application already owns the `Model`.
 ```ts
 import { bindSurveyModel } from "@dimah-survey/react";
 
+let updatedAt = initialUpdatedAt;
+
 const dispose = bindSurveyModel(model, {
-  savePartial: (data) => client.savePartial({ id, data, expectedUpdatedAt }),
-  submit: (data) => client.submitResponse({ id, data, expectedUpdatedAt }),
+  savePartial: async (data) => {
+    const saved = await client.savePartial({
+      id,
+      data,
+      expectedUpdatedAt: updatedAt,
+    });
+    updatedAt = saved.updatedAt;
+  },
+  submit: async (data) => {
+    const saved = await client.submitResponse({
+      id,
+      data,
+      expectedUpdatedAt: updatedAt,
+    });
+    updatedAt = saved.updatedAt;
+  },
   onWriteError: (error) => {
     console.error(error);
   },
 });
 ```
+
+Initialize the token from the response used to create `model` and replace it
+after every successful write.
 
 ```ts
 import type {
@@ -134,50 +153,8 @@ questions, including questions added later.
 File bytes stay in your application. There is no upload route.
 
 Handle `onUploadFiles`, `onDownloadFile`, and `onClearFiles` on the `Model`.
-Give SurveyJS `{ file, content }` where `content` is your URL. Partial save
-writes that locator into `data`. The binding does not store the bytes.
+Give SurveyJS `{ file, content }`, where `content` is your URL. The binding
+stores that locator in `data`, never the bytes.
 
-Start with the [Quickstart](/docs/quickstart) for the complete load and render
-flow. Creator autosave uses a separate binding described in
+Creator autosave uses a separate binding described in
 [Survey Creator](/docs/creator).
-
----
-
-## Frequently asked questions
-
-<Accordions>
-
-<Accordion title="Does useSurveyResponse render the survey?">
-
-No. It returns a SurveyJS `Model` built from `response.definition`. Your
-application renders that model, usually with `<Survey>` from
-`survey-react-ui`.
-
-</Accordion>
-
-<Accordion title="Why is a submitted response not editable?">
-
-A submitted or abandoned row opens in SurveyJS `display` mode and the binding
-sends no writes. Call `reopenResponse` when `settings.reopen` allows it, then
-load the draft again.
-
-</Accordion>
-
-<Accordion title="Where do file uploads go?">
-
-Not through dimah-survey. Handle `onUploadFiles`, `onDownloadFile`, and
-`onClearFiles` on the model, and give SurveyJS `{ file, content }` where
-`content` is your URL. The binding sets `storeDataAsText` to `false` so
-partial save writes that locator instead of the file bytes.
-
-</Accordion>
-
-<Accordion title="What should I do when stale is true?">
-
-Another writer updated the row. The mounted model stays in place, and a write
-with the old `expectedUpdatedAt` fails. Call `reload` to replace it with the
-stored snapshot.
-
-</Accordion>
-
-</Accordions>

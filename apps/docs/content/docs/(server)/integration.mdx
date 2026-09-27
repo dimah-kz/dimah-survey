@@ -17,10 +17,10 @@ must use the same `SurveyStore`.
 
 ```ts title="lib/survey.ts"
 import {
-  SURVEY_API_BASE_PATH,
-  SURVEY_EDITOR_API_BASE_PATH,
+  APIError,
+  SURVEY_ERROR_CODES,
   dimahSurvey,
-  guardAnonymous,
+  guardRespondent,
 } from "@dimah-survey/server";
 
 import { database } from "@/db";
@@ -28,26 +28,39 @@ import { database } from "@/db";
 export const editor = dimahSurvey({
   audience: "editor",
   database,
-  basePath: SURVEY_EDITOR_API_BASE_PATH,
+  guard: async ({ request }) => {
+    if (!request || !(await isEditor(request))) {
+      throw APIError.from("FORBIDDEN", SURVEY_ERROR_CODES.FORBIDDEN);
+    }
+  },
 });
 
 export const fill = dimahSurvey({
   audience: "fill",
   database,
-  basePath: SURVEY_API_BASE_PATH,
-  guard: guardAnonymous(),
+  guard: async (context) => {
+    const session = context.request
+      ? await getSession(context.request)
+      : null;
+    if (!session) {
+      throw APIError.from("FORBIDDEN", SURVEY_ERROR_CODES.FORBIDDEN);
+    }
+    return guardRespondent(session.user.id)(context);
+  },
 });
 ```
 
 Create `database` on [Database](/docs/persistence). Pass that same object to
-both audiences.
+both audiences. `isEditor` and `getSession` are your application code. For
+public capability-based responses, use `guardAnonymous()` instead; see
+[Authorization](/docs/security).
 
 `basePath` is part of the request contract and must match the corresponding
 browser client's `baseURL`. The defaults are `/api/survey` for fill and
 `/api/admin/survey` for editor.
 
 A fill instance without `guard` throws at startup. An editor guard returns
-nothing or throws. See [Security](/docs/security).
+nothing or throws. See [Authorization](/docs/security).
 
 ---
 
@@ -177,17 +190,18 @@ an HTTP round trip. Pass `headers` or a `Request` when the guard needs cookies
 or other caller context.
 
 ```ts
+import { headers } from "next/headers";
+
+const requestHeaders = await headers();
+
 await editor.api.publishSurvey({
   body: { id: "welcome" },
+  headers: requestHeaders,
 });
-```
-
-```ts
-import { headers } from "next/headers";
 
 await fill.api.startResponse({
   body: { surveyId: "welcome" },
-  headers: await headers(),
+  headers: requestHeaders,
 });
 ```
 
@@ -209,34 +223,3 @@ Browser clients take flat objects and perform HTTP. Import them from
 send a server instance to the client bundle.
 
 See the complete method and route map in [HTTP protocol](/docs/protocol).
-
----
-
-## Frequently asked questions
-
-<Accordions>
-
-<Accordion title="Why must basePath match the browser baseURL?">
-
-`basePath` is part of the route contract. The handler matches requests under
-that path, and `createFillClient({ baseURL })` calls the same path. The
-defaults are `/api/survey` for fill and `/api/admin/survey` for editor.
-
-</Accordion>
-
-<Accordion title="Why do Express and Fastify fail to read the body?">
-
-The adapters need the unread request stream. Mount the Express handler before
-`express.json()`. On Fastify, keep the JSON parser off these paths.
-
-</Accordion>
-
-<Accordion title="Do fill.api and editor.api perform HTTP requests?">
-
-No. They call the same operations in process. Pass `headers` or a `Request`
-when the guard needs the session cookie. A call without that context has no
-caller identity.
-
-</Accordion>
-
-</Accordions>

@@ -4,7 +4,8 @@ description: Map fill and editor routes to browser clients and the in-process AP
 icon: Waypoints
 ---
 
-Route constants and payload schemas live in `@dimah-survey/core`.
+Route constants, payload schemas, and clients live in
+`@dimah-survey/core`.
 
 | Audience | Default base path   | Operations                                          |
 | -------- | ------------------- | --------------------------------------------------- |
@@ -12,8 +13,8 @@ Route constants and payload schemas live in `@dimah-survey/core`.
 | Editor   | `/api/admin/survey` | Authoring, settings, publish, and response analysis |
 
 The suffixes below are appended to those bases. Browser clients take flat
-objects; `fill.api` and `editor.api` take `{ query }` or `{ body }`. An
-operation from the wrong audience is not mounted and returns `NOT_FOUND`.
+objects; the in-process API takes `{ query }` or `{ body }`. Operations from
+the wrong audience are not mounted and return `NOT_FOUND`.
 
 List endpoints default to 50 rows and cap at 100.
 
@@ -33,9 +34,8 @@ List endpoints default to 50 rows and cap at 100.
 On survey reads, `id` accepts a survey id or slug. `startResponse.surveyId`
 accepts either as well. Every response mutation uses the response row id.
 
-`getPublishedSurvey` returns `publishedJson` and `settings`. It omits
-`draftJson`. It is available to both fill principals and does not stamp a
-respondent.
+`getPublishedSurvey` returns `publishedJson` and `settings`, never
+`draftJson`. It does not stamp a respondent.
 
 The guard stamps `respondentId` for identified callers. A matching value in the
 body is tolerated, but the browser cannot claim another owner. Anonymous
@@ -96,34 +96,4 @@ partial save, submit, abandon, and reopen. When it is set, the stored
 bindings always send the token from their last successful read or write.
 
 The exported Zod schemas are the authoritative payload definitions. See
-[Errors](/docs/errors) for the stable failure codes.
-
----
-
-## Frequently asked questions
-
-<Accordions>
-
-<Accordion title="What does the client receive for an editor call on the fill handler?">
-
-`NOT_FOUND`. Each handler mounts only its audience. Publish, settings, and
-`include: "full"` are not present on `/api/survey`.
-
-</Accordion>
-
-<Accordion title="Can startResponse use a slug?">
-
-Yes. `getSurvey`, `getPublishedSurvey`, and `startResponse` accept a survey id
-or a slug. Response mutations always use the response row id.
-
-</Accordion>
-
-<Accordion title="Why do browser calls and fill.api look different?">
-
-Browser clients take flat objects and perform HTTP. `fill.api` and
-`editor.api` take `{ query }` or `{ body }` and run in process. The route
-table on this page lists both shapes.
-
-</Accordion>
-
-</Accordions>
+[Errors](/docs/errors) for stable failure codes.
