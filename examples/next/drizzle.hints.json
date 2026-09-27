@@ -1,0 +1,14 @@
+[
+  {
+    "type": "rename",
+    "kind": "table",
+    "from": ["public", "response"],
+    "to": ["public", "dimah_response"]
+  },
+  {
+    "type": "rename",
+    "kind": "table",
+    "from": ["public", "survey"],
+    "to": ["public", "dimah_survey"]
+  }
+]

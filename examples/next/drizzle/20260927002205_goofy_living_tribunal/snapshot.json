@@ -1,9 +1,9 @@
 {
   "version": "7",
   "dialect": "sqlite",
-  "id": "f5678b70-4729-4890-b98b-fd6ba4225ccb",
+  "id": "1d0a7d8d-6f13-4f37-982b-64ef2b4271d1",
   "prevIds": [
-    "03dac1aa-380c-4c95-aefb-ba0fcfb62f9b"
+    "00000000-0000-0000-0000-000000000000"
   ],
   "ddl": [
     {
@@ -11,11 +11,11 @@
       "entityType": "tables"
     },
     {
-      "name": "response",
+      "name": "dimah_response",
       "entityType": "tables"
     },
     {
-      "name": "survey",
+      "name": "dimah_survey",
       "entityType": "tables"
     },
     {
@@ -46,7 +46,7 @@
       "generated": null,
       "name": "id",
       "entityType": "columns",
-      "table": "response"
+      "table": "dimah_response"
     },
     {
       "type": "text(255)",
@@ -56,7 +56,7 @@
       "generated": null,
       "name": "survey_id",
       "entityType": "columns",
-      "table": "response"
+      "table": "dimah_response"
     },
     {
       "type": "text(255)",
@@ -66,7 +66,7 @@
       "generated": null,
       "name": "respondent_id",
       "entityType": "columns",
-      "table": "response"
+      "table": "dimah_response"
     },
     {
       "type": "text",
@@ -76,7 +76,7 @@
       "generated": null,
       "name": "status",
       "entityType": "columns",
-      "table": "response"
+      "table": "dimah_response"
     },
     {
       "type": "blob",
@@ -86,7 +86,7 @@
       "generated": null,
       "name": "definition",
       "entityType": "columns",
-      "table": "response"
+      "table": "dimah_response"
     },
     {
       "type": "blob",
@@ -96,7 +96,7 @@
       "generated": null,
       "name": "data",
       "entityType": "columns",
-      "table": "response"
+      "table": "dimah_response"
     },
     {
       "type": "integer",
@@ -106,7 +106,7 @@
       "generated": null,
       "name": "submitted_at",
       "entityType": "columns",
-      "table": "response"
+      "table": "dimah_response"
     },
     {
       "type": "integer",
@@ -116,7 +116,7 @@
       "generated": null,
       "name": "created_at",
       "entityType": "columns",
-      "table": "response"
+      "table": "dimah_response"
     },
     {
       "type": "integer",
@@ -126,7 +126,7 @@
       "generated": null,
       "name": "updated_at",
       "entityType": "columns",
-      "table": "response"
+      "table": "dimah_response"
     },
     {
       "type": "text(255)",
@@ -136,7 +136,7 @@
       "generated": null,
       "name": "id",
       "entityType": "columns",
-      "table": "survey"
+      "table": "dimah_survey"
     },
     {
       "type": "text(255)",
@@ -146,7 +146,7 @@
       "generated": null,
       "name": "slug",
       "entityType": "columns",
-      "table": "survey"
+      "table": "dimah_survey"
     },
     {
       "type": "text",
@@ -156,7 +156,7 @@
       "generated": null,
       "name": "status",
       "entityType": "columns",
-      "table": "survey"
+      "table": "dimah_survey"
     },
     {
       "type": "blob",
@@ -166,7 +166,7 @@
       "generated": null,
       "name": "draft_json",
       "entityType": "columns",
-      "table": "survey"
+      "table": "dimah_survey"
     },
     {
       "type": "blob",
@@ -176,7 +176,7 @@
       "generated": null,
       "name": "published_json",
       "entityType": "columns",
-      "table": "survey"
+      "table": "dimah_survey"
     },
     {
       "type": "integer",
@@ -186,17 +186,17 @@
       "generated": null,
       "name": "published_at",
       "entityType": "columns",
-      "table": "survey"
+      "table": "dimah_survey"
     },
     {
       "type": "blob",
       "notNull": true,
       "autoincrement": false,
-      "default": "'{\"responses\":\"one-open\",\"reopen\":true,\"opensAt\":null,\"closesAt\":null,\"maxResponses\":null}'",
+      "default": null,
       "generated": null,
       "name": "settings",
       "entityType": "columns",
-      "table": "survey"
+      "table": "dimah_survey"
     },
     {
       "type": "integer",
@@ -206,7 +206,7 @@
       "generated": null,
       "name": "created_at",
       "entityType": "columns",
-      "table": "survey"
+      "table": "dimah_survey"
     },
     {
       "type": "integer",
@@ -216,22 +216,22 @@
       "generated": null,
       "name": "updated_at",
       "entityType": "columns",
-      "table": "survey"
+      "table": "dimah_survey"
     },
     {
       "columns": [
         "survey_id"
       ],
-      "tableTo": "survey",
+      "tableTo": "dimah_survey",
       "columnsTo": [
         "id"
       ],
       "onUpdate": "RESTRICT",
       "onDelete": "RESTRICT",
       "nameExplicit": true,
-      "name": "response_survey_fk",
+      "name": "dimah_response_survey_fk",
       "entityType": "fks",
-      "table": "response"
+      "table": "dimah_response"
     },
     {
       "columns": [
@@ -247,8 +247,8 @@
         "id"
       ],
       "nameExplicit": false,
-      "name": "response_pk",
-      "table": "response",
+      "name": "dimah_response_pk",
+      "table": "dimah_response",
       "entityType": "pks"
     },
     {
@@ -256,8 +256,8 @@
         "id"
       ],
       "nameExplicit": false,
-      "name": "survey_pk",
-      "table": "survey",
+      "name": "dimah_survey_pk",
+      "table": "dimah_survey",
       "entityType": "pks"
     },
     {
@@ -274,9 +274,9 @@
       "isUnique": false,
       "where": null,
       "origin": "manual",
-      "name": "response_survey_id_updated_at_idx",
+      "name": "dimah_response_survey_id_updated_at_idx",
       "entityType": "indexes",
-      "table": "response"
+      "table": "dimah_response"
     },
     {
       "columns": [
@@ -296,9 +296,9 @@
       "isUnique": false,
       "where": null,
       "origin": "manual",
-      "name": "response_respondent_lookup_idx",
+      "name": "dimah_response_respondent_lookup_idx",
       "entityType": "indexes",
-      "table": "response"
+      "table": "dimah_response"
     },
     {
       "columns": [
@@ -312,11 +312,11 @@
         }
       ],
       "isUnique": true,
-      "where": "\"response\".\"status\" = 'draft' and \"response\".\"respondent_id\" is not null",
+      "where": "\"dimah_response\".\"status\" = 'draft' and \"dimah_response\".\"respondent_id\" is not null",
       "origin": "manual",
-      "name": "response_one_open_draft",
+      "name": "dimah_response_one_open_draft",
       "entityType": "indexes",
-      "table": "response"
+      "table": "dimah_response"
     },
     {
       "columns": [
@@ -328,9 +328,9 @@
       "isUnique": true,
       "where": null,
       "origin": "manual",
-      "name": "survey_slug_unique",
+      "name": "dimah_survey_slug_unique",
       "entityType": "indexes",
-      "table": "survey"
+      "table": "dimah_survey"
     },
     {
       "columns": [
@@ -346,21 +346,21 @@
       "isUnique": false,
       "where": null,
       "origin": "manual",
-      "name": "survey_status_updated_at_idx",
+      "name": "dimah_survey_status_updated_at_idx",
       "entityType": "indexes",
-      "table": "survey"
+      "table": "dimah_survey"
     },
     {
       "value": "\"status\" in ('draft', 'submitted', 'abandoned')",
-      "name": "response_status_check",
+      "name": "dimah_response_status_check",
       "entityType": "checks",
-      "table": "response"
+      "table": "dimah_response"
     },
     {
       "value": "\"status\" in ('draft', 'active', 'archived')",
-      "name": "survey_status_check",
+      "name": "dimah_survey_status_check",
       "entityType": "checks",
-      "table": "survey"
+      "table": "dimah_survey"
     }
   ],
   "renames": []

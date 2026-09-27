@@ -1,7 +1,9 @@
-ALTER TABLE `response` RENAME TO `dimah_response`;--> statement-breakpoint
-ALTER TABLE `survey` RENAME TO `dimah_survey`;--> statement-breakpoint
-PRAGMA foreign_keys=OFF;--> statement-breakpoint
-CREATE TABLE `__new_dimah_response` (
+CREATE TABLE `private_dimah_survey_settings` (
+	`id` text(255) PRIMARY KEY,
+	`version` text(255) DEFAULT '1.0.0' NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE `dimah_response` (
 	`id` text(255) PRIMARY KEY,
 	`survey_id` text(255) NOT NULL,
 	`respondent_id` text(255),
@@ -15,12 +17,7 @@ CREATE TABLE `__new_dimah_response` (
 	CONSTRAINT "dimah_response_status_check" CHECK("status" in ('draft', 'submitted', 'abandoned'))
 );
 --> statement-breakpoint
-INSERT INTO `__new_dimah_response`(`id`, `survey_id`, `respondent_id`, `status`, `definition`, `data`, `submitted_at`, `created_at`, `updated_at`) SELECT `id`, `survey_id`, `respondent_id`, `status`, `definition`, `data`, `submitted_at`, `created_at`, `updated_at` FROM `dimah_response`;--> statement-breakpoint
-DROP TABLE `dimah_response`;--> statement-breakpoint
-ALTER TABLE `__new_dimah_response` RENAME TO `dimah_response`;--> statement-breakpoint
-PRAGMA foreign_keys=ON;--> statement-breakpoint
-PRAGMA foreign_keys=OFF;--> statement-breakpoint
-CREATE TABLE `__new_dimah_survey` (
+CREATE TABLE `dimah_survey` (
 	`id` text(255) PRIMARY KEY,
 	`slug` text(255) NOT NULL,
 	`status` text NOT NULL,
@@ -33,15 +30,6 @@ CREATE TABLE `__new_dimah_survey` (
 	CONSTRAINT "dimah_survey_status_check" CHECK("status" in ('draft', 'active', 'archived'))
 );
 --> statement-breakpoint
-INSERT INTO `__new_dimah_survey`(`id`, `slug`, `status`, `draft_json`, `published_json`, `published_at`, `settings`, `created_at`, `updated_at`) SELECT `id`, `slug`, `status`, `draft_json`, `published_json`, `published_at`, `settings`, `created_at`, `updated_at` FROM `dimah_survey`;--> statement-breakpoint
-DROP TABLE `dimah_survey`;--> statement-breakpoint
-ALTER TABLE `__new_dimah_survey` RENAME TO `dimah_survey`;--> statement-breakpoint
-PRAGMA foreign_keys=ON;--> statement-breakpoint
-DROP INDEX IF EXISTS `response_survey_id_updated_at_idx`;--> statement-breakpoint
-DROP INDEX IF EXISTS `response_respondent_lookup_idx`;--> statement-breakpoint
-DROP INDEX IF EXISTS `response_one_open_draft`;--> statement-breakpoint
-DROP INDEX IF EXISTS `survey_slug_unique`;--> statement-breakpoint
-DROP INDEX IF EXISTS `survey_status_updated_at_idx`;--> statement-breakpoint
 CREATE INDEX `dimah_response_survey_id_updated_at_idx` ON `dimah_response` (`survey_id`,`updated_at`);--> statement-breakpoint
 CREATE INDEX `dimah_response_respondent_lookup_idx` ON `dimah_response` (`survey_id`,`respondent_id`,`status`);--> statement-breakpoint
 CREATE UNIQUE INDEX `dimah_response_one_open_draft` ON `dimah_response` (`survey_id`,`respondent_id`) WHERE "dimah_response"."status" = 'draft' and "dimah_response"."respondent_id" is not null;--> statement-breakpoint
