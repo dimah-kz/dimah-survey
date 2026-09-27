@@ -84,7 +84,6 @@ open-draft predicate, so apply the exported `indexes.sql` separately.
 
 - [Persistence](https://survey.dimah.dev/docs/persistence)
 - [Package map](https://survey.dimah.dev/docs/packages)
-- [Example application](https://survey.dimah.dev/docs/example)
 
 ## License
 

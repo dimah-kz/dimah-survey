@@ -11,7 +11,6 @@ import { getSiteUrl } from "./site-url";
 export const LLM_PAGE_PRIORITY = [
   "/docs",
   "/docs/quickstart",
-  "/docs/example",
   "/docs/comparison",
   "/docs/surveys",
   "/docs/settings",
@@ -101,7 +100,6 @@ export function llmFileLists(origin = getSiteUrl().origin): string {
 ## Optional
 
 - [Full docs dump](${origin}/llms-full.txt): every page as markdown
-- [Next.js example](${githubUrl}/tree/${gitConfig.branch}/examples/next): complete SQLite-backed integration
 - [GitHub](${githubUrl}): source repository
 - [X](${xProfileUrl}): updates
 `;

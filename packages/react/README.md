@@ -68,7 +68,6 @@ response stores the URL or locator, never file bytes.
 
 - [Fill with React](https://survey.dimah.dev/docs/react)
 - [Survey Creator](https://survey.dimah.dev/docs/creator)
-- [Example application](https://survey.dimah.dev/docs/example)
 
 ## License
 

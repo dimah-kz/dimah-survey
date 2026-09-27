@@ -51,7 +51,7 @@ export function Fill({ responseId }: { responseId: string }) {
 }
 ```
 
-SurveyJS UI components require a browser, so this Next.js example loads
+SurveyJS UI components require a browser, so Next.js applications should load
 `<Survey>` dynamically. A submitted or abandoned response opens in `display`
 mode and sends no writes.
 
@@ -106,6 +106,6 @@ Handle `onUploadFiles`, `onDownloadFile`, and `onClearFiles` on the `Model`.
 Give SurveyJS `{ file, content }` where `content` is your URL. Partial save
 writes that locator into `data`. The binding does not store the bytes.
 
-See the [example application](/docs/example) for complete loading, stale-write,
-reopen, and error UI. Creator autosave uses a separate binding described in
+Start with the [Quickstart](/docs/quickstart) for the complete load and render
+flow. Creator autosave uses a separate binding described in
 [Survey Creator](/docs/creator).

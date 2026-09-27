@@ -44,24 +44,11 @@ This is not a renderer, hosted survey product, or SurveyJS plugin.
 
 ## Documentation
 
-Read the [quickstart](https://survey.dimah.dev/docs/quickstart), explore the
-[example application](https://survey.dimah.dev/docs/example), or open the
+Read the [quickstart](https://survey.dimah.dev/docs/quickstart) or open the
 [HTTP protocol](https://survey.dimah.dev/docs/protocol).
 
 The complete documentation is published at
 [survey.dimah.dev](https://survey.dimah.dev).
-
-## Run the example
-
-The Next.js example uses all four packages with SQLite, Survey Creator, and a
-cookie-backed respondent:
-
-```bash
-pnpm install
-pnpm example
-```
-
-See [`examples/next`](./examples/next) for its routes and architecture.
 
 ## Development
 

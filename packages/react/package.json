@@ -1,6 +1,6 @@
 {
   "name": "@dimah-survey/react",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "React bindings for SurveyJS responses and Creator drafts",
   "keywords": [
     "survey",

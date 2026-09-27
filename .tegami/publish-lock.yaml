@@ -1,0 +1,36 @@
+core:changelogs:
+  - content: "---\npackages:\n  group:dimah-survey:\n    type: minor\n---\n\n### Initial release\n\nPublish an editable survey, freeze the definition each response starts with, save drafts, and validate submissions against that snapshot.\n"
+    filename: 2026-09-27-muj7l5qa.md
+    v: 0.0.0
+core:packages:
+  - changelogIds:
+      - 2026-09-27-muj7l5qa.md
+    id: npm:@workspace/survey-store-contract
+    updated: true
+  - changelogIds:
+      - 2026-09-27-muj7l5qa.md
+    id: npm:example-next
+    updated: true
+  - changelogIds:
+      - 2026-09-27-muj7l5qa.md
+    id: npm:@dimah-survey/core
+    updated: true
+  - changelogIds:
+      - 2026-09-27-muj7l5qa.md
+    id: npm:@dimah-survey/db
+    updated: true
+  - changelogIds:
+      - 2026-09-27-muj7l5qa.md
+    id: npm:@dimah-survey/react
+    updated: true
+  - changelogIds:
+      - 2026-09-27-muj7l5qa.md
+    id: npm:@dimah-survey/server
+    updated: true
+npm:packages:
+  - id: npm:@workspace/survey-store-contract
+  - id: npm:example-next
+  - id: npm:@dimah-survey/core
+  - id: npm:@dimah-survey/db
+  - id: npm:@dimah-survey/react
+  - id: npm:@dimah-survey/server

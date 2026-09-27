@@ -89,10 +89,13 @@ export default function HomePage() {
               <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
             </Link>
             <Link
-              href="/docs/example"
+              href={githubUrl}
+              target="_blank"
+              rel="noreferrer"
               className="group inline-flex h-11 items-center gap-2 rounded-lg border border-fd-border bg-fd-background/75 px-5 text-sm font-medium text-fd-foreground backdrop-blur-sm transition-[background-color,border-color] hover:border-fd-primary/30 hover:bg-fd-muted"
             >
-              Explore the example
+              <GitHubIcon />
+              View on GitHub
               <ArrowUpRight className="size-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
             </Link>
           </div>

@@ -51,5 +51,5 @@ generate the next migration from this app:
 pnpm --filter example-next db:generate
 ```
 
-Read the [example guide](https://survey.dimah.dev/docs/example) or start with
-the [quickstart](https://survey.dimah.dev/docs/quickstart).
+For the library integration, start with the
+[quickstart](https://survey.dimah.dev/docs/quickstart).

@@ -24,11 +24,7 @@ function entry(url: string, priority: number): MetadataRoute.Sitemap[number] {
 }
 
 function docsPriority(url: string): number {
-  if (
-    url === "/docs" ||
-    url === "/docs/quickstart" ||
-    url === "/docs/example"
-  ) {
+  if (url === "/docs" || url === "/docs/quickstart") {
     return 0.9;
   }
   if (
