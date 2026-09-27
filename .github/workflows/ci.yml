@@ -14,11 +14,7 @@ concurrency:
 permissions:
   contents: read
 
-# Remote cache needs a Vercel `TURBO_TOKEN` Actions secret. Until one is set,
-# jobs share a local .turbo cache via actions/cache.
-env:
-  TURBO_TEAM: ${{ vars.TURBO_TEAM }}
-
+# Jobs share a local .turbo cache via actions/cache.
 jobs:
   quality:
     name: Lint & Format

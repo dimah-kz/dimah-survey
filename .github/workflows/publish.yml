@@ -13,9 +13,6 @@ concurrency:
 permissions:
   contents: read
 
-env:
-  TURBO_TEAM: ${{ vars.TURBO_TEAM }}
-
 jobs:
   publish:
     name: Version & Publish
