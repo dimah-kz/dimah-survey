@@ -40,6 +40,8 @@ This compares responsibility, not performance. The same application can use
 SurveyJS with dimah-survey for surveys and a different form library for
 unrelated UI.
 
+---
+
 ## Deliberate non-goals
 
 dimah-survey does not render questions, ship Creator, define question types,
@@ -49,6 +51,39 @@ analytics warehouse. It also has no plugin system and no survey-version table;
 
 SurveyJS Analytics or PDF tooling can consume each response's `definition` and
 `data`. Do not interpret old response data against the current survey draft.
+
+---
+
+## Frequently asked questions
+
+<Accordions>
+
+<Accordion title="Can I keep using SurveyJS Creator and Analytics?">
+
+Yes. Creator stays in your application and writes `draftJson`. Analytics or PDF
+tooling should read each response's stored `definition` and `data`, not the
+current draft.
+
+</Accordion>
+
+<Accordion title="Is dimah-survey a hosted form backend?">
+
+No. You run the handlers, choose the database, and keep authentication. A
+hosted product is the better fit when you want its accounts, inbox, and
+storage.
+
+</Accordion>
+
+<Accordion title="Where is the survey version history?">
+
+On the response. There is no survey-version table. `response.definition` is
+the document that response was started and validated against.
+
+</Accordion>
+
+</Accordions>
+
+---
 
 Next, review the concrete [package boundaries](/docs/packages) or build the
 [quickstart](/docs/quickstart).

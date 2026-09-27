@@ -18,20 +18,13 @@ Published on npm, still before `1.0.0`. A release may change the API.
 
 ```ts
 import { DimahSurveyDB, db } from "@dimah-survey/db";
-import { dimahSurvey } from "@dimah-survey/server";
-import { drizzleAdapter } from "fumadb/adapters/drizzle";
 
-const database = db(
-  DimahSurveyDB.client(drizzleAdapter({ db: drizzleOrm, provider: "sqlite" })),
-);
-
-const editor = dimahSurvey({
-  audience: "editor",
-  database,
-});
+const database = db(DimahSurveyDB.client(adapter));
 ```
 
-Pass the same `database` to both the fill and editor instances.
+`adapter` is `drizzleAdapter`, `prismaAdapter`, or `kyselyAdapter` from
+`fumadb/adapters`. Pass the same `database` to both audiences. The
+[Database](https://survey.dimah.dev/docs/persistence) page has each ORM.
 
 ## Own the schema
 
@@ -53,20 +46,9 @@ They are source references, not runtime ORM models.
 
 ## Generate with FumaDB
 
-```ts
-import { createCli } from "fumadb/cli";
-import { DimahSurveyDB } from "@dimah-survey/db";
-import { drizzleAdapter } from "fumadb/adapters/drizzle";
-import { drizzle } from "drizzle-orm/node-sqlite";
-
-await createCli({
-  db: DimahSurveyDB.client(
-    drizzleAdapter({ db: drizzle(":memory:"), provider: "sqlite" }),
-  ),
-  command: "dimah-survey",
-  version: "YOUR_APP_VERSION",
-}).main();
-```
+`createCli` takes `DimahSurveyDB.client(adapter)`. That client only emits a
+file. Drizzle, Prisma, and Kysely scripts are on
+[Persistence](https://survey.dimah.dev/docs/persistence).
 
 ```bash
 dimah-survey generate 1.0.0 -o ./db/survey.ts

@@ -52,13 +52,47 @@ The backend exposes two isolated audiences over one shared `SurveyStore`:
 The fill audience always requires a guard. The editor audience has a separate
 guard and route, so respondent traffic never gains authoring access.
 
+---
+
+## Frequently asked questions
+
+<Accordions>
+
+<Accordion title="Does dimah-survey replace SurveyJS?">
+
+No. SurveyJS still owns the survey schema, `Model`, `<Survey>`, Creator, and
+question behavior. dimah-survey owns publish, the response snapshot, partial
+saves, and submit validation.
+
+</Accordion>
+
+<Accordion title="Does publishing change responses that already started?">
+
+No. `publishSurvey` replaces `publishedJson` for future `startResponse` calls.
+Each existing response keeps the `definition` copied when it started.
+
+</Accordion>
+
+<Accordion title="Why are fill and editor separate handlers?">
+
+They share one `SurveyStore` and not one trust boundary. Fill serves
+respondents and always requires a guard. Editor serves trusted application
+code: drafts, publish, settings, and full response reads. A fill handler does
+not mount editor operations.
+
+</Accordion>
+
+</Accordions>
+
+---
+
 ## Start here
 
 <Cards>
   <Card
     title="Quickstart"
     href="/docs/quickstart"
-    description="Publish a survey, mount the API, and render a response."
+    description="Connect your database, publish a survey, and render a response."
   />
   <Card
     title="Response lifecycle"

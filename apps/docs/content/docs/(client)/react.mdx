@@ -86,6 +86,8 @@ key-level patch.
 Writes are queued. Each one sends `expectedUpdatedAt` from the last successful
 read. See [Responses](/docs/responses).
 
+---
+
 ## Bind an existing model
 
 Use `bindSurveyModel()` when your application already owns the `Model`.
@@ -125,6 +127,8 @@ Call `dispose` on unmount. It removes the SurveyJS handlers it added.
 `bindSurveyModel` also sets `storeDataAsText` to `false` on file and signature
 questions, including questions added later.
 
+---
+
 ## Keep file storage in your app
 
 File bytes stay in your application. There is no upload route.
@@ -136,3 +140,44 @@ writes that locator into `data`. The binding does not store the bytes.
 Start with the [Quickstart](/docs/quickstart) for the complete load and render
 flow. Creator autosave uses a separate binding described in
 [Survey Creator](/docs/creator).
+
+---
+
+## Frequently asked questions
+
+<Accordions>
+
+<Accordion title="Does useSurveyResponse render the survey?">
+
+No. It returns a SurveyJS `Model` built from `response.definition`. Your
+application renders that model, usually with `<Survey>` from
+`survey-react-ui`.
+
+</Accordion>
+
+<Accordion title="Why is a submitted response not editable?">
+
+A submitted or abandoned row opens in SurveyJS `display` mode and the binding
+sends no writes. Call `reopenResponse` when `settings.reopen` allows it, then
+load the draft again.
+
+</Accordion>
+
+<Accordion title="Where do file uploads go?">
+
+Not through dimah-survey. Handle `onUploadFiles`, `onDownloadFile`, and
+`onClearFiles` on the model, and give SurveyJS `{ file, content }` where
+`content` is your URL. The binding sets `storeDataAsText` to `false` so
+partial save writes that locator instead of the file bytes.
+
+</Accordion>
+
+<Accordion title="What should I do when stale is true?">
+
+Another writer updated the row. The mounted model stays in place, and a write
+with the old `expectedUpdatedAt` fails. Call `reload` to replace it with the
+stored snapshot.
+
+</Accordion>
+
+</Accordions>

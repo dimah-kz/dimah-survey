@@ -5,8 +5,8 @@ icon: PackageOpen
 ---
 
 The four packages version together but keep runtime boundaries separate. A
-typical React application installs `server` and `react`, then adds `db` for the
-bundled SQL store.
+typical React application installs `server`, `db`, and `react`. The SQL store
+is the one the [Quickstart](/docs/quickstart) uses.
 
 <Callout>
   Published on npm, still before `1.0.0`. A release may change the API.
@@ -15,17 +15,16 @@ bundled SQL store.
 | Package                | Install when you need                                       | Does not own       |
 | ---------------------- | ----------------------------------------------------------- | ------------------ |
 | `@dimah-survey/core`   | Protocol types, clients, schemas, errors, or a custom store | SurveyJS runtime   |
-| `@dimah-survey/server` | Handlers, guards, validation, adapters, and local memory    | UI or SQL ORM      |
+| `@dimah-survey/server` | Handlers, guards, validation, and runtime adapters          | UI or SQL ORM      |
 | `@dimah-survey/react`  | `Model` and Creator lifecycle bindings                      | SurveyJS renderers |
 | `@dimah-survey/db`     | FumaDB-backed SQL storage and schema references             | Your migrations    |
 
 ```npm
-npm i @dimah-survey/server @dimah-survey/react survey-core survey-react-ui
+npm i @dimah-survey/server @dimah-survey/db @dimah-survey/react survey-core survey-react-ui fumadb
 ```
 
-Add `@dimah-survey/db fumadb` for the bundled SQL store. Install
-`survey-creator-core` and `survey-creator-react` only when your application
-renders Creator.
+[Database](/docs/persistence) adds Drizzle, Prisma, or Kysely. Install
+`survey-creator-core` and `survey-creator-react` only when you render Creator.
 
 ## `@dimah-survey/server`
 
@@ -33,7 +32,6 @@ Start here for backend integration:
 
 - `dimahSurvey()` for fill and editor instances
 - `guardRespondent()` and `guardAnonymous()` for fill guards
-- `memoryAdapter()` for local development and tests
 - `checkSurveyResult()` and `clearSurveyResult()` for validation behavior
 - adapters for Next.js, Node, Express, Hono, Fastify, Elysia, and SvelteKit
 
@@ -75,9 +73,42 @@ files.
   application.
 </Callout>
 
-The database package is optional. Any store must preserve immutable response
-definitions, compare-and-swap inside writes, and one open draft per identified
-respondent.
+`@dimah-survey/db` is the SQL store. A custom `SurveyStore` is the alternative
+when those tables cannot live in your database. Either store must preserve
+immutable response definitions, compare-and-swap inside writes, and one open
+draft per identified respondent.
 
-Continue with [Configuration](/docs/configuration) for runtime options or
-[HTTP protocol](/docs/protocol) for the operation map.
+Continue with [Configuration](/docs/configuration) for runtime
+options or [HTTP protocol](/docs/protocol) for the operation map.
+
+---
+
+## Frequently asked questions
+
+<Accordions>
+
+<Accordion title="Which packages does a React application need?">
+
+`@dimah-survey/server`, `@dimah-survey/react`, `survey-core`, and
+`survey-react-ui`. Add `@dimah-survey/db` and `fumadb` for the SQL store. Add
+the Creator packages only in the app that renders Creator.
+
+</Accordion>
+
+<Accordion title="Should browser code import @dimah-survey/server?">
+
+No. Import `createFillClient` and `createEditorClient` from
+`@dimah-survey/react`, or from `@dimah-survey/core` outside React. The server
+package is the handler, guards, and adapters.
+
+</Accordion>
+
+<Accordion title="Can I skip @dimah-survey/db?">
+
+Yes, when you implement `SurveyStore` yourself. The quickstart uses the SQL
+store. Even then, your application owns the migrated schema. Do not import a
+reference schema into the running app.
+
+</Accordion>
+
+</Accordions>

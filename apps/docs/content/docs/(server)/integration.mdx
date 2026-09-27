@@ -21,10 +21,9 @@ import {
   SURVEY_EDITOR_API_BASE_PATH,
   dimahSurvey,
   guardAnonymous,
-  memoryAdapter,
 } from "@dimah-survey/server";
 
-const database = memoryAdapter();
+import { database } from "@/db";
 
 export const editor = dimahSurvey({
   audience: "editor",
@@ -40,6 +39,9 @@ export const fill = dimahSurvey({
 });
 ```
 
+Create `database` on [Database](/docs/persistence). Pass that same object to
+both audiences.
+
 `basePath` is part of the request contract and must match the corresponding
 browser client's `baseURL`. The defaults are `/api/survey` for fill and
 `/api/admin/survey` for editor.
@@ -47,8 +49,7 @@ browser client's `baseURL`. The defaults are `/api/survey` for fill and
 A fill instance without `guard` throws at startup. An editor guard returns
 nothing or throws. See [Security](/docs/security).
 
-`memoryAdapter()` is for tests and local development. Choose SQL or a custom
-`SurveyStore` in [Persistence](/docs/persistence).
+---
 
 ## Mount the HTTP handlers
 
@@ -167,6 +168,8 @@ createServer(toNodeHandler(fill)).listen(3000);
 Repeat the same adapter setup for the editor path. Never send both audiences
 through one instance.
 
+---
+
 ## Call the API on the server
 
 `fill.api` and `editor.api` take `{ body }` or `{ query }`. They do not perform
@@ -190,6 +193,8 @@ await fill.api.startResponse({
 
 Without forwarded request data, an in-process call has no session cookie.
 
+---
+
 ## Call from the browser
 
 ```ts
@@ -204,3 +209,34 @@ Browser clients take flat objects and perform HTTP. Import them from
 send a server instance to the client bundle.
 
 See the complete method and route map in [HTTP protocol](/docs/protocol).
+
+---
+
+## Frequently asked questions
+
+<Accordions>
+
+<Accordion title="Why must basePath match the browser baseURL?">
+
+`basePath` is part of the route contract. The handler matches requests under
+that path, and `createFillClient({ baseURL })` calls the same path. The
+defaults are `/api/survey` for fill and `/api/admin/survey` for editor.
+
+</Accordion>
+
+<Accordion title="Why do Express and Fastify fail to read the body?">
+
+The adapters need the unread request stream. Mount the Express handler before
+`express.json()`. On Fastify, keep the JSON parser off these paths.
+
+</Accordion>
+
+<Accordion title="Do fill.api and editor.api perform HTTP requests?">
+
+No. They call the same operations in process. Pass `headers` or a `Request`
+when the guard needs the session cookie. A call without that context has no
+caller identity.
+
+</Accordion>
+
+</Accordions>

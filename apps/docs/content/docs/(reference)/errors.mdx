@@ -60,6 +60,8 @@ is no `UNAUTHORIZED` code; guards reject callers with `FORBIDDEN`.
 survey. The editor `getSurvey` uses the same code when the id is missing, and
 returns the draft when the row exists.
 
+---
+
 ## SurveyJS validation failures
 
 `VALIDATION_FAILED` adds `questions`: the SurveyJS question names that failed.
@@ -79,3 +81,37 @@ whose `closesAt` is not after `opensAt`. It has no `questions` array.
 A resubmit that fails validation on an already submitted row is
 `RESPONSE_CLOSED`, not `VALIDATION_FAILED`. The row is already closed. See
 [Responses](/docs/responses).
+
+---
+
+## Frequently asked questions
+
+<Accordions>
+
+<Accordion title="How do I tell a bad request from a failed survey?">
+
+`VALIDATION_ERROR` means the body or query failed schema checks, such as
+`closesAt` not after `opensAt`. `VALIDATION_FAILED` means the stored definition
+rejected the answers and includes `questions`. A different payload on an
+already submitted row is `RESPONSE_CLOSED`.
+
+</Accordion>
+
+<Accordion title="Why is there no UNAUTHORIZED code?">
+
+Guards reject callers with `FORBIDDEN`. A plain `Error` becomes
+`INTERNAL_ERROR`. Throw
+`APIError.from("FORBIDDEN", SURVEY_ERROR_CODES.FORBIDDEN)` when the session is
+missing or the caller does not own the row.
+
+</Accordion>
+
+<Accordion title="Which code means I should reload and retry?">
+
+`STALE_UPDATE`. `expectedUpdatedAt` no longer matches the stored row. Read the
+row again and retry from that `updatedAt`. `OPEN_DRAFT` and `RESPONSE_CLOSED`
+are state conflicts, not a stale token.
+
+</Accordion>
+
+</Accordions>

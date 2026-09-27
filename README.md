@@ -13,7 +13,7 @@ save drafts, and validate submissions against that same snapshot.
 [Documentation](https://survey.dimah.dev) · [Contributing](./CONTRIBUTING.md) · [Support](./SUPPORT.md) · [Security](./SECURITY.md) · [Code of conduct](./CODE_OF_CONDUCT.md)
 
 ```bash
-npm i @dimah-survey/server @dimah-survey/react survey-core survey-react-ui
+npm i @dimah-survey/server @dimah-survey/db @dimah-survey/react survey-core survey-react-ui fumadb
 ```
 
 Published on npm, still before `1.0.0`. A release may change the API.
