@@ -1,32 +1,32 @@
+import { ArrowRight, ArrowUpRight } from "lucide-react";
+import { Instrument_Serif } from "next/font/google";
 import Link from "next/link";
-import {
-  ArrowRight,
-  ArrowUpRight,
-  Blocks,
-  FileClock,
-  FilePenLine,
-} from "lucide-react";
 
+import { cn } from "@/lib/cn";
 import { githubUrl, siteDescription, siteHeadline } from "@/lib/shared";
+
+const display = Instrument_Serif({
+  subsets: ["latin"],
+  weight: "400",
+  style: ["normal", "italic"],
+  display: "swap",
+});
 
 const surveyName = "SurveyJS";
 const surveyUrl = "https://surveyjs.io/";
 
 const features = [
   {
-    icon: FilePenLine,
     title: "Explicit publishing",
     description:
       "The editor works on a draft. Respondents can start a survey only after you publish it.",
   },
   {
-    icon: FileClock,
     title: "Reproducible responses",
     description:
       "Each response keeps the survey it started with. A later publish does not change that copy, and submit is checked against it.",
   },
   {
-    icon: Blocks,
     title: "Runs in your app",
     description:
       "Authentication and the database stay yours. Adapters cover Next.js, Hono, Express, Fastify, Elysia, SvelteKit, and Node.",
@@ -45,98 +45,123 @@ function HeroHeading() {
   const index = siteHeadline.lastIndexOf(surveyName);
   if (index === -1) return siteHeadline;
 
+  const prefix = siteHeadline.slice(0, index);
+  const bridgeAt = prefix.lastIndexOf("for");
+  const suffix = siteHeadline.slice(index + surveyName.length);
+  const name = (
+    <a
+      href={surveyUrl}
+      target="_blank"
+      rel="noreferrer"
+      className="text-fd-primary italic no-underline transition-colors hover:text-fd-primary/80"
+    >
+      {surveyName}
+      <span className="sr-only"> (opens in a new tab)</span>
+    </a>
+  );
+
+  if (bridgeAt === -1) {
+    return (
+      <>
+        {prefix}
+        {name}
+        {suffix}
+      </>
+    );
+  }
+
   return (
     <>
-      {siteHeadline.slice(0, index)}
-      <a
-        href={surveyUrl}
-        target="_blank"
-        rel="noreferrer"
-        className="text-fd-primary no-underline transition-colors hover:text-fd-primary/80"
-      >
-        {surveyName}
-        <span className="sr-only"> (opens in a new tab)</span>
-      </a>
-      {siteHeadline.slice(index + surveyName.length)}
+      <span className="block">{prefix.slice(0, bridgeAt).trim()}</span>
+      <span className="block">
+        {prefix.slice(bridgeAt).trim()} {name}
+        {suffix}
+      </span>
     </>
   );
 }
 
 export default function HomePage() {
   return (
-    <>
-      <section
-        aria-labelledby="hero-heading"
-        className="relative px-6 pt-22 pb-20 text-center sm:pt-30 sm:pb-24 lg:pt-34"
-      >
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-full bg-[radial-gradient(ellipse_at_top,color-mix(in_oklab,var(--color-fd-primary)_18%,transparent),transparent_68%)]"
-        />
-        <h1
-          id="hero-heading"
-          className="mx-auto max-w-4xl text-4xl leading-[1.08] font-semibold tracking-[-0.035em] text-balance text-fd-foreground sm:text-6xl"
-        >
-          <HeroHeading />
-        </h1>
-        <p className="mx-auto mt-5 max-w-xl text-base leading-7 text-pretty text-fd-muted-foreground sm:text-lg sm:leading-8">
-          {siteDescription}
-        </p>
-        <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-          <Link
-            href="/docs/quickstart"
-            className="group inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-fd-primary px-5 text-sm font-medium text-fd-primary-foreground shadow-[0_1px_0_color-mix(in_oklab,var(--color-fd-foreground)_12%,transparent)] transition-[background-color,transform] hover:-translate-y-0.5 hover:bg-fd-primary/90 sm:w-auto"
-          >
-            Get started
-            <ArrowRight
-              aria-hidden
-              className="size-4 transition-transform group-hover:translate-x-0.5"
-            />
-          </Link>
-          <a
-            href={githubUrl}
-            target="_blank"
-            rel="noreferrer"
-            className="group inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg border border-fd-border bg-fd-background/75 px-5 text-sm font-medium text-fd-foreground backdrop-blur-sm transition-[background-color,border-color] hover:border-fd-primary/30 hover:bg-fd-muted sm:w-auto"
-          >
-            <GitHubIcon />
-            View on GitHub
-            <ArrowUpRight
-              aria-hidden
-              className="size-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
-            />
-          </a>
-        </div>
-      </section>
+    <div className="relative flex flex-1 flex-col">
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 -top-14 -z-10 h-128 bg-[radial-gradient(ellipse_at_top,color-mix(in_oklab,var(--color-fd-primary)_11%,transparent),transparent_70%)]"
+      />
 
       <section
-        aria-label="Features"
-        className="mx-auto w-full max-w-5xl px-6 pt-10 pb-16 sm:pt-14 sm:pb-20 xl:max-w-[calc(var(--fd-layout-width)-4rem)]"
+        aria-labelledby="hero-heading"
+        className="mx-auto grid w-full max-w-5xl flex-1 content-center gap-14 px-6 py-16 sm:py-20 lg:grid-cols-[minmax(0,26rem)_minmax(0,1fr)] lg:items-center lg:gap-20 lg:py-24"
       >
-        <ul className="grid gap-4 sm:grid-cols-3 sm:gap-5">
-          {features.map(({ icon: Icon, title, description }) => (
-            <li
-              key={title}
-              className="rounded-xl border border-fd-border bg-fd-card p-5"
+        <div>
+          <h1
+            id="hero-heading"
+            className={cn(
+              display.className,
+              "text-[3.25rem] leading-[0.96] font-normal tracking-[-0.035em] text-fd-foreground sm:text-6xl lg:text-[4.25rem] lg:leading-[0.94]",
+            )}
+          >
+            <HeroHeading />
+          </h1>
+          <p className="mt-6 max-w-md text-base leading-7 text-pretty text-fd-muted-foreground">
+            {siteDescription}
+          </p>
+          <div className="mt-8 flex flex-wrap items-center gap-2.5">
+            <Link
+              href="/docs/quickstart"
+              className="group inline-flex h-10 items-center justify-center gap-2 rounded-md bg-fd-primary px-4 text-sm font-medium text-fd-primary-foreground transition-colors hover:bg-fd-primary/90"
             >
-              <Icon
+              Get started
+              <ArrowRight
                 aria-hidden
                 strokeWidth={1.75}
-                className="size-5 text-fd-primary"
+                className="size-4 transition-transform duration-200 group-hover:translate-x-0.5"
               />
-              <h2 className="mt-4 text-sm font-semibold text-fd-foreground">
-                {title}
-              </h2>
-              <p className="mt-2 text-sm leading-6 text-pretty text-fd-muted-foreground">
-                {description}
-              </p>
+            </Link>
+            <a
+              href={githubUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="group inline-flex h-10 items-center justify-center gap-2 rounded-md border border-fd-border px-4 text-sm font-medium text-fd-foreground transition-colors hover:bg-fd-muted"
+            >
+              <GitHubIcon />
+              View on GitHub
+              <ArrowUpRight
+                aria-hidden
+                strokeWidth={1.75}
+                className="size-3.5 text-fd-muted-foreground transition-transform duration-200 group-hover:translate-x-px group-hover:-translate-y-px"
+              />
+            </a>
+          </div>
+        </div>
+
+        <ul className="divide-y divide-fd-border border-t border-fd-border lg:border-t-0 lg:border-l lg:pl-14">
+          {features.map(({ title, description }, index) => (
+            <li
+              key={title}
+              className="grid grid-cols-[2rem_minmax(0,1fr)] gap-x-4 py-5 first:pt-6 last:pb-0 lg:py-6 lg:first:pt-0"
+            >
+              <span
+                aria-hidden
+                className="pt-1 font-mono text-[11px] tracking-[0.16em] text-fd-muted-foreground tabular-nums"
+              >
+                {String(index + 1).padStart(2, "0")}
+              </span>
+              <div>
+                <h2 className="text-[15px] font-medium tracking-[-0.02em] text-fd-foreground">
+                  {title}
+                </h2>
+                <p className="mt-1.5 max-w-md text-sm leading-6 text-pretty text-fd-muted-foreground">
+                  {description}
+                </p>
+              </div>
             </li>
           ))}
         </ul>
       </section>
 
       <footer className="mt-auto border-t border-fd-border">
-        <div className="mx-auto flex w-full max-w-5xl flex-col gap-3 px-6 py-6 text-sm text-fd-muted-foreground sm:flex-row sm:items-center sm:justify-between xl:max-w-[calc(var(--fd-layout-width)-4rem)]">
+        <div className="mx-auto flex w-full max-w-5xl flex-col gap-3 px-6 py-5 text-[13px] text-fd-muted-foreground sm:flex-row sm:items-center sm:justify-between">
           <p>Released under the MIT License.</p>
           <nav aria-label="Footer" className="flex items-center gap-5">
             <Link
@@ -156,6 +181,6 @@ export default function HomePage() {
           </nav>
         </div>
       </footer>
-    </>
+    </div>
   );
 }
