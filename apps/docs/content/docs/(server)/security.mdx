@@ -26,7 +26,13 @@ therefore belong to fill; publish hooks belong to editor.
 
 ## Stamp an identified respondent
 
-`guardRespondent(id)` returns `{ respondentId }`. The server then:
+```ts
+import type { SurveyPrincipal } from "@dimah-survey/core";
+```
+
+<AutoTypeTable path="packages/core/src/types.ts" name="SurveyPrincipal" />
+
+`guardRespondent(id)` returns this principal. The server then:
 
 - stamps that id onto `startResponse` and `listResponses`
 - rejects a different id in the body or query
@@ -66,10 +72,15 @@ Identified start follows `settings.responses`. See [Settings](/docs/settings).
 
 ## Treat anonymous ids as capabilities
 
-`guardAnonymous()` returns `{ anonymous: true }`. Each start inserts a row.
-Listing and a body `respondentId` are refused. The response id itself becomes
-the capability for read and mutation, and the row must have a null
-`respondentId`.
+```ts
+import type { AnonymousPrincipal } from "@dimah-survey/core";
+```
+
+<AutoTypeTable path="packages/core/src/types.ts" name="AnonymousPrincipal" />
+
+`guardAnonymous()` returns this principal. Each start inserts a row. The
+response id itself becomes the capability for read and mutation, and the row
+must have a null `respondentId`.
 
 ```ts title="lib/survey.ts"
 import { guardAnonymous, guardRespondent } from "@dimah-survey/server";

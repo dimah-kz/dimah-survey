@@ -12,6 +12,12 @@ and submit check stays tied to that snapshot.
   interpret it.
 </Callout>
 
+```ts
+import type { ResponseRecord } from "@dimah-survey/core";
+```
+
+<AutoTypeTable path="packages/core/src/types.ts" name="ResponseRecord" />
+
 ## States and transitions
 
 | Status      | Meaning                                 | Allowed next actions             |
@@ -93,5 +99,11 @@ Omit the token only when a last-write-wins update is intentional.
 `listResponses` returns summaries by default. `include: "full"` adds
 `definition` and `data` and is available only to the editor audience. Always
 interpret a full row against its own `definition`, not the current survey.
+
+```ts
+import type { ResponseSummary } from "@dimah-survey/core";
+```
+
+<AutoTypeTable path="packages/core/src/types.ts" name="ResponseSummary" />
 
 Pagination and filters are listed in the [HTTP protocol](/docs/protocol).

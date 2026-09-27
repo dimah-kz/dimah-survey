@@ -34,8 +34,14 @@ List endpoints default to 50 rows and cap at 100.
 On survey reads, `id` accepts a survey id or slug. `startResponse.surveyId`
 accepts either as well. Every response mutation uses the response row id.
 
-`getPublishedSurvey` returns `publishedJson` and `settings`, never
-`draftJson`. It does not stamp a respondent.
+`getPublishedSurvey` returns the active published document and does not stamp
+a respondent. `draftJson` is not part of this result.
+
+```ts
+import type { PublishedSurvey } from "@dimah-survey/core";
+```
+
+<AutoTypeTable path="packages/core/src/types.ts" name="PublishedSurvey" />
 
 The guard stamps `respondentId` for identified callers. A matching value in the
 body is tolerated, but the browser cannot claim another owner. Anonymous
@@ -62,9 +68,6 @@ callers cannot list responses; identified callers cannot request
 Pass `expectedUpdatedAt` when updating. A create that includes the token fails
 with `STALE_UPDATE`.
 
-`listSurveys` returns `{ surveys, limit, offset, nextOffset }`.
-`listResponses` returns `{ responses, limit, offset, nextOffset, total }`.
-
 ## List queries
 
 `listResponses` accepts:
@@ -85,6 +88,24 @@ import type { ListSurveysQuery } from "@dimah-survey/core";
 ```
 
 <AutoTypeTable path="packages/core/src/types.ts" name="ListSurveysQuery" />
+
+## List results
+
+`listSurveys` returns:
+
+```ts
+import type { SurveyList } from "@dimah-survey/core";
+```
+
+<AutoTypeTable path="packages/core/src/types.ts" name="SurveyList" />
+
+`listResponses` returns:
+
+```ts
+import type { ResponseList } from "@dimah-survey/core";
+```
+
+<AutoTypeTable path="packages/core/src/types.ts" name="ResponseList" />
 
 ---
 

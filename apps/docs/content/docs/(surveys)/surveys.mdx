@@ -4,14 +4,15 @@ description: Author a draft, publish explicitly, and preserve every response sna
 icon: FileText
 ---
 
-Each survey stores three independent concerns:
-
-- `draftJson` — the editable SurveyJS document
-- `publishedJson` — the document new responses may start
-- `settings` — collection policy owned by dimah-survey
-
+Each survey row keeps `draftJson`, `publishedJson`, and `settings` independent.
 Creator writes the draft. Publishing promotes it. Starting a response copies
 the published document into `response.definition`.
+
+```ts
+import type { SurveyRecord } from "@dimah-survey/core";
+```
+
+<AutoTypeTable path="packages/core/src/types.ts" name="SurveyRecord" />
 
 <Callout>
   `saveSurvey` only replaces `draftJson`. It never publishes, changes collection

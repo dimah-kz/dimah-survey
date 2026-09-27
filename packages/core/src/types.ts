@@ -57,6 +57,7 @@ export type SurveyRecord = {
   id: string;
   /** Unique public identifier. Defaults to `id` when omitted on create. */
   slug: string;
+  /** `draft`, `active`, or `archived`. */
   status: SurveyStatus;
   /** Editable SurveyJS document. `saveSurvey` replaces this and does not publish. */
   draftJson: SurveyJson;
@@ -74,26 +75,33 @@ export type SurveyRecord = {
 
 /** Active published document. `draftJson` is absent. */
 export type PublishedSurvey = {
+  /** Application-chosen id. */
   id: string;
+  /** Unique public identifier. */
   slug: string;
   /** Copy of the document new responses start from. */
   publishedJson: SurveyJson;
+  /** When `publishedJson` was last promoted. */
   publishedAt: string;
+  /** Server-owned collection policy. Not copied into SurveyJS JSON. */
   settings: SurveySettings;
 };
 
 /** One response. `definition` is the published document from the moment it started. */
 export type ResponseRecord = {
+  /** Response row id. */
   id: string;
   /** Survey this response belongs to. */
   surveyId: string;
   /** Stamped owner. `null` for an anonymous response. */
   respondentId: string | null;
+  /** `draft`, `submitted`, or `abandoned`. */
   status: ResponseStatus;
   /** Copy of `publishedJson` at start. Later publishes must not change it. */
   definition: SurveyJson;
   /** Stored `survey.data`. Partial save replaces the whole object. */
   data: SurveyResult;
+  /** When the row was inserted. */
   createdAt: string;
   /** Compare-and-swap token for later writes. */
   updatedAt: string;
@@ -230,20 +238,29 @@ export type ListResponsesQuery = ListPageQuery & {
 
 /** List row when `include` is `"summary"`. `definition` and `data` are omitted. */
 export type ResponseSummary = {
+  /** Response row id. */
   id: string;
+  /** Survey this response belongs to. */
   surveyId: string;
+  /** Stamped owner. `null` for an anonymous response. */
   respondentId: string | null;
+  /** `draft`, `submitted`, or `abandoned`. */
   status: ResponseStatus;
+  /** When the row was inserted. */
   createdAt: string;
+  /** Compare-and-swap token for later writes. */
   updatedAt: string;
+  /** When status became `submitted`. Cleared on reopen. */
   submittedAt: string | null;
 };
 
 /** One page of surveys, `updatedAt` descending. */
 export type SurveyList = {
+  /** Surveys on this page. */
   surveys: SurveyRecord[];
   /** Page size that produced this result. */
   limit: number;
+  /** Rows skipped before this page. */
   offset: number;
   /** Offset of the next page. `null` when this page is the last. */
   nextOffset: number | null;
@@ -251,8 +268,11 @@ export type SurveyList = {
 
 /** One page of responses. `total` ignores `limit` and `offset`. */
 export type ResponseList = {
+  /** Rows on this page. `"summary"` omits `definition` and `data`. */
   responses: (ResponseRecord | ResponseSummary)[];
+  /** Page size that produced this result. */
   limit: number;
+  /** Rows skipped before this page. */
   offset: number;
   /** Offset of the next page. `null` when this page is the last. */
   nextOffset: number | null;
