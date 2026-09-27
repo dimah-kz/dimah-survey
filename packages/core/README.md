@@ -13,6 +13,8 @@ through `@dimah-survey/react`.
 npm i @dimah-survey/core
 ```
 
+Published on npm, still before `1.0.0`. A release may change the API.
+
 ## Create a browser client
 
 ```ts

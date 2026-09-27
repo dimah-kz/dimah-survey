@@ -33,13 +33,13 @@ Package references: `"@dimah-survey/core"`, `"npm:@dimah-survey/core"`, or `"gro
 
 ## Bump types
 
-| Type  | When                                      |
-| ----- | ----------------------------------------- |
-| patch | Fix, internal-safe improvement            |
-| minor | Backward-compatible feature               |
-| major | Breaking API, types, or consumer contract |
+| Type  | When                                                   |
+| ----- | ------------------------------------------------------ |
+| patch | Fix or internal-safe improvement                       |
+| minor | Feature or any consumer-contract change before `1.0.0` |
+| major | The `1.0.0` release                                    |
 
-Until [architecture.md](./architecture.md) **Pre-release** is replaced, the library is still being built and a bump type does not freeze the API. Record the change. After the first release, a break is `major`.
+Before `1.0.0`, a break is `minor`. `major` publishes `1.0.0`. Remove the previous API in the same change. See [architecture.md](./architecture.md) **Before 1.0**.
 
 ## Before opening a PR
 
@@ -61,9 +61,9 @@ After PRs with pending changelogs merge to `main`:
 
 Failed publishes are safe to retry — the publish lock lives in git.
 
-### First package / npm Trusted Publishers (OIDC)
+### New package name / npm Trusted Publishers (OIDC)
 
-npm cannot attach a Trusted Publisher until the package name exists on the registry. For a **new** `@dimah-survey/*` package (or the first release of this repo):
+npm cannot attach a Trusted Publisher until the package name exists on the registry. `@dimah-survey/core`, `server`, `react`, and `db` are already published. For a **new** package name:
 
 1. Finish versioning so `.tegami/publish-lock.yaml` exists (`pnpm tegami version`, or merge the Version Packages PR).
 2. Log in to npm (`npm login`).
@@ -89,10 +89,10 @@ Do not set `NPM_TOKEN`, `registry-url`, or `NODE_AUTH_TOKEN` on the Publish work
 
 ## Local commands
 
-| Command                    | Purpose                                                     |
-| -------------------------- | ----------------------------------------------------------- |
-| `pnpm tegami`              | Create a changelog interactively                            |
-| `pnpm tegami version`      | Draft bumps and write the publish lock                      |
-| `pnpm tegami publish`      | Publish from the publish lock                               |
-| `pnpm tegami ci`           | Version if pending, otherwise publish                       |
-| `pnpm tegami npm pretrust` | Placeholder + Trusted Publisher for packages not yet on npm |
+| Command                    | Purpose                                                           |
+| -------------------------- | ----------------------------------------------------------------- |
+| `pnpm tegami`              | Create a changelog interactively                                  |
+| `pnpm tegami version`      | Draft bumps and write the publish lock                            |
+| `pnpm tegami publish`      | Publish from the publish lock                                     |
+| `pnpm tegami ci`           | Version if pending, otherwise publish                             |
+| `pnpm tegami npm pretrust` | Placeholder + Trusted Publisher for a package name not yet on npm |

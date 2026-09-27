@@ -5,13 +5,11 @@
 `@dimah-survey/core`, `@dimah-survey/server`, `@dimah-survey/react`, and
 `@dimah-survey/db` release together as one version line.
 
-| Version                         | Supported        |
-| ------------------------------- | ---------------- |
-| `main`                          | Yes              |
-| Latest npm release, once tagged | Yes              |
-| Older npm releases              | Best effort only |
-
-Until the first npm release, report issues against `main`.
+| Version            | Supported |
+| ------------------ | --------- |
+| `main`             | Yes       |
+| Latest npm release | Yes       |
+| Earlier releases   | No        |
 
 ## Reporting a vulnerability
 

@@ -46,13 +46,13 @@ Shared protocol changes start in `core`, then wire `server` and the fetch client
   and `editor.api` take `{ body }` or `{ query }`; the fetch client takes flat
   objects.
 
-## Pre-release
+## Before 1.0
 
-`@dimah-survey/*` is still under construction and has not been published. The tree is the current design, not a version anyone depends on. API stability is not a goal yet.
+`@dimah-survey/core`, `server`, `react`, and `db` are published on npm and still before `1.0.0`. The tree is the current design.
 
-Land the shape you would actually ship. Remove the previous route, payload, type, column, or export in the same change. A compatibility alias, a deprecated export, or a second path is out of scope. SemVer does not decide whether a break is allowed.
+Land the shape you would actually ship. Remove the previous route, payload, type, column, or export in the same change. A compatibility alias, a deprecated export, or a second path is out of scope. Changelog bumps live in [release.md](./release.md): a consumer-contract change is `minor` and publishes the next `0.x`. `major` publishes `1.0.0`.
 
-This section is the whole policy. After the first npm release, replace it: breaks stay allowed until `1.0.0`, leftover compatibility code is still removed, and a break is recorded as `major`.
+This section is the whole policy until `1.0.0`.
 
 ## Do not
 

@@ -10,7 +10,7 @@ Not a map of the repo. Explore `packages/*/src` for what exists.
 
 If an agent can see it in source (paths, method names, current error codes), it does not belong here. Put **constraints** here, not a snapshot of the tree.
 
-Stability policy lives only in [architecture.md](./architecture.md) **Pre-release**. Replace that section after the first npm release.
+Stability policy lives only in [architecture.md](./architecture.md) **Before 1.0**.
 
 | File                                 | Read when                                             |
 | ------------------------------------ | ----------------------------------------------------- |

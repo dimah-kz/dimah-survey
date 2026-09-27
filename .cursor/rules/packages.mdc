@@ -10,7 +10,7 @@ Edit the smallest package that owns the behavior. Shared protocol starts in `cor
 
 SurveyJS JSON stays opaque. Do not import `@dimah-form/*`. Auth stays in consumer `guard`. Fill and editor are separate `dimahSurvey({ audience })` handlers. A fill guard returns `{ respondentId }` or `{ anonymous: true }`. No ORM in `server`. Persistence is `database` (`memoryAdapter()` or `db(client)` from `@dimah-survey/db`).
 
-The library is still under construction and not on npm. Ship the current design; do not keep a previous API beside it. Policy: [docs/agents/architecture.md](docs/agents/architecture.md) **Pre-release**. Changelog rules are in `docs/agents/release.md`.
+Published on npm and still before `1.0.0`. Ship the current design and delete the previous API in the same change. Policy: [docs/agents/architecture.md](docs/agents/architecture.md) **Before 1.0**. Changelog rules are in `docs/agents/release.md`.
 
 `draftJson` and `publishedJson` are different documents. A response stores `definition` copied at start. Submit validates that snapshot.
 
