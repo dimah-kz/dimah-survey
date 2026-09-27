@@ -1,6 +1,6 @@
 # Schema examples
 
-`src/schema/v1.ts` is the FumaDB source. These files are reference copies, not a runtime import. The app owns its schema: generate it with FumaDB's CLI, then keep the indexes FumaDB does not emit.
+`src/schema/v1.ts` is the FumaDB source. These files are exported as references (`@dimah-survey/db/schema/drizzle.ts` and the SQL and Prisma files beside it). Read or paste them into the app. Do not import them at runtime. Generate the app schema with FumaDB's CLI, then keep the indexes FumaDB does not emit.
 
 | File                               | Dialect                      |
 | ---------------------------------- | ---------------------------- |

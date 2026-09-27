@@ -1,3 +1,8 @@
+/**
+ * Reference copy for reading and pasting into the app.
+ * Do not import this module from `@dimah-survey/db`. The app owns the tables
+ * it migrates. Refresh them with the FumaDB CLI, then keep the indexes below.
+ */
 import { defineRelations, sql } from "drizzle-orm";
 import {
   blob,

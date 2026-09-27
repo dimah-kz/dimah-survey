@@ -25,7 +25,14 @@ const editor = dimahSurvey({
 });
 ```
 
-The app owns the tables. Generate them into the app with FumaDB's CLI, then extend that file. Drizzle and Prisma pick the file up like any other app schema.
+The app owns the tables. Write them in the app schema and migrate that file. Generate a fresh copy with FumaDB's CLI when the library schema changes, then keep any indexes or extra columns you added.
+
+These package paths are references for you and for agents. Read them. Do not import them into the running app:
+
+- `@dimah-survey/db/schema/drizzle.ts`
+- `@dimah-survey/db/schema/tables.sql`
+- `@dimah-survey/db/schema/indexes.sql`
+- `@dimah-survey/db/schema/schema.prisma`
 
 ```ts
 import { createCli } from "fumadb/cli";
@@ -42,7 +49,7 @@ await createCli({
 }).main();
 ```
 
-`dimah-survey generate 1.0.0 -o ./db/survey.ts` writes the ORM schema. FumaDB does not emit secondary indexes. Keep `response_one_open_draft` in the app schema after you generate; one open draft per survey and identified respondent depends on it. Prisma cannot express that predicate, so apply [`indexes.sql`](./src/schema/examples/indexes.sql) after the Prisma tables exist. Reference copies live in [`src/schema/examples`](./src/schema/examples).
+`dimah-survey generate 1.0.0 -o ./db/survey.ts` writes the ORM schema into the app. FumaDB does not emit secondary indexes. Keep `response_one_open_draft` in the app schema after you generate; one open draft per survey and identified respondent depends on it. Prisma cannot express that predicate, so apply `@dimah-survey/db/schema/indexes.sql` after the Prisma tables exist.
 
 ## License
 

@@ -1,3 +1,6 @@
+// Reference copy. Paste into the app. Do not import this file from the package.
+// The partial unique index is not expressible here. Apply indexes.sql after generate.
+
 generator client {
   provider = "prisma-client-js"
 }

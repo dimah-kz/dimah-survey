@@ -1,4 +1,4 @@
--- Secondary indexes. FumaDB generate does not emit these.
+-- Reference copy. Paste into the app. FumaDB generate does not emit these.
 
 create index if not exists survey_status_updated_at_idx
   on survey (status, updated_at);

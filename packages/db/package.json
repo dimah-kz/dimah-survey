@@ -27,7 +27,11 @@
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
-    }
+    },
+    "./schema/drizzle.ts": "./src/schema/examples/drizzle.ts",
+    "./schema/tables.sql": "./src/schema/examples/tables.sql",
+    "./schema/indexes.sql": "./src/schema/examples/indexes.sql",
+    "./schema/schema.prisma": "./src/schema/examples/schema.prisma"
   },
   "files": [
     "dist",

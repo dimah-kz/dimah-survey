@@ -1,3 +1,4 @@
+-- Reference copy. Paste into the app. Do not treat this file as a runtime import.
 -- PostgreSQL shape of @dimah-survey/db schema v1.
 -- response.definition is insert-only: it is the published survey copied at start.
 
