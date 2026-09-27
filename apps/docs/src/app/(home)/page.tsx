@@ -12,7 +12,12 @@ import {
 } from "lucide-react";
 
 import { Flow } from "@/components/flow";
-import { githubUrl, siteDescription } from "@/lib/shared";
+import {
+  githubUrl,
+  siteDescription,
+  siteHeadline,
+  siteHeadlineAccent,
+} from "@/lib/shared";
 
 function GitHubIcon() {
   return (
@@ -91,8 +96,8 @@ export default function HomePage() {
           id="hero-heading"
           className="relative mx-auto mt-7 max-w-4xl text-4xl font-semibold tracking-[-0.045em] text-balance text-fd-foreground sm:text-6xl sm:leading-[1.03]"
         >
-          <span className="block">The backend lifecycle layer</span>
-          <span className="block text-fd-primary">for SurveyJS.</span>
+          <span className="block">{siteHeadline}</span>
+          <span className="block text-fd-primary">{siteHeadlineAccent}</span>
         </h1>
 
         <p className="relative mx-auto mt-6 max-w-2xl text-base leading-relaxed text-balance text-fd-muted-foreground sm:text-lg">

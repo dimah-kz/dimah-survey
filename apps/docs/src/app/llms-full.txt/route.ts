@@ -1,8 +1,14 @@
-import { docsLlms } from "@/lib/source";
-import { withSiteOrigin } from "@/lib/shared";
+import { llmDecisionSheet, llmMarkdownHeaders } from "@/lib/llm-intro";
+import { getLLMText, orderPagesForLlms, source } from "@/lib/source";
 
 export const revalidate = false;
 
+/** `/llms-full.txt` — decision sheet + every docs page as markdown. */
 export async function GET() {
-  return new Response(withSiteOrigin(await docsLlms.full()));
+  const scan = orderPagesForLlms(source.getPages()).map(getLLMText);
+  const scanned = await Promise.all(scan);
+
+  return new Response(`${llmDecisionSheet()}\n\n${scanned.join("\n\n")}`, {
+    headers: llmMarkdownHeaders,
+  });
 }

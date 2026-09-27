@@ -1,14 +1,27 @@
 import type { MetadataRoute } from "next";
 
-import { absoluteUrl } from "@/lib/shared";
+import { getSiteUrl, isProductionDeploy } from "@/lib/site-url";
 
+/** `/robots.txt` — allow crawlers on production; keep preview deploys out. */
 export default function robots(): MetadataRoute.Robots {
+  if (!isProductionDeploy()) {
+    return {
+      rules: {
+        userAgent: "*",
+        disallow: "/",
+      },
+    };
+  }
+
+  const origin = getSiteUrl().origin;
+
   return {
     rules: {
       userAgent: "*",
       allow: "/",
       disallow: ["/api/", "/og/", "/llms.mdx/"],
     },
-    sitemap: absoluteUrl("/sitemap.xml"),
+    sitemap: `${origin}/sitemap.xml`,
+    host: origin,
   };
 }
