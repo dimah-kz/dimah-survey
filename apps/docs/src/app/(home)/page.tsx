@@ -7,38 +7,29 @@ import {
   FilePenLine,
 } from "lucide-react";
 
-import { Flow } from "@/components/flow";
 import { githubUrl, siteDescription, siteHeadline } from "@/lib/shared";
 
 const surveyName = "SurveyJS";
 const surveyUrl = "https://surveyjs.io/";
-
-const lifecycle = [
-  { name: "Author", kind: "data", note: "Creator writes draftJson" },
-  { name: "Publish", kind: "server", note: "Promote publishedJson" },
-  { name: "Start", kind: "server", note: "Freeze response.definition" },
-  { name: "Fill", kind: "client", note: "SurveyJS renders the snapshot" },
-  { name: "Submit", kind: "server", note: "Validate the same snapshot" },
-] as const;
 
 const features = [
   {
     icon: FilePenLine,
     title: "Explicit publishing",
     description:
-      "Creator edits a draft. Respondents only see what you publish.",
+      "The editor works on a draft. Respondents can start a survey only after you publish it.",
   },
   {
     icon: FileClock,
     title: "Reproducible responses",
     description:
-      "Each response keeps the survey it started with, and submit is validated against that copy.",
+      "Each response keeps the survey it started with. A later publish does not change that copy, and submit is checked against it.",
   },
   {
     icon: Blocks,
     title: "Runs in your app",
     description:
-      "Your auth and your database. Adapters for Next.js, Hono, Express, Fastify, Elysia, SvelteKit, and Node.",
+      "Authentication and the database stay yours. Adapters cover Next.js, Hono, Express, Fastify, Elysia, SvelteKit, and Node.",
   },
 ] as const;
 
@@ -61,7 +52,7 @@ function HeroHeading() {
         href={surveyUrl}
         target="_blank"
         rel="noreferrer"
-        className="text-fd-primary underline decoration-fd-primary/35 decoration-2 underline-offset-[0.14em] transition-colors hover:decoration-fd-primary"
+        className="text-fd-primary no-underline transition-colors hover:text-fd-primary/80"
       >
         {surveyName}
         <span className="sr-only"> (opens in a new tab)</span>
@@ -76,7 +67,7 @@ export default function HomePage() {
     <>
       <section
         aria-labelledby="hero-heading"
-        className="relative px-6 pt-20 pb-14 text-center sm:pt-28 sm:pb-16 lg:pt-32"
+        className="relative px-6 pt-22 pb-20 text-center sm:pt-30 sm:pb-24 lg:pt-34"
       >
         <div
           aria-hidden
@@ -119,28 +110,24 @@ export default function HomePage() {
       </section>
 
       <section
-        aria-label="Response lifecycle"
-        className="mx-auto w-full max-w-5xl px-6"
-      >
-        <Flow label="One response" steps={[...lifecycle]} />
-      </section>
-
-      <section
         aria-label="Features"
-        className="mx-auto w-full max-w-3xl px-6 py-20 sm:py-24"
+        className="mx-auto w-full max-w-5xl px-6 pt-10 pb-16 sm:pt-14 sm:pb-20 xl:max-w-[calc(var(--fd-layout-width)-4rem)]"
       >
-        <ul className="grid gap-8 sm:grid-cols-3">
+        <ul className="grid gap-4 sm:grid-cols-3 sm:gap-5">
           {features.map(({ icon: Icon, title, description }) => (
-            <li key={title} className="border-t border-fd-border pt-6">
+            <li
+              key={title}
+              className="rounded-xl border border-fd-border bg-fd-card p-5"
+            >
               <Icon
                 aria-hidden
                 strokeWidth={1.75}
                 className="size-5 text-fd-primary"
               />
-              <h2 className="mt-4 text-sm font-medium text-fd-foreground">
+              <h2 className="mt-4 text-sm font-semibold text-fd-foreground">
                 {title}
               </h2>
-              <p className="mt-1.5 text-sm leading-6 text-fd-muted-foreground">
+              <p className="mt-2 text-sm leading-6 text-pretty text-fd-muted-foreground">
                 {description}
               </p>
             </li>
@@ -149,7 +136,7 @@ export default function HomePage() {
       </section>
 
       <footer className="mt-auto border-t border-fd-border">
-        <div className="mx-auto flex w-full max-w-3xl flex-col gap-3 px-6 py-6 text-sm text-fd-muted-foreground sm:flex-row sm:items-center sm:justify-between">
+        <div className="mx-auto flex w-full max-w-5xl flex-col gap-3 px-6 py-6 text-sm text-fd-muted-foreground sm:flex-row sm:items-center sm:justify-between xl:max-w-[calc(var(--fd-layout-width)-4rem)]">
           <p>Released under the MIT License.</p>
           <nav aria-label="Footer" className="flex items-center gap-5">
             <Link
