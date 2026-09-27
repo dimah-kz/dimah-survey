@@ -1,12 +1,11 @@
 ---
 title: Quickstart
-description: Build a complete SurveyJS response flow in Next.js.
+description: Publish a survey, mount the API, and render a response.
 icon: Rocket
 ---
 
-This guide creates the smallest complete flow: publish a SurveyJS document,
-start a response, render its frozen definition, save page progress, and submit
-it.
+This guide publishes a SurveyJS document, starts a response, renders its frozen
+definition, saves page progress, and submits it.
 
 <Callout type="warn">
   This quickstart uses process-local memory and a fixed respondent. Before
@@ -24,8 +23,8 @@ it.
 npm i @dimah-survey/server @dimah-survey/react survey-core survey-react-ui
 ```
 
-`survey-react-ui` renders questions. dimah-survey owns only the lifecycle
-around the SurveyJS document.
+`survey-react-ui` renders questions. dimah-survey owns the lifecycle around the
+SurveyJS document.
 
 </Step>
 
@@ -33,8 +32,7 @@ around the SurveyJS document.
 
 ### Create the server
 
-Create one instance for respondents and one for trusted editor operations. They
-must share the same store.
+Create a fill instance and an editor instance on one store.
 
 ```ts title="lib/survey.ts"
 import {
@@ -57,34 +55,7 @@ export const fill = dimahSurvey({
 });
 ```
 
-The fill guard stamps `"demo"` onto every response operation. With the default
-`"one-open"` policy, another start resumes the open draft instead of creating a
-second one.
-
-</Step>
-
-<Step>
-
-### Mount both audiences
-
-```ts title="app/api/survey/[[...path]]/route.ts"
-import { toNextJsHandler } from "@dimah-survey/server/next";
-import { fill } from "@/lib/survey";
-
-export const { GET, POST, PUT, PATCH, DELETE } = toNextJsHandler(fill);
-```
-
-```ts title="app/api/admin/survey/[[...path]]/route.ts"
-import { toNextJsHandler } from "@dimah-survey/server/next";
-import { editor } from "@/lib/survey";
-
-export const { GET, POST, PUT, PATCH, DELETE } = toNextJsHandler(editor);
-```
-
-These folders are the defaults: `/api/survey` for fill and `/api/admin/survey`
-for editor. `dimahSurvey()` already uses them. Set `basePath` when the folder
-is different, and pass that same path as the browser client's `baseURL`. See
-[Mount the server](/docs/integration) for other runtimes.
+The guard stamps `"demo"` on every response.
 
 </Step>
 
@@ -92,12 +63,11 @@ is different, and pass that same path as the browser client's `baseURL`. See
 
 ### Publish a SurveyJS document
 
-Use the in-process editor API from server code. Saving changes `draftJson`;
-publishing explicitly copies that draft to `publishedJson`.
+Saving writes `draftJson`. Publishing copies that draft to `publishedJson`.
 
 ```ts title="lib/welcome.ts"
 import { isAPIError } from "@dimah-survey/server";
-import { editor } from "@/lib/survey";
+import { editor } from "./survey";
 
 const definition = {
   title: "Welcome",
@@ -131,14 +101,124 @@ export async function ensureWelcomeSurvey() {
 }
 ```
 
-`getSurvey` throws `SURVEY_NOT_FOUND` when the row is missing; it does not
-return `null`.
+`getSurvey` throws `SURVEY_NOT_FOUND` when the row is missing.
+
+</Step>
+
+<Step>
+
+### Mount both audiences
+
+Each audience gets its own route. The handler serves only that audience.
+
+<Tabs items={["Next.js", "Express", "Hono", "Fastify", "SvelteKit"]}>
+  <Tab value="Next.js">
+
+```ts title="app/api/survey/[[...path]]/route.ts"
+import { toNextJsHandler } from "@dimah-survey/server/next";
+import { fill } from "@/lib/survey";
+
+export const { GET, POST, PUT, PATCH, DELETE } = toNextJsHandler(fill);
+```
+
+```ts title="app/api/admin/survey/[[...path]]/route.ts"
+import { toNextJsHandler } from "@dimah-survey/server/next";
+import { editor } from "@/lib/survey";
+
+export const { GET, POST, PUT, PATCH, DELETE } = toNextJsHandler(editor);
+```
+
+  </Tab>
+  <Tab value="Express">
+
+```ts title="server.ts"
+import express from "express";
+import { toExpressHandler } from "@dimah-survey/server/express";
+import { editor, fill } from "./survey";
+
+const app = express();
+
+app.all("/api/survey/*", toExpressHandler(fill));
+app.all("/api/admin/survey/*", toExpressHandler(editor));
+app.use(express.json());
+```
+
+Register these routes before `express.json()` so the adapter can read the body.
+
+  </Tab>
+  <Tab value="Hono">
+
+```ts title="server.ts"
+import { Hono } from "hono";
+import { toHonoHandler } from "@dimah-survey/server/hono";
+import { editor, fill } from "./survey";
+
+const app = new Hono();
+const methods = ["GET", "POST", "PUT", "PATCH", "DELETE"] as const;
+
+app.on(methods, "/api/survey/*", toHonoHandler(fill));
+app.on(methods, "/api/admin/survey/*", toHonoHandler(editor));
+```
+
+  </Tab>
+  <Tab value="Fastify">
+
+```ts title="server.ts"
+import Fastify from "fastify";
+import { toFastifyHandler } from "@dimah-survey/server/fastify";
+import { editor, fill } from "./survey";
+
+const app = Fastify();
+
+app.all("/api/survey/*", toFastifyHandler(fill));
+app.all("/api/admin/survey/*", toFastifyHandler(editor));
+```
+
+Leave the JSON parser off these paths so the adapter can read the body.
+
+  </Tab>
+  <Tab value="SvelteKit">
+
+```ts title="src/routes/api/survey/[...path]/+server.ts"
+import { toSvelteKitHandler } from "@dimah-survey/server/svelte-kit";
+import { fill } from "$lib/survey";
+
+const handler = toSvelteKitHandler(fill);
+
+export const GET = handler;
+export const POST = handler;
+export const PUT = handler;
+export const PATCH = handler;
+export const DELETE = handler;
+```
+
+```ts title="src/routes/api/admin/survey/[...path]/+server.ts"
+import { toSvelteKitHandler } from "@dimah-survey/server/svelte-kit";
+import { editor } from "$lib/survey";
+
+const handler = toSvelteKitHandler(editor);
+
+export const GET = handler;
+export const POST = handler;
+export const PUT = handler;
+export const PATCH = handler;
+export const DELETE = handler;
+```
+
+  </Tab>
+</Tabs>
+
+Fill is `/api/survey`. Editor is `/api/admin/survey`. Set `basePath` when the
+route differs, and pass that same path as the browser client's `baseURL`.
+Elysia and Node are on [Mount the server](/docs/integration).
 
 </Step>
 
 <Step>
 
 ### Create the browser client
+
+The fill view below is React. `createFillClient()` calls `/api/survey`.
 
 ```ts title="lib/fill-client.ts"
 "use client";
@@ -148,8 +228,7 @@ import { createFillClient } from "@dimah-survey/react";
 export const fillClient = createFillClient();
 ```
 
-Browser clients take flat input objects. In-process APIs use `{ body }` or
-`{ query }`.
+Browser methods take a flat object. `fill.api` takes `{ body }` or `{ query }`.
 
 </Step>
 
@@ -190,9 +269,9 @@ export function Fill({ responseId }: { responseId: string }) {
 }
 ```
 
-The hook loads `response.definition`, constructs a `Model`, and binds partial
-save and submit. It never renders UI. `partial` defaults to `"page"`, so moving
-to the next page persists the complete `survey.data` object.
+The hook builds a `Model` from `response.definition` and saves the full
+`survey.data` on the next page. It does not render questions. Next.js loads
+`<Survey>` in the browser; other React apps can import it directly.
 
 </Step>
 
@@ -215,8 +294,9 @@ export default async function Page() {
 }
 ```
 
-The first request creates a draft whose definition is a copy of the published
-document. Refreshing resumes that draft. A later publish cannot rewrite it.
+This page is Next.js. Any server runtime calls `fill.api.startResponse` the
+same way. The first call copies the published document onto the response.
+Refreshing resumes that draft. A later publish leaves it unchanged.
 
 </Step>
 
