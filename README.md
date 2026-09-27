@@ -37,6 +37,14 @@ Node 24 or newer. Versions are cut with Tegami; see [docs/agents/release.md](./d
 pnpm example
 ```
 
+## Docs
+
+[`apps/docs`](./apps/docs) is the Fumadocs site.
+
+```bash
+pnpm docs
+```
+
 ## License
 
 [MIT](./LICENSE)

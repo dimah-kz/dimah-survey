@@ -1,8 +1,8 @@
 import type { KnipConfig } from "knip";
 
 const config: KnipConfig = {
-  // The Next example is an app graph (routes, CSS, Drizzle), not a library package.
-  ignore: ["examples/**"],
+  // Next apps are route graphs, not library packages.
+  ignore: ["examples/**", "apps/**"],
   ignoreIssues: {
     "packages/**": ["exports", "types", "duplicates", "nsExports", "nsTypes"],
     // Published copy-paste schemas — not imported at runtime.

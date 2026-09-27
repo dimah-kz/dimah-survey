@@ -1,16 +1,24 @@
 import { createGetUrl } from "fumadocs-core/source";
 
-export const appName = "My App";
+export const appName = "dimah-survey";
 export const docsRoute = "/docs";
 export const docsImageRoute = "/og/docs";
 export const docsContentRoute = "/llms.mdx/docs";
 
-// fill this with your actual GitHub info, for example:
 export const gitConfig = {
-  user: "fuma-nama",
-  repo: "fumadocs",
+  user: "dimah-kz",
+  repo: "dimah-survey",
   branch: "main",
-};
+} as const;
+
+export const githubUrl = `https://github.com/${gitConfig.user}/${gitConfig.repo}`;
+
+/** MDX collection, relative to the repository root. */
+const docsContentDir = "apps/docs/content/docs";
+
+export function pageGithubUrl(page: { path: string }) {
+  return `${githubUrl}/blob/${gitConfig.branch}/${docsContentDir}/${page.path}`;
+}
 
 const getContentUrl = createGetUrl(docsContentRoute);
 

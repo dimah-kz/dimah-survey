@@ -16,6 +16,12 @@ const config = {
       files: ["**/*.md"],
       options: { proseWrap: "preserve" },
     },
+    {
+      files: ["apps/docs/**/*.{js,jsx,ts,tsx,mjs,mdx}"],
+      options: {
+        tailwindStylesheet: "./apps/docs/src/app/global.css",
+      },
+    },
   ],
 };
 

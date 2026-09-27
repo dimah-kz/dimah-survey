@@ -34,7 +34,7 @@ pnpm --filter @dimah-survey/core check-types
 
 ## Documentation
 
-Package READMEs are concise npm entry points. Maintainer checklists under `docs/agents/` apply when changing published behavior:
+Package READMEs are concise npm entry points. The public site is `apps/docs` (Fumadocs). Maintainer checklists under `docs/agents/` apply when changing published behavior:
 
 - `packages.md` for protocols, endpoints, and validation
 - `architecture.md` for package boundaries

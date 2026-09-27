@@ -1,5 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
 import { isMarkdownPreferred, rewritePath } from "fumadocs-core/negotiation";
+import { NextResponse, type NextRequest } from "next/server";
+
 import { docsContentRoute, docsRoute } from "@/lib/shared";
 
 const { rewrite: rewriteDocs } = rewritePath(
@@ -11,18 +12,17 @@ const { rewrite: rewriteSuffix } = rewritePath(
   `${docsContentRoute}{/*path}/content.md`,
 );
 
-export default function proxy(request: NextRequest) {
-  const result = rewriteSuffix(request.nextUrl.pathname);
-  if (result) {
-    return NextResponse.rewrite(new URL(result, request.nextUrl));
+export function proxy(request: NextRequest) {
+  const suffix = rewriteSuffix(request.nextUrl.pathname);
+  if (suffix) {
+    return NextResponse.rewrite(new URL(suffix, request.nextUrl));
   }
 
   if (isMarkdownPreferred(request)) {
-    const result = rewriteDocs(request.nextUrl.pathname);
+    const markdown = rewriteDocs(request.nextUrl.pathname);
 
-    if (result) {
-      return NextResponse.rewrite(new URL(result, request.nextUrl), {
-        // this URL has two representations, selected by `Accept`
+    if (markdown) {
+      return NextResponse.rewrite(new URL(markdown, request.nextUrl), {
         headers: { Vary: "Accept" },
       });
     }
@@ -30,3 +30,9 @@ export default function proxy(request: NextRequest) {
 
   return NextResponse.next();
 }
+
+export const config = {
+  matcher: [
+    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+  ],
+};

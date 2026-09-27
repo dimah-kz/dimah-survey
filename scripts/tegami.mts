@@ -31,6 +31,7 @@ const paper = tegami({
   packages: () => ({ group: "dimah-survey" }),
   ignore: [
     "dimah-survey",
+    "docs",
     "@workspace/eslint-config",
     "@workspace/tsup-config",
     "@workspace/typescript-config",
