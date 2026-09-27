@@ -36,16 +36,17 @@ for a non-React client and shared protocol types.
 
 ## Documentation
 
-The Fumadocs site lives in [`apps/docs`](./apps/docs). Start it from the
-repository root:
+Guides and the protocol reference are published at
+<https://survey.dimah.dev>.
+
+The site source is [`apps/docs`](./apps/docs). From the repository root:
 
 ```bash
 pnpm dev:docs
 ```
 
-Then open <http://localhost:3001>. Its [content](./apps/docs/content/docs)
-covers backend integration, collection lifecycle, React bindings, persistence,
-and the protocol reference.
+That serves the same [content](./apps/docs/content/docs) at
+<http://localhost:3001>.
 
 ## Development
 

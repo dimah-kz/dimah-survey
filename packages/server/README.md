@@ -82,8 +82,9 @@ and SvelteKit.
 
 ## Documentation
 
-Read the server integration, security, and persistence guides in
-[apps/docs](https://github.com/dimah-kz/dimah-survey/tree/main/apps/docs).
+<https://survey.dimah.dev/docs/integration> covers handlers and the in-process
+API. Also see [security](https://survey.dimah.dev/docs/security) and
+[persistence](https://survey.dimah.dev/docs/persistence).
 
 ## License
 

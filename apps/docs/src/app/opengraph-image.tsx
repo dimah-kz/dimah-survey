@@ -95,17 +95,20 @@ export default function OpenGraphImage() {
           display: "flex",
           fontFamily: "monospace",
           fontSize: 19,
-          gap: "22px",
+          justifyContent: "space-between",
           paddingTop: "26px",
         }}
       >
-        <span>draft</span>
-        <span style={{ color: "#0f766e" }}>→</span>
-        <span>publish</span>
-        <span style={{ color: "#0f766e" }}>→</span>
-        <span>snapshot</span>
-        <span style={{ color: "#0f766e" }}>→</span>
-        <span>submit</span>
+        <div style={{ display: "flex", gap: "22px" }}>
+          <span>draft</span>
+          <span style={{ color: "#0f766e" }}>→</span>
+          <span>publish</span>
+          <span style={{ color: "#0f766e" }}>→</span>
+          <span>snapshot</span>
+          <span style={{ color: "#0f766e" }}>→</span>
+          <span>submit</span>
+        </div>
+        <span>survey.dimah.dev</span>
       </div>
     </div>,
     size,

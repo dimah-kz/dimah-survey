@@ -1,5 +1,8 @@
 blank_issues_enabled: false
 contact_links:
+  - name: Documentation
+    url: https://survey.dimah.dev
+    about: Guides, the protocol reference, and package docs.
   - name: Security reports
     url: https://github.com/dimah-kz/dimah-survey/security/advisories/new
     about: Please report security vulnerabilities privately.

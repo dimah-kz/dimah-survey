@@ -2,6 +2,8 @@
 
 A minimal consumer of `@dimah-survey/server`, `@dimah-survey/react`, and `@dimah-survey/db`.
 
+Library guides: <https://survey.dimah.dev>.
+
 SurveyJS renders the survey and Creator. Responses are stored in SQLite (`data/survey.db`) through Drizzle and `@dimah-survey/db`. The respondent is an httpOnly cookie.
 
 ## Run

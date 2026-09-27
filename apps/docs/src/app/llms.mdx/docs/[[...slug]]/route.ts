@@ -1,5 +1,5 @@
 import { docsLlms, source } from "@/lib/source";
-import { getPageMarkdownUrl } from "@/lib/shared";
+import { getPageMarkdownUrl, withSiteOrigin } from "@/lib/shared";
 import { notFound } from "next/navigation";
 
 export const revalidate = false;
@@ -12,7 +12,7 @@ export async function GET(
   const page = source.getPage(slug?.slice(0, -1));
   if (!page) notFound();
 
-  return new Response(await docsLlms.page(page), {
+  return new Response(withSiteOrigin(await docsLlms.page(page)), {
     headers: {
       "Content-Type": "text/markdown",
     },

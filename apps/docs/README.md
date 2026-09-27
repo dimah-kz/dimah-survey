@@ -1,6 +1,6 @@
 # Docs
 
-Public documentation site for this library. [Fumadocs](https://fumadocs.dev) renders MDX from `content/docs`. This app is not a published package. Maintainer checklists stay in [`docs/agents`](../../docs/agents).
+Public documentation for this library, published at <https://survey.dimah.dev>. [Fumadocs](https://fumadocs.dev) renders MDX from `content/docs`. This app is not a published package. Maintainer checklists stay in [`docs/agents`](../../docs/agents).
 
 ## Run
 
@@ -10,7 +10,7 @@ From the repository root:
 pnpm dev:docs
 ```
 
-http://localhost:3001
+Local: <http://localhost:3001>. Production: <https://survey.dimah.dev>.
 
 | Path                | Role                  |
 | ------------------- | --------------------- |

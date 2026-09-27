@@ -35,8 +35,9 @@ map.
 
 ## Documentation
 
-Read the package map, HTTP protocol, and persistence contract in
-[apps/docs](https://github.com/dimah-kz/dimah-survey/tree/main/apps/docs).
+<https://survey.dimah.dev/docs/protocol> covers routes, client methods, and the
+in-process server API. The [package map](https://survey.dimah.dev/docs/packages)
+and [error reference](https://survey.dimah.dev/docs/errors) sit beside it.
 
 ## License
 

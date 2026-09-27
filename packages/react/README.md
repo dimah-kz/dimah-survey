@@ -61,8 +61,8 @@ response data stores the URL or locator your handler returns, never file bytes.
 
 ## Documentation
 
-Read the React Model and Creator guides in
-[apps/docs](https://github.com/dimah-kz/dimah-survey/tree/main/apps/docs).
+<https://survey.dimah.dev/docs/react> covers Model bindings.
+[Creator autosave](https://survey.dimah.dev/docs/creator) covers draft writes.
 
 ## License
 

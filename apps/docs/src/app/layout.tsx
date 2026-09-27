@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { RootProvider } from "fumadocs-ui/provider/next";
 import { Inter } from "next/font/google";
 
-import { appName, siteDescription } from "@/lib/shared";
+import { appName, siteDescription, siteUrl } from "@/lib/shared";
 
 import "./global.css";
 
@@ -12,6 +12,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(siteUrl),
   applicationName: appName,
   title: {
     default: appName,
@@ -20,6 +21,8 @@ export const metadata: Metadata = {
   description: siteDescription,
   openGraph: {
     type: "website",
+    locale: "en_US",
+    siteName: appName,
     title: appName,
     description: siteDescription,
   },

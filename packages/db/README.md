@@ -73,8 +73,9 @@ creates its tables.
 
 ## Documentation
 
-Read the persistence guide and package map in
-[apps/docs](https://github.com/dimah-kz/dimah-survey/tree/main/apps/docs).
+<https://survey.dimah.dev/docs/persistence> covers `db()`, schema ownership, and
+custom stores. The [package map](https://survey.dimah.dev/docs/packages) shows
+where this package sits next to `server`.
 
 ## License
 
