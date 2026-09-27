@@ -1,0 +1,5 @@
+```sql title="db/indexes.sql"
+create unique index if not exists dimah_response_one_open_draft
+  on dimah_response (survey_id, respondent_id)
+  where status = 'draft' and respondent_id is not null;
+```

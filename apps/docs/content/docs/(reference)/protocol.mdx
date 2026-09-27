@@ -4,7 +4,8 @@ description: Map fill and editor routes to browser clients and the in-process AP
 icon: Waypoints
 ---
 
-Route constants and payload schemas live in `@dimah-survey/core`.
+Route constants, payload schemas, and clients live in
+`@dimah-survey/core`.
 
 | Audience | Default base path   | Operations                                          |
 | -------- | ------------------- | --------------------------------------------------- |
@@ -12,8 +13,8 @@ Route constants and payload schemas live in `@dimah-survey/core`.
 | Editor   | `/api/admin/survey` | Authoring, settings, publish, and response analysis |
 
 The suffixes below are appended to those bases. Browser clients take flat
-objects; `fill.api` and `editor.api` take `{ query }` or `{ body }`. An
-operation from the wrong audience is not mounted and returns `NOT_FOUND`.
+objects; the in-process API takes `{ query }` or `{ body }`. Operations from
+the wrong audience are not mounted and return `NOT_FOUND`.
 
 List endpoints default to 50 rows and cap at 100.
 
@@ -33,14 +34,21 @@ List endpoints default to 50 rows and cap at 100.
 On survey reads, `id` accepts a survey id or slug. `startResponse.surveyId`
 accepts either as well. Every response mutation uses the response row id.
 
-`getPublishedSurvey` returns `publishedJson` and `settings`. It omits
-`draftJson`. It is available to both fill principals and does not stamp a
-respondent.
+`getPublishedSurvey` returns the active published document and does not stamp
+a respondent. `draftJson` is not part of this result.
+
+```ts
+import type { PublishedSurvey } from "@dimah-survey/core";
+```
+
+<AutoTypeTable path="packages/core/src/types.ts" name="PublishedSurvey" />
 
 The guard stamps `respondentId` for identified callers. A matching value in the
 body is tolerated, but the browser cannot claim another owner. Anonymous
 callers cannot list responses; identified callers cannot request
 `include: "full"`.
+
+---
 
 ## Editor routes
 
@@ -59,9 +67,6 @@ callers cannot list responses; identified callers cannot request
 `saveSurvey` creates the survey when the id is new. `slug` defaults to `id`.
 Pass `expectedUpdatedAt` when updating. A create that includes the token fails
 with `STALE_UPDATE`.
-
-`listSurveys` returns `{ surveys, limit, offset, nextOffset }`.
-`listResponses` returns `{ responses, limit, offset, nextOffset, total }`.
 
 ## List queries
 
@@ -84,6 +89,26 @@ import type { ListSurveysQuery } from "@dimah-survey/core";
 
 <AutoTypeTable path="packages/core/src/types.ts" name="ListSurveysQuery" />
 
+## List results
+
+`listSurveys` returns:
+
+```ts
+import type { SurveyList } from "@dimah-survey/core";
+```
+
+<AutoTypeTable path="packages/core/src/types.ts" name="SurveyList" />
+
+`listResponses` returns:
+
+```ts
+import type { ResponseList } from "@dimah-survey/core";
+```
+
+<AutoTypeTable path="packages/core/src/types.ts" name="ResponseList" />
+
+---
+
 ## Compare-and-swap inputs
 
 `expectedUpdatedAt` is optional on draft, publish, archive, settings, resume,
@@ -92,4 +117,4 @@ partial save, submit, abandon, and reopen. When it is set, the stored
 bindings always send the token from their last successful read or write.
 
 The exported Zod schemas are the authoritative payload definitions. See
-[Errors](/docs/errors) for the stable failure codes.
+[Errors](/docs/errors) for stable failure codes.

@@ -1,106 +1,85 @@
 ---
 title: Quickstart
-description: Build a complete SurveyJS response flow in Next.js.
+description: Set up the server, publish a survey, and render a frozen response.
 icon: Rocket
 ---
 
-This guide creates the smallest complete flow: publish a SurveyJS document,
-start a response, render its frozen definition, save page progress, and submit
-it.
+This guide uses Next.js. The same server API works on every supported runtime.
 
-<Callout type="warn">
-  This quickstart uses process-local memory and a fixed respondent. Before
-  production, use a durable store, derive identity from the session, and guard
-  the editor route.
-</Callout>
-
-<Steps>
-
-<Step>
-
-### Install
+### Install [step]
 
 ```npm
-npm i @dimah-survey/server @dimah-survey/react survey-core survey-react-ui
+npm i @dimah-survey/server @dimah-survey/db @dimah-survey/react react react-dom survey-core survey-react-ui
 ```
 
-`survey-react-ui` renders questions. dimah-survey owns only the lifecycle
-around the SurveyJS document.
+`survey-react-ui` renders the questions.
 
-</Step>
+### Add the tables [step]
 
-<Step>
+Add `dimah_survey` and `dimah_response` to the database you already use, migrate,
+and export `database`.
 
-### Create the server
+<Cards>
+  <Card
+    title="Drizzle, Prisma, and Kysely"
+    href="/docs/database"
+    description="Copy the tables into your schema and connect the store."
+  />
+</Cards>
 
-Create one instance for respondents and one for trusted editor operations. They
-must share the same store.
+On Next.js, that page also sets `serverExternalPackages`.
+
+### Create the server [step]
+
+Create a fill instance and an editor instance. Replace `getSession` with your
+authentication code. The browser never chooses the respondent id.
 
 ```ts title="lib/survey.ts"
 import {
-  SURVEY_API_BASE_PATH,
-  SURVEY_EDITOR_API_BASE_PATH,
+  APIError,
+  SURVEY_ERROR_CODES,
   dimahSurvey,
   guardRespondent,
-  memoryAdapter,
 } from "@dimah-survey/server";
 
-const database = memoryAdapter();
+import { database } from "@/db";
 
 export const editor = dimahSurvey({
   audience: "editor",
   database,
-  basePath: SURVEY_EDITOR_API_BASE_PATH,
+  guard: async ({ request }) => {
+    const session = request ? await getSession(request) : null;
+    if (session?.user.role !== "editor") {
+      throw APIError.from("FORBIDDEN", SURVEY_ERROR_CODES.FORBIDDEN);
+    }
+  },
 });
 
 export const fill = dimahSurvey({
   audience: "fill",
   database,
-  basePath: SURVEY_API_BASE_PATH,
-  guard: guardRespondent("demo"),
+  guard: async (context) => {
+    const session = context.request
+      ? await getSession(context.request)
+      : null;
+    if (!session) {
+      throw APIError.from("FORBIDDEN", SURVEY_ERROR_CODES.FORBIDDEN);
+    }
+    return guardRespondent(session.user.id)(context);
+  },
 });
 ```
 
-The fill guard stamps `"demo"` onto every response operation. With the default
-`"one-open"` policy, another start resumes the open draft instead of creating a
-second one.
+Both instances share `database`. See [Authorization](/docs/security) for
+anonymous responses.
 
-</Step>
+### Publish a SurveyJS document [step]
 
-<Step>
-
-### Mount both audiences
-
-```ts title="app/api/survey/[[...path]]/route.ts"
-import { toNextJsHandler } from "@dimah-survey/server/next";
-import { fill } from "@/lib/survey";
-
-export const { GET, POST, PUT, PATCH, DELETE } = toNextJsHandler(fill);
-```
-
-```ts title="app/api/admin/survey/[[...path]]/route.ts"
-import { toNextJsHandler } from "@dimah-survey/server/next";
-import { editor } from "@/lib/survey";
-
-export const { GET, POST, PUT, PATCH, DELETE } = toNextJsHandler(editor);
-```
-
-The paths match the default base paths: `/api/survey` for fill and
-`/api/admin/survey` for editor. See [Mount the server](/docs/integration) for
-other runtimes.
-
-</Step>
-
-<Step>
-
-### Publish a SurveyJS document
-
-Use the in-process editor API from server code. Saving changes `draftJson`;
-publishing explicitly copies that draft to `publishedJson`.
+Saving writes `draftJson`. Publishing copies that draft to `publishedJson`.
+Seed one document when the server starts:
 
 ```ts title="lib/welcome.ts"
-import { isAPIError } from "@dimah-survey/server";
-import { editor } from "@/lib/survey";
+import { database } from "@/db";
 
 const definition = {
   title: "Welcome",
@@ -120,54 +99,82 @@ const definition = {
   ],
 };
 
-export async function ensureWelcomeSurvey() {
-  try {
-    await editor.api.getSurvey({ query: { id: "welcome" } });
-  } catch (error) {
-    if (!isAPIError(error) || error.code !== "SURVEY_NOT_FOUND") throw error;
+export async function seedWelcomeSurvey() {
+  if (await database.getSurvey("welcome")) return;
 
-    await editor.api.saveSurvey({
-      body: { id: "welcome", slug: "welcome", draftJson: definition },
-    });
-    await editor.api.publishSurvey({ body: { id: "welcome" } });
-  }
+  await database.saveSurvey({
+    id: "welcome",
+    slug: "welcome",
+    draftJson: definition,
+  });
+  await database.publishSurvey({ id: "welcome" });
 }
 ```
 
-`getSurvey` throws `SURVEY_NOT_FOUND` when the row is missing; it does not
-return `null`.
-
-</Step>
-
-<Step>
-
-### Create the browser client
-
-```ts title="lib/fill-client.ts"
-"use client";
-
-import { createFillClient } from "@dimah-survey/react";
-
-export const fillClient = createFillClient({
-  baseURL: "/api/survey",
-});
+```ts title="instrumentation.ts"
+export async function register() {
+  if (process.env.NEXT_RUNTIME !== "nodejs") return;
+  const { seedWelcomeSurvey } = await import("@/lib/welcome");
+  await seedWelcomeSurvey();
+}
 ```
 
-Browser clients take flat input objects. In-process APIs use `{ body }` or
-`{ query }`.
+This seed calls the store directly. Authoring in the product should use the
+editor API so publish hooks run.
 
-</Step>
+### Mount both audiences [step]
 
-<Step>
+Each audience has its own route. The handler serves only that audience.
 
-### Render the response snapshot
+```ts title="app/api/survey/[[...path]]/route.ts"
+import { toNextJsHandler } from "@dimah-survey/server/next";
+
+import { fill } from "@/lib/survey";
+
+export const { GET, POST, PUT, PATCH, DELETE } = toNextJsHandler(fill);
+```
+
+```ts title="app/api/admin/survey/[[...path]]/route.ts"
+import { toNextJsHandler } from "@dimah-survey/server/next";
+
+import { editor } from "@/lib/survey";
+
+export const { GET, POST, PUT, PATCH, DELETE } = toNextJsHandler(editor);
+```
+
+Fill is `/api/survey`. Editor is `/api/admin/survey`. Set `basePath` when the
+route differs, and pass that same path as the browser client's `baseURL`.
+Other runtimes are on [Mount the server](/docs/integration).
+
+### Start the response [step]
+
+```ts title="lib/start-response.ts"
+import { headers } from "next/headers";
+
+import { fill } from "@/lib/survey";
+
+export async function startWelcomeResponse() {
+  const response = await fill.api.startResponse({
+    body: { surveyId: "welcome" },
+    headers: await headers(),
+  });
+  return response.id;
+}
+```
+
+Forward `headers()` so the fill guard sees the session. The first call copies
+`publishedJson` onto the response. A later call returns that respondent's open
+draft.
+
+### Render the response [step]
+
+`createFillClient()` calls `/api/survey`. The hook reads the snapshot. `<Survey>` renders it.
 
 ```tsx title="components/fill.tsx"
 "use client";
 
 import dynamic from "next/dynamic";
-import { useSurveyResponse } from "@dimah-survey/react";
-import { fillClient } from "@/lib/fill-client";
+import { createFillClient, useSurveyResponse } from "@dimah-survey/react";
 
 import "survey-core/survey-core.min.css";
 
@@ -176,14 +183,16 @@ const Survey = dynamic(
   { ssr: false },
 );
 
+const client = createFillClient();
+
 export function Fill({ responseId }: { responseId: string }) {
   const { model, error, saveError, stale, reload } = useSurveyResponse({
-    client: fillClient,
+    client,
     responseId,
   });
 
   if (error) return <p>{error.message}</p>;
-  if (!model) return null;
+  if (!model) return <p>Loading…</p>;
 
   return (
     <>
@@ -195,43 +204,35 @@ export function Fill({ responseId }: { responseId: string }) {
 }
 ```
 
-The hook loads `response.definition`, constructs a `Model`, and binds partial
-save and submit. It never renders UI. `partial` defaults to `"page"`, so moving
-to the next page persists the complete `survey.data` object.
-
-</Step>
-
-<Step>
-
-### Start the response
-
 ```tsx title="app/page.tsx"
 import { Fill } from "@/components/fill";
-import { fill } from "@/lib/survey";
-import { ensureWelcomeSurvey } from "@/lib/welcome";
+import { startWelcomeResponse } from "@/lib/start-response";
 
 export default async function Page() {
-  await ensureWelcomeSurvey();
-  const response = await fill.api.startResponse({
-    body: { surveyId: "welcome" },
-  });
-
-  return <Fill responseId={response.id} />;
+  const responseId = await startWelcomeResponse();
+  return <Fill responseId={responseId} />;
 }
 ```
 
-The first request creates a draft whose definition is a copy of the published
-document. Refreshing resumes that draft. A later publish cannot rewrite it.
+The hook builds a `Model` from `response.definition` and saves the complete
+`survey.data` object on the next page. It does not render SurveyJS.
 
-</Step>
+## Next
 
-</Steps>
-
-## Make it production-ready
-
-- Replace `memoryAdapter()` with the SQL store or your own durable
-  `SurveyStore`. See [Persistence](/docs/persistence).
-- Read the respondent from your session and protect the editor audience. See
-  [Security](/docs/security).
-- Add Creator autosave without coupling it to publish. See
-  [Survey Creator](/docs/creator).
+<Cards>
+  <Card
+    title="Authorization"
+    href="/docs/security"
+    description="Harden fill and editor guards."
+  />
+  <Card
+    title="Response lifecycle"
+    href="/docs/responses"
+    description="Understand partial save, submit, and reopen."
+  />
+  <Card
+    title="Survey Creator"
+    href="/docs/creator"
+    description="Autosave drafts while keeping publish explicit."
+  />
+</Cards>

@@ -4,14 +4,15 @@ description: Author a draft, publish explicitly, and preserve every response sna
 icon: FileText
 ---
 
-Each survey stores three independent concerns:
+Each survey row keeps `draftJson`, `publishedJson`, and `settings` independent.
+Creator writes the draft. Publishing promotes it. Starting a response copies
+the published document into `response.definition`.
 
-- `draftJson` — the editable SurveyJS document
-- `publishedJson` — the document new responses may start
-- `settings` — collection policy owned by dimah-survey
+```ts
+import type { SurveyRecord } from "@dimah-survey/core";
+```
 
-Creator writes the draft. Publishing explicitly promotes that draft. Starting
-a response copies the published document into `response.definition`.
+<AutoTypeTable path="packages/core/src/types.ts" name="SurveyRecord" />
 
 <Callout>
   `saveSurvey` only replaces `draftJson`. It never publishes, changes collection
@@ -20,16 +21,16 @@ a response copies the published document into `response.definition`.
 
 ## Status and availability
 
-| Status     | Meaning                                           | Can start a response?         |
-| ---------- | ------------------------------------------------- | ----------------------------- |
-| `draft`    | No published document exists                      | No; `NOT_PUBLISHED`           |
-| `active`   | `publishedJson` is available to fill              | Yes, while collection is open |
-| `archived` | Collection is stopped; published JSON is retained | No; `NOT_PUBLISHED`           |
+| Status     | Meaning                                           | Can start a response?    |
+| ---------- | ------------------------------------------------- | ------------------------ |
+| `draft`    | No published document exists                      | No; `NOT_PUBLISHED`      |
+| `active`   | `publishedJson` is available to fill              | Yes, while policy allows |
+| `archived` | Collection is stopped; published JSON is retained | No; `NOT_PUBLISHED`      |
 
-`GET /survey/published` on the fill handler returns `publishedJson` and
-`settings` for an active survey. It never exposes `draftJson`. The read remains
-available outside the collection window so the application can render a closed
-state; start and writes fail with `SURVEY_CLOSED`.
+The fill route returns `publishedJson` and `settings` for an active survey. It
+never exposes `draftJson`. The read remains available outside the collection
+window so the application can render a closed state; start and writes fail
+with `SURVEY_CLOSED`.
 
 ## Authoring operations
 
@@ -41,9 +42,9 @@ state; start and writes fail with `SURVEY_CLOSED`.
 | `resumeSurvey`       | Return an archived, previously published survey to `active`                 |
 | `saveSurveySettings` | Replace the complete `settings` object without touching either document     |
 
-`resumeSurvey` does not copy `draftJson`. An already active survey is returned
-unchanged. An archived survey with no published document throws
-`NOT_PUBLISHED`, and resume never runs publish hooks.
+`resumeSurvey` restores the last published document; it does not publish the
+current draft. An already active survey is returned unchanged; an archived
+survey with no published document fails with `NOT_PUBLISHED`.
 
 Publish runs `onPublish` before the write and `afterPublish` after it.
 `onPublish` may abort; an `afterPublish` failure leaves the published row in
@@ -57,23 +58,21 @@ unique; a conflicting write throws `SLUG_TAKEN`.
 `getSurvey` and `getPublishedSurvey` accept an id or a slug in the `id` query.
 `startResponse` accepts either value in `surveyId`.
 
+---
+
 ## Protect concurrent changes
 
 Draft, publish, archive, settings, and resume accept `expectedUpdatedAt` from
 the last read. The store compares it inside the write and rejects a stale
 request with `STALE_UPDATE`.
 
-Omit the token only when a last-write-wins update is intentional. Creating a
-survey with `expectedUpdatedAt` set fails with `STALE_UPDATE`, because there is
-no row to compare.
+Omit the token only for an intentional last-write-wins update. A create with
+`expectedUpdatedAt` fails with `STALE_UPDATE` because no row exists to compare.
 
 `useSurveyDraft` sends the token it last read. See [Creator](/docs/creator).
 
-## Publish changes the future, not history
+---
 
-Existing drafts, submitted responses, and abandoned responses keep their stored
-`definition`. Only a newly created response copies the latest
-`publishedJson`.
-
-There is no separate survey-version table. The snapshot on each response is
-the version history that matters.
+Only new responses copy the latest `publishedJson`. Existing drafts, submitted
+responses, and abandoned responses keep their stored `definition`; that
+snapshot is the historical record.

@@ -9,7 +9,7 @@ replaces `draftJson`; it never changes `publishedJson` or any response
 definition.
 
 ```npm
-npm i @dimah-survey/react survey-creator-core survey-creator-react
+npm i @dimah-survey/react react react-dom survey-core survey-react-ui survey-creator-core survey-creator-react
 ```
 
 <Callout>
@@ -20,9 +20,20 @@ npm i @dimah-survey/react survey-creator-core survey-creator-react
 ```tsx title="components/design.tsx"
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useState } from "react";
+import dynamic from "next/dynamic";
+import type { SurveyJson } from "@dimah-survey/core";
 import { createEditorClient, useSurveyDraft } from "@dimah-survey/react";
-import { SurveyCreator, SurveyCreatorComponent } from "survey-creator-react";
+import type { SurveyCreator } from "survey-creator-react";
+
+import "survey-core/survey-core.min.css";
+import "survey-creator-core/survey-creator-core.min.css";
+
+const CreatorSurface = dynamic(
+  () =>
+    import("survey-creator-react").then((mod) => mod.SurveyCreatorComponent),
+  { ssr: false },
+);
 
 const editorClient = createEditorClient({ baseURL: "/api/admin/survey" });
 
@@ -32,14 +43,11 @@ export function Design({
   updatedAt,
 }: {
   surveyId: string;
-  draftJson: object;
+  draftJson: SurveyJson;
   updatedAt: string;
 }) {
-  const creator = useMemo(() => {
-    const next = new SurveyCreator();
-    next.JSON = draftJson;
-    return next;
-  }, [draftJson]);
+  const snapshot = JSON.stringify(draftJson);
+  const [creator, setCreator] = useState<SurveyCreator | null>(null);
 
   const { saveError, stale } = useSurveyDraft({
     client: editorClient,
@@ -48,11 +56,30 @@ export function Design({
     updatedAt,
   });
 
+  useEffect(() => {
+    let disposed = false;
+    let instance: SurveyCreator | undefined;
+
+    void import("survey-creator-react").then(({ SurveyCreator }) => {
+      if (disposed) return;
+      instance = new SurveyCreator();
+      instance.JSON = JSON.parse(snapshot) as SurveyJson;
+      setCreator(instance);
+    });
+
+    return () => {
+      disposed = true;
+      instance?.dispose();
+    };
+  }, [snapshot, surveyId]);
+
+  if (!creator) return <p>Loading…</p>;
+
   return (
     <>
       {saveError ? <p>{saveError.message}</p> : null}
       {stale ? <p>This draft was saved somewhere else.</p> : null}
-      <SurveyCreatorComponent creator={creator} />
+      <CreatorSurface creator={creator} />
     </>
   );
 }
@@ -60,7 +87,8 @@ export function Design({
 
 Load `draftJson` and `updatedAt` on the server with `editor.api.getSurvey`,
 then pass both into the client component. `createEditorClient()` defaults to
-`/api/admin/survey`.
+`/api/admin/survey`. Creator is browser-only, so Next.js loads both the class
+and component dynamically.
 
 ```ts
 import type { UseSurveyDraftOptions } from "@dimah-survey/react";
@@ -87,18 +115,40 @@ import type { SurveyDraftBinding } from "@dimah-survey/react";
 Unlike the fill hook, `useSurveyDraft()` has no `reload()` method. Reload the
 survey in your application before writing again.
 
+---
+
 ## Publish explicitly
 
 Autosave must not call `publishSurvey`. Publish copies the current draft onto
-`publishedJson` and is an explicit action:
+`publishedJson`. Wait for the current Creator save, then publish the revision
+you just read:
 
 ```ts
-await editorClient.publishSurvey({ id: surveyId, expectedUpdatedAt });
+import type { SurveyCreator } from "survey-creator-react";
+
+function flushCreatorSave(creator: SurveyCreator) {
+  return new Promise<void>((resolve, reject) => {
+    creator.saveSurveyFunc(0, (_saveNo, success) => {
+      if (success) resolve();
+      else reject(new Error("Could not save the draft."));
+    });
+  });
+}
+
+await flushCreatorSave(creator);
+const latest = await editorClient.getSurvey(surveyId);
+await editorClient.publishSurvey({
+  id: surveyId,
+  expectedUpdatedAt: latest.updatedAt,
+});
 ```
 
 On the server, the equivalent call is
 `editor.api.publishSurvey({ body })`. Archive, resume, and settings are editor
-calls too. See [Surveys](/docs/surveys).
+calls too. See the complete [Next.js
+example](https://github.com/dimah-kz/dimah-survey/blob/main/examples/next/components/survey-designer.tsx).
+
+---
 
 ## Bind without React state
 

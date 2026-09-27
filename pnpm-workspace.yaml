@@ -50,15 +50,13 @@ catalog:
   vitest: ^5.0.2
   zod: ^4.6.5
 
-# TypeScript 7 has no compiler API, and eslint-config-next's React plugin
-# crashes on ESLint 10. Next apps take the API shim and ESLint 9 from these
-# catalogs. Default-catalog `typescript` and `eslint` stay 7 and 10 for the libraries.
+# TypeScript 7 has no compiler API. Next apps take the TypeScript 6 API from
+# this catalog so typescript-eslint can load it. `tsc` is `@typescript/native`
+# (TypeScript 7). Default-catalog `typescript` stays 7 for the libraries.
 catalogs:
   typescript6:
     typescript: "npm:@typescript/typescript6@^6.0.2"
     "@typescript/native": "npm:typescript@7.0.2"
-  next:
-    eslint: 9.39.5
 
 allowBuilds:
   esbuild: true

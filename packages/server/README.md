@@ -1,7 +1,7 @@
 # @dimah-survey/server
 
-Server factory, guards, SurveyJS validation, runtime adapters, and local memory
-storage for [dimah-survey](https://survey.dimah.dev).
+Server factory, guards, SurveyJS validation, and runtime adapters for
+[dimah-survey](https://survey.dimah.dev).
 
 `dimahSurvey()` creates an isolated fill or editor audience with both a Fetch
 handler and a typed in-process API.
@@ -20,13 +20,9 @@ Create two instances over one store. Fill always requires a principal; editor
 authorization allows the request or throws.
 
 ```ts
-import {
-  dimahSurvey,
-  guardRespondent,
-  memoryAdapter,
-} from "@dimah-survey/server";
+import { dimahSurvey, guardRespondent } from "@dimah-survey/server";
 
-const database = memoryAdapter();
+import { database } from "./db";
 
 export const editor = dimahSurvey({
   audience: "editor",
@@ -44,8 +40,8 @@ export const fill = dimahSurvey({
 });
 ```
 
-`memoryAdapter()` is process-local. Use `db(client)` from
-`@dimah-survey/db`, or a custom `SurveyStore`, for durable storage.
+Create `database` with `@dimah-survey/db`. Drizzle, Prisma, and Kysely are in
+the [quickstart](https://survey.dimah.dev/docs/quickstart).
 
 ## Mount a runtime adapter
 
@@ -73,7 +69,7 @@ for Node.js, Express, Hono, Fastify, Elysia, and SvelteKit.
 
 - [Mount the server](https://survey.dimah.dev/docs/integration)
 - [Authorization and identity](https://survey.dimah.dev/docs/security)
-- [Persistence](https://survey.dimah.dev/docs/persistence)
+- [Database](https://survey.dimah.dev/docs/database)
 
 ## License
 

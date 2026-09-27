@@ -1,0 +1,179 @@
+﻿---
+title: Database
+description: Add the survey tables to the database you already use.
+icon: Database
+---
+
+Add `dimah_survey` and `dimah_response` to your schema, migrate with the tool
+you already use, and pass the same `database` to both server audiences.
+dimah-survey does not run migrations.
+
+```npm
+npm i @dimah-survey/db fumadb
+```
+
+Model keys are `survey` and `response`. Copy the tables into your application.
+Do not import them from `@dimah-survey/db` at runtime.
+
+`provider` is `"sqlite"`, `"postgresql"`, or `"mysql"`.
+
+<Tabs items={["Drizzle", "Prisma", "Kysely"]}>
+<Tab value="Drizzle">
+
+Add these tables to your Drizzle schema. This copy is SQLite. On PostgreSQL or
+MySQL, use that driver's table builder and set `provider` to match. Keep the
+partial unique index.
+
+<include>../../_includes/db/drizzle.mdx</include>
+
+```ts title="db/index.ts"
+import { DimahSurveyDB, db } from "@dimah-survey/db";
+import { drizzleAdapter } from "fumadb/adapters/drizzle";
+
+export const database = db(
+  DimahSurveyDB.client(
+    drizzleAdapter({ db: drizzleDb, provider: "sqlite" }),
+  ),
+);
+```
+
+`drizzleDb` is the Drizzle client you already open. Pass `relations` from the
+schema into that client.
+
+</Tab>
+<Tab value="Prisma">
+
+Add these models to your Prisma schema. This copy is PostgreSQL.
+
+<include>../../_includes/db/prisma.mdx</include>
+
+Prisma cannot express the partial unique index. Add this statement to the
+migration you generate, then apply it as you usually do:
+
+<include>../../_includes/db/indexes.mdx</include>
+
+```ts title="db/index.ts"
+import { DimahSurveyDB, db } from "@dimah-survey/db";
+import { prismaAdapter } from "fumadb/adapters/prisma";
+
+export const database = db(
+  DimahSurveyDB.client(
+    prismaAdapter({ prisma, provider: "postgresql" }),
+  ),
+);
+```
+
+`prisma` is your existing `PrismaClient`.
+
+</Tab>
+<Tab value="Kysely">
+
+Add this SQL with your migration tool. This copy is PostgreSQL.
+
+<include>../../_includes/db/sql.mdx</include>
+
+```ts title="db/index.ts"
+import { DimahSurveyDB, db } from "@dimah-survey/db";
+import { kyselyAdapter } from "fumadb/adapters/kysely";
+
+export const database = db(
+  DimahSurveyDB.client(
+    kyselyAdapter({ db: kysely, provider: "postgresql" }),
+  ),
+);
+```
+
+`kysely` is your existing Kysely instance.
+
+</Tab>
+</Tabs>
+
+<Callout>
+  The store accepts `provider: "mysql"`, but this page does not include a MySQL
+  schema. Translate the tables and indexes before connecting the adapter.
+</Callout>
+
+## Next.js
+
+Keep the store on the Node.js runtime. The last entry is the ORM package that
+opens the connection: `drizzle-orm`, `@prisma/client`, or `kysely`.
+
+```ts title="next.config.ts"
+import type { NextConfig } from "next";
+
+const nextConfig: NextConfig = {
+  serverExternalPackages: ["@dimah-survey/db", "fumadb", "drizzle-orm"],
+};
+
+export default nextConfig;
+```
+
+## In memory
+
+`memoryAdapter()` from `@dimah-survey/server` stores rows in the process. They
+disappear when the process exits. Use it for tests, or when you do not want
+the SQL tables. Pass it as `database` the same way as the SQL store.
+
+```ts
+import { memoryAdapter } from "@dimah-survey/server";
+
+export const database = memoryAdapter();
+```
+
+## Custom store
+
+```ts
+import type { SurveyStore } from "@dimah-survey/core";
+```
+
+<AutoTypeTable path="packages/core/src/types.ts" name="SurveyStore" />
+
+Start and submit callbacks are server-only. They are never accepted from the
+HTTP body:
+
+```ts
+import type {
+  StartResponseLifecycle,
+  SubmitResponseLifecycle,
+} from "@dimah-survey/core";
+```
+
+<AutoTypeTable
+  path="packages/core/src/types.ts"
+  name="StartResponseLifecycle"
+/>
+
+<AutoTypeTable
+  path="packages/core/src/types.ts"
+  name="SubmitResponseLifecycle"
+/>
+
+A conforming store preserves these invariants:
+
+### Documents and snapshots
+
+- Keep `draftJson`, `publishedJson`, and `settings` independent.
+- Insert default settings with a new survey; only
+  `saveSurveySettings` changes them afterward.
+- Copy `publishedJson` into `response.definition` at start and never update
+  that column.
+- Partial save replaces `data`; persist the object passed by the server.
+
+### Atomic writes
+
+- Check `expectedUpdatedAt` inside the write.
+- Evaluate start reuse, collection windows, response caps, and one-open-draft
+  rules in the same lock or transaction as the mutation.
+- Enforce one draft per survey and identified respondent in application logic;
+  use the partial unique index as a database backstop.
+- Run the start and submit lifecycle callbacks inside that same boundary.
+
+### Queries and transitions
+
+- Anonymous start always inserts. Identified start follows `"one-open"` or
+  `"single"` settings.
+- Start, partial save, and submit enforce the collection window.
+- New starts and submits enforce the response cap.
+- Reopen enforces `reopen` and refuses a second identified draft.
+- Lists honor pagination, sort by `updatedAt` descending, and omit
+  `definition` and `data` from summaries.

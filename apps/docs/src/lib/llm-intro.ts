@@ -15,8 +15,8 @@ export const LLM_PAGE_PRIORITY = [
   "/docs/surveys",
   "/docs/settings",
   "/docs/responses",
+  "/docs/database",
   "/docs/integration",
-  "/docs/persistence",
   "/docs/security",
   "/docs/react",
   "/docs/creator",
@@ -70,11 +70,11 @@ export function llmDecisionSheet(): string {
 
 SurveyJS owns the schema, Creator, question behavior, and renderer. Your application owns authentication, database migrations, files, and UI. dimah-survey owns publish, response snapshots, drafts, collection policy, and submit validation.
 
-TypeScript packages: \`@dimah-survey/core\` (protocol, browser clients, schemas, errors, store types), \`@dimah-survey/server\` (\`dimahSurvey()\`, guards, validation, adapters, \`memoryAdapter()\`), \`@dimah-survey/react\` (SurveyJS Model and Creator bindings), \`@dimah-survey/db\` (SQL store). HTTP adapters: Next.js App Router, Express, Hono, Fastify, Elysia, SvelteKit, and Node.
+TypeScript packages: \`@dimah-survey/core\` (protocol, browser clients, schemas, errors, store types), \`@dimah-survey/server\` (\`dimahSurvey()\`, guards, validation, adapters), \`@dimah-survey/react\` (SurveyJS Model and Creator bindings), \`@dimah-survey/db\` (SQL store). HTTP adapters: Next.js App Router, Express, Hono, Fastify, Elysia, SvelteKit, and Node.
 
 Use it when a SurveyJS app needs explicit publish and reproducible response history. Skip it for a visual form builder, hosted survey product, SurveyJS renderer, or dimah-form integration.
 
-Install: \`npm i @dimah-survey/server @dimah-survey/react survey-core survey-react-ui\`. Add \`@dimah-survey/db\` for the SQL store. Published and still before \`1.0.0\`. A release may change the API.
+Install: \`npm i @dimah-survey/server @dimah-survey/db @dimah-survey/react react react-dom survey-core survey-react-ui\`. Adding the SQL tables, including \`fumadb\`, is \`/docs/database\`. \`memoryAdapter()\` from \`@dimah-survey/server\` is a process-local store for tests. Published and still before \`1.0.0\`. A release may change the API.
 
 - Auth stays in the consumer \`guard\`. Do not look for library auth.
 - \`draftJson\` is the editor copy. \`publishedJson\` is what new responses clone. A later publish does not change \`response.definition\`.
@@ -93,7 +93,7 @@ export function llmFileLists(origin = getSiteUrl().origin): string {
   return `## Packages
 
 - [@dimah-survey/core](${packageTree("core")}): protocol, clients, schemas, errors, and store types
-- [@dimah-survey/server](${packageTree("server")}): \`dimahSurvey()\`, guards, validation, adapters, and \`memoryAdapter()\`
+- [@dimah-survey/server](${packageTree("server")}): \`dimahSurvey()\`, guards, validation, and adapters
 - [@dimah-survey/react](${packageTree("react")}): SurveyJS Model and Creator bindings
 - [@dimah-survey/db](${packageTree("db")}): SQL \`SurveyStore\`
 

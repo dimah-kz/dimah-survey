@@ -4,25 +4,38 @@ description: Configure server audiences, browser clients, validation, hooks, and
 icon: Settings
 ---
 
-Fill and editor have separate configuration types because they expose different
-trust boundaries. Both require the same `database`; only fill accepts response
-validation and only editor accepts publish hooks.
+Fill and editor have separate configuration types and share one `database`.
+Only fill accepts response validation; only editor accepts publish hooks.
 
 ## Fill instance
 
 ```ts
 import {
+  APIError,
+  SURVEY_ERROR_CODES,
   dimahSurvey,
-  guardAnonymous,
-  memoryAdapter,
+  guardRespondent,
 } from "@dimah-survey/server";
+
+import { database } from "@/db";
 
 export const fill = dimahSurvey({
   audience: "fill",
-  database: memoryAdapter(),
-  guard: guardAnonymous(),
+  database,
+  guard: async (context) => {
+    const session = context.request
+      ? await getSession(context.request)
+      : null;
+    if (!session) {
+      throw APIError.from("FORBIDDEN", SURVEY_ERROR_CODES.FORBIDDEN);
+    }
+    return guardRespondent(session.user.id)(context);
+  },
 });
 ```
+
+[Database](/docs/database) creates `database` with `@dimah-survey/db`.
+`getSession` is your application code.
 
 ```ts
 import type { DimahFillConfig } from "@dimah-survey/server";
@@ -33,13 +46,19 @@ import type { DimahFillConfig } from "@dimah-survey/server";
   name="DimahFillConfig"
 />
 
-`checkSurveyResult` drops values that cannot be assigned, runs `validate`, and
-returns the `survey.data` to persist. Questions with `choicesByUrl` keep their
-posted value. The server does not fetch that list.
+The default `checkSurveyResult` clears values the snapshot cannot assign, runs
+SurveyJS validation, and returns the `survey.data` to persist. The server does
+not fetch `choicesByUrl`.
 
-A custom `validateResult` receives `{ definition, data }`. Return the object to
-store. Return nothing to keep `data`. Throw `APIError` with `VALIDATION_FAILED`
-to reject the submit. See [Responses](/docs/responses).
+```ts
+import type { ValidateResultInput } from "@dimah-survey/core";
+```
+
+<AutoTypeTable path="packages/core/src/types.ts" name="ValidateResultInput" />
+
+Return the object to store. Return nothing to keep `data`. Throw `APIError`
+with `VALIDATION_FAILED` to reject the submit. See
+[Responses](/docs/responses).
 
 ### guard
 
@@ -50,7 +69,8 @@ import type { GuardContext } from "@dimah-survey/core";
 <AutoTypeTable path="packages/core/src/types.ts" name="GuardContext" />
 
 Returning nothing from a fill guard is forbidden. `guardRespondent(id)` returns
-`{ respondentId }`. `guardAnonymous()` returns `{ anonymous: true }`.
+`{ respondentId }`. `guardAnonymous()` opts into capability-based anonymous
+responses and returns `{ anonymous: true }`.
 
 ### Lifecycle hooks
 
@@ -60,20 +80,34 @@ import type { FillHooks } from "@dimah-survey/server";
 
 <AutoTypeTable path="packages/server/src/dimah-survey.ts" name="FillHooks" />
 
-A start that returns an existing row does not call `onStart` or `afterStart`.
-A replayed submit does not call `onSubmit` or `afterSubmit`. The HTTP body
-cannot carry these hooks.
+A resumed start and an idempotent resubmit skip their hooks. `on*` hooks may
+abort a write; `after*` hooks run after storage and cannot roll it back. Keep
+external side effects retry-safe. HTTP bodies cannot provide hooks.
+
+---
 
 ## Editor instance
 
 ```ts
-import { dimahSurvey } from "@dimah-survey/server";
+import {
+  APIError,
+  SURVEY_ERROR_CODES,
+  dimahSurvey,
+} from "@dimah-survey/server";
 
 export const editor = dimahSurvey({
   audience: "editor",
   database,
+  guard: async ({ request }) => {
+    if (!request || !(await isEditor(request))) {
+      throw APIError.from("FORBIDDEN", SURVEY_ERROR_CODES.FORBIDDEN);
+    }
+  },
 });
 ```
+
+`isEditor` is your application code. An editor guard returns nothing or throws.
+Omitting it leaves the editor open to every caller that can reach the route.
 
 ```ts
 import type { DimahEditorConfig } from "@dimah-survey/server";
@@ -89,6 +123,11 @@ import type { EditorHooks } from "@dimah-survey/server";
 ```
 
 <AutoTypeTable path="packages/server/src/dimah-survey.ts" name="EditorHooks" />
+
+`onPublish` may abort publishing. `afterPublish` runs after storage.
+`resumeSurvey` runs neither hook.
+
+---
 
 ## Browser clients
 
@@ -107,6 +146,8 @@ import type { CreateSurveyClientOptions } from "@dimah-survey/react";
 Browser methods take flat objects. `fill.api` and `editor.api` take `{ body }`
 or `{ query }`, plus optional `headers` or `request` for guards. See
 [Mount the server](/docs/integration).
+
+---
 
 ## React
 

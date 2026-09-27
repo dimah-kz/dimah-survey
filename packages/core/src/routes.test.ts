@@ -19,6 +19,7 @@ describe("normalizeSurveyApiBasePath", () => {
       "/api/admin/survey",
     );
     expect(normalizeSurveyApiBasePath("  /api/fill/ ")).toBe("/api/fill");
+    expect(normalizeSurveyApiBasePath("/api/fill///")).toBe("/api/fill");
     expect(
       normalizeSurveyApiBasePath("http://survey.local/api/admin/survey/"),
     ).toBe("http://survey.local/api/admin/survey");

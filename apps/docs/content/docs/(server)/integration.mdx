@@ -17,38 +17,52 @@ must use the same `SurveyStore`.
 
 ```ts title="lib/survey.ts"
 import {
-  SURVEY_API_BASE_PATH,
-  SURVEY_EDITOR_API_BASE_PATH,
+  APIError,
+  SURVEY_ERROR_CODES,
   dimahSurvey,
-  guardAnonymous,
-  memoryAdapter,
+  guardRespondent,
 } from "@dimah-survey/server";
 
-const database = memoryAdapter();
+import { database } from "@/db";
 
 export const editor = dimahSurvey({
   audience: "editor",
   database,
-  basePath: SURVEY_EDITOR_API_BASE_PATH,
+  guard: async ({ request }) => {
+    if (!request || !(await isEditor(request))) {
+      throw APIError.from("FORBIDDEN", SURVEY_ERROR_CODES.FORBIDDEN);
+    }
+  },
 });
 
 export const fill = dimahSurvey({
   audience: "fill",
   database,
-  basePath: SURVEY_API_BASE_PATH,
-  guard: guardAnonymous(),
+  guard: async (context) => {
+    const session = context.request
+      ? await getSession(context.request)
+      : null;
+    if (!session) {
+      throw APIError.from("FORBIDDEN", SURVEY_ERROR_CODES.FORBIDDEN);
+    }
+    return guardRespondent(session.user.id)(context);
+  },
 });
 ```
+
+Create `database` on [Database](/docs/database). Pass that same object to
+both audiences. `isEditor` and `getSession` are your application code. For
+public capability-based responses, use `guardAnonymous()` instead; see
+[Authorization](/docs/security).
 
 `basePath` is part of the request contract and must match the corresponding
 browser client's `baseURL`. The defaults are `/api/survey` for fill and
 `/api/admin/survey` for editor.
 
 A fill instance without `guard` throws at startup. An editor guard returns
-nothing or throws. See [Security](/docs/security).
+nothing or throws. See [Authorization](/docs/security).
 
-`memoryAdapter()` is for tests and local development. Choose SQL or a custom
-`SurveyStore` in [Persistence](/docs/persistence).
+---
 
 ## Mount the HTTP handlers
 
@@ -167,6 +181,8 @@ createServer(toNodeHandler(fill)).listen(3000);
 Repeat the same adapter setup for the editor path. Never send both audiences
 through one instance.
 
+---
+
 ## Call the API on the server
 
 `fill.api` and `editor.api` take `{ body }` or `{ query }`. They do not perform
@@ -174,21 +190,24 @@ an HTTP round trip. Pass `headers` or a `Request` when the guard needs cookies
 or other caller context.
 
 ```ts
+import { headers } from "next/headers";
+
+const requestHeaders = await headers();
+
 await editor.api.publishSurvey({
   body: { id: "welcome" },
+  headers: requestHeaders,
 });
-```
-
-```ts
-import { headers } from "next/headers";
 
 await fill.api.startResponse({
   body: { surveyId: "welcome" },
-  headers: await headers(),
+  headers: requestHeaders,
 });
 ```
 
 Without forwarded request data, an in-process call has no session cookie.
+
+---
 
 ## Call from the browser
 
