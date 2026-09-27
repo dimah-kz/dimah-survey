@@ -1,3 +1,9 @@
+## @workspace/survey-store-contract@0.4.0
+
+### Export the option types the docs render
+
+`SurveyGuard`, `CreateSurveyClientOptions`, `UseSurveyResponseOptions`, and `UseSurveyDraftOptions` are public. Configuration, settings, store, list, and React binding fields document their defaults and write behavior in JSDoc.
+
 ## @workspace/survey-store-contract@0.3.0
 
 ### Export the option types the docs render
