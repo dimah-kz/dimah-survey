@@ -1,4 +1,4 @@
 {
   "title": "Server",
-  "pages": ["persistence", "integration", "security"]
+  "pages": ["database", "integration", "security"]
 }
