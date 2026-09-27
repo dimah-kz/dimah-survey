@@ -1,52 +1,67 @@
 # dimah-survey
 
-The backend lifecycle layer for [SurveyJS](https://surveyjs.io/) JSON.
+[![CI](https://github.com/dimah-kz/dimah-survey/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/dimah-kz/dimah-survey/actions/workflows/ci.yml)
+[![Docs](https://img.shields.io/badge/docs-survey.dimah.dev-0e8a16)](https://survey.dimah.dev)
+[![License: MIT](https://img.shields.io/github/license/dimah-kz/dimah-survey)](./LICENSE)
 
-## What it owns
+Server-owned publishing and response lifecycles for
+[SurveyJS](https://surveyjs.io/) JSON.
 
-SurveyJS owns the schema, renderer, and Creator. Your application owns auth,
-database migrations, and UI composition. dimah-survey owns:
+Publish an editable survey, freeze the definition each response starts with,
+save drafts, and validate submissions against that same snapshot.
 
-- an editable `draftJson` and an explicit `publishedJson`
-- a frozen `response.definition` for every started response
-- partial save, submit, reopen, and response collection policy
-- submit validation against the stored definition
-- separate fill and editor HTTP audiences over one shared store
-
-A later publish never rewrites an existing response. This is not a form
-renderer, hosted survey product, SurveyJS plugin, or dimah-form integration.
-
-## Packages
-
-| Package                | Role                                                        |
-| ---------------------- | ----------------------------------------------------------- |
-| `@dimah-survey/core`   | Protocol, browser clients, schemas, errors, and store types |
-| `@dimah-survey/server` | Server factory, guards, validation, handlers, and adapters  |
-| `@dimah-survey/react`  | SurveyJS Model and Creator bindings; no renderer            |
-| `@dimah-survey/db`     | SQL `SurveyStore` and schema references for your app        |
-
-## Install
+[Documentation](https://survey.dimah.dev) · [Contributing](./CONTRIBUTING.md) · [Support](./SUPPORT.md) · [Security](./SECURITY.md) · [Code of conduct](./CODE_OF_CONDUCT.md)
 
 ```bash
 npm i @dimah-survey/server @dimah-survey/react survey-core survey-react-ui
 ```
 
-Install `@dimah-survey/db` when you want the SQL store, or `@dimah-survey/core`
-for a non-React client and shared protocol types.
+## Why it exists
+
+SurveyJS owns the schema, Creator, question behavior, and renderer. Your
+application owns authentication, database migrations, files, and UI.
+dimah-survey owns the server lifecycle between them:
+
+- separate editable and published SurveyJS documents
+- immutable per-response definitions
+- partial save, submit, abandon, and reopen
+- collection windows, response limits, and compare-and-swap writes
+- submit validation against the stored response definition
+- isolated fill and editor APIs over one shared store
+
+> A later publish never rewrites an existing `response.definition`.
+
+This is not a renderer, hosted survey product, or SurveyJS plugin.
+
+## Packages
+
+| Package                                     | Purpose                                                            |
+| ------------------------------------------- | ------------------------------------------------------------------ |
+| [`@dimah-survey/core`](./packages/core)     | Protocol, browser clients, schemas, errors, and store types        |
+| [`@dimah-survey/server`](./packages/server) | Server factory, guards, validation, handlers, and runtime adapters |
+| [`@dimah-survey/react`](./packages/react)   | SurveyJS `Model` and Creator bindings without renderer wrappers    |
+| [`@dimah-survey/db`](./packages/db)         | SQL `SurveyStore` and application-owned schema references          |
 
 ## Documentation
 
-Guides and the protocol reference are published at
-<https://survey.dimah.dev>.
+Read the [quickstart](https://survey.dimah.dev/docs/quickstart), explore the
+[example application](https://survey.dimah.dev/docs/example), or open the
+[HTTP protocol](https://survey.dimah.dev/docs/protocol).
 
-The site source is [`apps/docs`](./apps/docs). From the repository root:
+The complete documentation is published at
+[survey.dimah.dev](https://survey.dimah.dev).
+
+## Run the example
+
+The Next.js example uses all four packages with SQLite, Survey Creator, and a
+cookie-backed respondent:
 
 ```bash
-pnpm dev:docs
+pnpm install
+pnpm example
 ```
 
-That serves the same [content](./apps/docs/content/docs) at
-<http://localhost:3001>.
+See [`examples/next`](./examples/next) for its routes and architecture.
 
 ## Development
 
@@ -57,7 +72,9 @@ pnpm check-types
 pnpm test
 ```
 
-Release workflow details live in [`docs/agents/release.md`](./docs/agents/release.md).
+Run `pnpm dev:docs` for the documentation site on
+[localhost:3001](http://localhost:3001). Setup, pull requests, and the release
+policy are in [CONTRIBUTING.md](./CONTRIBUTING.md).
 
 ## License
 

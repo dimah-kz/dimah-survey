@@ -1,17 +1,12 @@
 import Link from "next/link";
 import {
+  ArrowDown,
   ArrowRight,
   ArrowUpRight,
-  Braces,
-  Camera,
-  Database,
-  Layers3,
-  Server,
-  ShieldCheck,
-  Split,
+  Check,
+  LockKeyhole,
 } from "lucide-react";
 
-import { Flow } from "@/components/flow";
 import {
   githubUrl,
   siteDescription,
@@ -27,286 +22,232 @@ function GitHubIcon() {
   );
 }
 
-const features = [
+const documentationLinks = [
   {
-    icon: Camera,
-    kicker: "Response snapshots",
-    title: "Keep each response reproducible",
-    body: "Starting a response copies the published SurveyJS JSON into a durable definition that later publishes cannot change.",
+    index: "01",
+    title: "Overview",
+    description: "Understand the lifecycle",
+    href: "/docs",
   },
   {
-    icon: Split,
-    kicker: "Server boundaries",
-    title: "Separate authoring from collection",
-    body: "Editor routes own drafts and publish. Fill routes own respondent access, drafts, and submit.",
+    index: "02",
+    title: "Quickstart",
+    description: "Build the first response",
+    href: "/docs/quickstart",
   },
   {
-    icon: ShieldCheck,
-    kicker: "Server validation",
-    title: "Validate the survey that started",
-    body: "Submit runs SurveyJS validation on the stored response definition before the server accepts its data.",
-  },
-] as const;
-
-const packages = [
-  {
-    icon: Braces,
-    name: "@dimah-survey/core",
-    body: "Protocol, browser clients, schemas, errors, and store types.",
+    index: "03",
+    title: "Integration",
+    description: "Mount your runtime",
+    href: "/docs/integration",
   },
   {
-    icon: Server,
-    name: "@dimah-survey/server",
-    body: "Handlers, guards, validation, adapters, and local memory storage.",
-  },
-  {
-    icon: Layers3,
-    name: "@dimah-survey/react",
-    body: "SurveyJS Model and Creator bindings without a renderer wrapper.",
-  },
-  {
-    icon: Database,
-    name: "@dimah-survey/db",
-    body: "The SQL store and schema references that your app owns.",
+    index: "04",
+    title: "Protocol",
+    description: "Read the API contract",
+    href: "/docs/protocol",
   },
 ] as const;
 
 export default function HomePage() {
   return (
-    <div className="mx-auto w-full max-w-7xl px-4 sm:px-6">
+    <main id="main" className="relative isolate overflow-hidden">
+      <div className="landing-ambient pointer-events-none absolute inset-x-0 top-0 -z-20 h-[52rem]" />
+      <div className="landing-grid pointer-events-none absolute inset-x-0 top-0 -z-10 h-[46rem] [mask-image:linear-gradient(to_bottom,black,transparent)] opacity-70" />
+
       <section
         aria-labelledby="hero-heading"
-        className="home-grid relative overflow-hidden pt-16 pb-14 text-center sm:pt-24 sm:pb-20"
+        className="mx-auto grid min-h-[calc(100svh-8rem)] w-full max-w-7xl items-center gap-14 px-5 py-16 sm:px-8 sm:py-20 lg:grid-cols-[minmax(0,1fr)_minmax(25rem,0.78fr)] lg:gap-20 lg:py-24"
       >
-        <a
-          href="https://surveyjs.io/"
+        <div className="max-w-3xl">
+          <div className="inline-flex items-center gap-2.5 font-mono text-[0.7rem] font-medium tracking-[0.12em] text-fd-muted-foreground uppercase">
+            <span className="relative flex size-2">
+              <span className="absolute inline-flex size-full rounded-full bg-fd-primary opacity-30" />
+              <span className="relative inline-flex size-2 rounded-full bg-fd-primary" />
+            </span>
+            Open source · TypeScript · SurveyJS-native
+          </div>
+
+          <h1
+            id="hero-heading"
+            className="mt-7 max-w-3xl text-5xl leading-[0.98] font-semibold tracking-[-0.055em] text-balance text-fd-foreground sm:text-6xl lg:text-[4.4rem]"
+          >
+            <span className="block">{siteHeadline}</span>
+            <span className="block text-fd-primary">{siteHeadlineAccent}</span>
+          </h1>
+
+          <p className="mt-7 max-w-xl text-base leading-7 text-pretty text-fd-muted-foreground sm:text-lg sm:leading-8">
+            {siteDescription}
+          </p>
+
+          <div className="mt-9 flex flex-wrap items-center gap-3">
+            <Link
+              href="/docs/quickstart"
+              className="group inline-flex h-11 items-center gap-2 rounded-lg bg-fd-primary px-5 text-sm font-medium text-fd-primary-foreground shadow-[0_1px_0_color-mix(in_oklab,var(--color-fd-foreground)_12%,transparent)] transition-[background-color,transform] hover:-translate-y-0.5 hover:bg-fd-primary/90"
+            >
+              Read the quickstart
+              <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
+            </Link>
+            <Link
+              href="/docs/example"
+              className="group inline-flex h-11 items-center gap-2 rounded-lg border border-fd-border bg-fd-background/75 px-5 text-sm font-medium text-fd-foreground backdrop-blur-sm transition-[background-color,border-color] hover:border-fd-primary/30 hover:bg-fd-muted"
+            >
+              Explore the example
+              <ArrowUpRight className="size-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+            </Link>
+          </div>
+
+          <div className="mt-8 inline-flex max-w-full items-center gap-3 rounded-lg border border-fd-border/80 bg-fd-background/55 px-3.5 py-2 font-mono text-xs text-fd-muted-foreground backdrop-blur-sm">
+            <span aria-hidden className="text-fd-primary">
+              $
+            </span>
+            <code className="truncate">
+              npm i @dimah-survey/server @dimah-survey/react
+            </code>
+          </div>
+        </div>
+
+        <LifecycleContract />
+      </section>
+
+      <nav
+        aria-label="Documentation"
+        className="mx-auto w-full max-w-7xl border-y border-fd-border/80 px-5 sm:px-8"
+      >
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4">
+          {documentationLinks.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              className="group flex min-h-28 items-center gap-4 border-b border-fd-border/80 py-6 transition-colors hover:text-fd-primary sm:odd:border-r sm:nth-last-[-n+2]:border-b-0 lg:border-r lg:border-b-0 lg:last:border-r-0 lg:odd:border-r"
+            >
+              <span className="font-mono text-[0.65rem] text-fd-muted-foreground">
+                {item.index}
+              </span>
+              <span className="min-w-0">
+                <span className="block text-sm font-medium text-fd-foreground transition-colors group-hover:text-fd-primary">
+                  {item.title}
+                </span>
+                <span className="mt-1 block text-xs text-fd-muted-foreground">
+                  {item.description}
+                </span>
+              </span>
+              <ArrowUpRight className="ml-auto size-3.5 shrink-0 text-fd-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-fd-primary" />
+            </Link>
+          ))}
+        </div>
+      </nav>
+
+      <footer className="mx-auto flex w-full max-w-7xl flex-col gap-3 px-5 py-7 text-xs text-fd-muted-foreground sm:flex-row sm:items-center sm:justify-between sm:px-8">
+        <p>Open source under the MIT License.</p>
+        <Link
+          href={githubUrl}
           target="_blank"
           rel="noreferrer"
-          className="group relative inline-flex items-center gap-2 rounded-full border border-fd-primary/20 bg-fd-background/85 px-3.5 py-1.5 text-xs font-medium text-fd-muted-foreground shadow-sm transition-colors hover:border-fd-primary/40 hover:text-fd-foreground"
+          className="inline-flex items-center gap-2 transition-colors hover:text-fd-foreground"
         >
-          <span className="size-1.5 rounded-full bg-fd-primary" />
-          <span className="font-semibold text-fd-primary">
-            Built for SurveyJS
-          </span>
-          Schema, Creator, and renderer stay yours
-          <ArrowUpRight className="size-3 transition-transform group-hover:translate-x-0.5" />
-        </a>
+          <GitHubIcon />
+          dimah-kz/dimah-survey
+        </Link>
+      </footer>
+    </main>
+  );
+}
 
-        <h1
-          id="hero-heading"
-          className="relative mx-auto mt-7 max-w-4xl text-4xl font-semibold tracking-[-0.045em] text-balance text-fd-foreground sm:text-6xl sm:leading-[1.03]"
-        >
-          <span className="block">{siteHeadline}</span>
-          <span className="block text-fd-primary">{siteHeadlineAccent}</span>
-        </h1>
-
-        <p className="relative mx-auto mt-6 max-w-2xl text-base leading-relaxed text-balance text-fd-muted-foreground sm:text-lg">
-          {siteDescription}
-        </p>
-
-        <div className="relative mt-8 flex flex-wrap items-center justify-center gap-3">
-          <Link
-            href="/docs/quickstart"
-            className="inline-flex h-10 items-center gap-2 rounded-lg bg-fd-primary px-4 text-sm font-medium text-fd-primary-foreground shadow-sm transition-colors hover:bg-fd-primary/90"
-          >
-            Get started
-            <ArrowRight className="size-4" />
-          </Link>
-          <Link
-            href={githubUrl}
-            target="_blank"
-            rel="noreferrer"
-            className="inline-flex h-10 items-center gap-2 rounded-lg border border-fd-border bg-fd-background/85 px-4 text-sm font-medium text-fd-foreground transition-colors hover:bg-fd-muted"
-          >
-            <GitHubIcon />
-            View on GitHub
-          </Link>
+function LifecycleContract() {
+  return (
+    <aside
+      aria-label="Response lifecycle contract"
+      className="relative mx-auto w-full max-w-lg lg:mx-0"
+    >
+      <div className="absolute -inset-8 -z-10 rounded-[3rem] bg-fd-primary/6 blur-3xl" />
+      <div className="overflow-hidden rounded-2xl border border-fd-border/90 bg-fd-card/80 shadow-[0_24px_80px_-36px_color-mix(in_oklab,var(--color-fd-foreground)_28%,transparent)] backdrop-blur-xl">
+        <div className="flex h-12 items-center justify-between border-b border-fd-border/80 px-4">
+          <div className="flex items-center gap-1.5" aria-hidden>
+            <span className="size-2 rounded-full bg-fd-muted-foreground/25" />
+            <span className="size-2 rounded-full bg-fd-muted-foreground/25" />
+            <span className="size-2 rounded-full bg-fd-primary/50" />
+          </div>
+          <code className="font-mono text-[0.65rem] text-fd-muted-foreground">
+            response.lifecycle
+          </code>
         </div>
 
-        <p className="relative mx-auto mt-6 max-w-2xl text-sm leading-relaxed text-fd-muted-foreground">
-          Keep SurveyJS in your application. Move publishing, response
-          snapshots, collection rules, and submit validation to your server.
-        </p>
-      </section>
+        <div className="p-5 sm:p-7">
+          <p className="font-mono text-[0.65rem] font-medium tracking-[0.12em] text-fd-muted-foreground uppercase">
+            One immutable contract
+          </p>
 
-      <section
-        aria-labelledby="lifecycle-title"
-        className="border-b border-fd-border py-14 sm:py-18"
-      >
-        <div className="grid gap-8 lg:grid-cols-[15rem_minmax(0,1fr)] lg:items-center lg:gap-12">
-          <div>
-            <p className="font-mono text-xs font-medium tracking-[0.12em] text-fd-primary uppercase">
-              Backend lifecycle
-            </p>
-            <h2
-              id="lifecycle-title"
-              className="mt-3 text-2xl font-semibold tracking-tight text-balance text-fd-foreground sm:text-3xl"
-            >
-              Put the lifecycle around SurveyJS on your server.
-            </h2>
-          </div>
-          <div className="rounded-2xl border border-fd-border bg-fd-card/55 px-5 py-1 sm:px-6">
-            <Flow
-              label="Survey lifecycle"
-              steps={[
-                {
-                  name: "Draft",
-                  kind: "data",
-                  note: "Creator writes draftJson",
-                },
-                {
-                  name: "Publish",
-                  kind: "server",
-                  note: "Copy to publishedJson",
-                },
-                {
-                  name: "Start",
-                  kind: "server",
-                  note: "Freeze definition",
-                },
-                {
-                  name: "Fill",
-                  kind: "client",
-                  note: "SurveyJS renders",
-                },
-                {
-                  name: "Submit",
-                  kind: "server",
-                  note: "Validate snapshot",
-                },
-              ]}
+          <div className="mt-5 space-y-2">
+            <ContractRow label="draftJson" detail="editable" tone="muted" />
+            <ContractArrow label="publish" />
+            <ContractRow label="publishedJson" detail="current" tone="muted" />
+            <ContractArrow label="start response" />
+            <ContractRow
+              label="response.definition"
+              detail="frozen"
+              tone="primary"
             />
           </div>
-        </div>
-      </section>
 
-      <section aria-labelledby="features-title" className="py-16 sm:py-20">
-        <div className="max-w-2xl">
-          <p className="font-mono text-xs font-medium tracking-[0.12em] text-fd-primary uppercase">
-            What the backend adds
-          </p>
-          <h2
-            id="features-title"
-            className="mt-3 text-2xl font-semibold tracking-tight text-balance text-fd-foreground sm:text-3xl"
-          >
-            Publish, collect, and validate without changing SurveyJS.
-          </h2>
-        </div>
-
-        <div className="mt-10 overflow-hidden rounded-2xl border border-fd-border bg-fd-card/50">
-          <div className="grid divide-y divide-fd-border lg:grid-cols-3 lg:divide-x lg:divide-y-0">
-            {features.map((feature) => {
-              const Icon = feature.icon;
-              return (
-                <article key={feature.title} className="p-6 sm:p-7">
-                  <div className="flex items-center gap-2.5">
-                    <span className="flex size-8 items-center justify-center rounded-lg bg-fd-primary/10 text-fd-primary">
-                      <Icon className="size-4" aria-hidden />
-                    </span>
-                    <span className="font-mono text-xs text-fd-muted-foreground">
-                      {feature.kicker}
-                    </span>
-                  </div>
-                  <h3 className="mt-5 text-base font-semibold text-fd-foreground">
-                    {feature.title}
-                  </h3>
-                  <p className="mt-2 text-sm leading-relaxed text-fd-muted-foreground">
-                    {feature.body}
-                  </p>
-                </article>
-              );
-            })}
+          <div className="mt-5 rounded-xl border border-fd-primary/20 bg-fd-primary/[0.055] p-4">
+            <div className="flex items-center gap-2 text-xs font-medium text-fd-foreground">
+              <LockKeyhole className="size-3.5 text-fd-primary" aria-hidden />
+              Submit validates the stored definition
+            </div>
+            <code className="mt-3 block font-mono text-[0.7rem] leading-5 text-fd-muted-foreground">
+              validate(data, response.definition)
+            </code>
           </div>
         </div>
-      </section>
 
-      <section
-        aria-labelledby="packages-title"
-        className="border-t border-fd-border py-16 sm:py-20"
+        <div className="flex items-center gap-2 border-t border-fd-border/80 bg-fd-muted/35 px-5 py-3 text-[0.7rem] text-fd-muted-foreground sm:px-7">
+          <Check className="size-3.5 text-fd-primary" aria-hidden />
+          Later publishes never rewrite existing responses.
+        </div>
+      </div>
+    </aside>
+  );
+}
+
+function ContractRow({
+  label,
+  detail,
+  tone,
+}: {
+  label: string;
+  detail: string;
+  tone: "muted" | "primary";
+}) {
+  return (
+    <div
+      className={
+        tone === "primary"
+          ? "flex items-center justify-between rounded-xl border border-fd-primary/25 bg-fd-primary/[0.07] px-4 py-3.5"
+          : "flex items-center justify-between rounded-xl border border-fd-border bg-fd-background/55 px-4 py-3.5"
+      }
+    >
+      <code className="font-mono text-xs font-medium text-fd-foreground">
+        {label}
+      </code>
+      <span
+        className={
+          tone === "primary"
+            ? "font-mono text-[0.65rem] text-fd-primary"
+            : "font-mono text-[0.65rem] text-fd-muted-foreground"
+        }
       >
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-          <div className="max-w-2xl">
-            <p className="font-mono text-xs font-medium tracking-[0.12em] text-fd-primary uppercase">
-              One protocol, four packages
-            </p>
-            <h2
-              id="packages-title"
-              className="mt-3 text-2xl font-semibold tracking-tight text-balance text-fd-foreground sm:text-3xl"
-            >
-              Keep your renderer. Add only the backend layer you need.
-            </h2>
-          </div>
-          <Link
-            href="/docs/packages"
-            className="group inline-flex shrink-0 items-center gap-1.5 text-sm font-medium text-fd-primary transition-colors hover:text-fd-foreground"
-          >
-            Explore the package map
-            <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
-          </Link>
-        </div>
+        {detail}
+      </span>
+    </div>
+  );
+}
 
-        <div className="mt-10 grid gap-3 sm:grid-cols-2">
-          {packages.map((pkg) => {
-            const Icon = pkg.icon;
-
-            return (
-              <article
-                key={pkg.name}
-                className="rounded-xl border border-fd-border bg-fd-card/45 p-5 transition-colors hover:border-fd-primary/30 hover:bg-fd-card"
-              >
-                <div className="flex items-center gap-3">
-                  <span className="flex size-8 items-center justify-center rounded-md bg-fd-background text-fd-primary ring-1 ring-fd-border">
-                    <Icon className="size-4" aria-hidden />
-                  </span>
-                  <code className="font-mono text-xs font-medium text-fd-foreground">
-                    {pkg.name}
-                  </code>
-                </div>
-                <p className="mt-4 text-sm leading-relaxed text-fd-muted-foreground">
-                  {pkg.body}
-                </p>
-              </article>
-            );
-          })}
-        </div>
-      </section>
-
-      <section
-        aria-labelledby="closing-cta-title"
-        className="border-t border-fd-border py-16 text-center sm:py-20"
-      >
-        <p className="font-mono text-xs font-medium tracking-[0.12em] text-fd-muted-foreground uppercase">
-          Ready to integrate
-        </p>
-        <h2
-          id="closing-cta-title"
-          className="mt-3 text-2xl font-semibold tracking-tight text-balance text-fd-foreground sm:text-3xl"
-        >
-          Add a server lifecycle to your SurveyJS application.
-        </h2>
-        <p className="mx-auto mt-3 max-w-xl text-sm leading-relaxed text-fd-muted-foreground sm:text-base">
-          Configure two handlers, connect your store, and keep the SurveyJS
-          renderer in your application.
-        </p>
-        <div className="mt-7 flex flex-wrap items-center justify-center gap-3">
-          <Link
-            href="/docs/quickstart"
-            className="inline-flex h-10 items-center gap-2 rounded-lg bg-fd-primary px-4 text-sm font-medium text-fd-primary-foreground transition-colors hover:bg-fd-primary/90"
-          >
-            Read the quickstart
-            <ArrowRight className="size-4" />
-          </Link>
-          <a
-            href="https://surveyjs.io/"
-            target="_blank"
-            rel="noreferrer"
-            className="inline-flex h-10 items-center gap-2 rounded-lg border border-fd-border bg-fd-background px-4 text-sm font-medium text-fd-foreground transition-colors hover:bg-fd-muted"
-          >
-            Visit SurveyJS
-            <ArrowUpRight className="size-4" />
-          </a>
-        </div>
-      </section>
+function ContractArrow({ label }: { label: string }) {
+  return (
+    <div className="flex items-center gap-2 pl-4 font-mono text-[0.62rem] text-fd-muted-foreground">
+      <ArrowDown className="size-3" aria-hidden />
+      {label}
     </div>
   );
 }

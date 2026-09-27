@@ -3,21 +3,41 @@ updates:
   - package-ecosystem: github-actions
     directory: /
     schedule:
-      interval: monthly
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
     labels:
       - dependencies
+      - area:ci
+    reviewers:
+      - dimah-kz
+    commit-message:
+      prefix: chore
+      include: scope
+    cooldown:
+      default-days: 3
     groups:
       github-actions:
         patterns:
           - "*"
 
+  # Minor and patch updates are grouped. Major updates stay as separate pull
+  # requests so a breaking bump can be reviewed on its own.
   - package-ecosystem: npm
     directory: /
     schedule:
       interval: weekly
+      day: monday
     open-pull-requests-limit: 10
     labels:
       - dependencies
+    reviewers:
+      - dimah-kz
+    commit-message:
+      prefix: chore
+      include: scope
+    cooldown:
+      default-days: 3
     groups:
       production-npm:
         dependency-type: production

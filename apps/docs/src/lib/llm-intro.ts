@@ -11,6 +11,7 @@ import { getSiteUrl } from "./site-url";
 export const LLM_PAGE_PRIORITY = [
   "/docs",
   "/docs/quickstart",
+  "/docs/example",
   "/docs/comparison",
   "/docs/surveys",
   "/docs/settings",
@@ -66,11 +67,13 @@ export function toMarkdownTwinUrls(markdown: string, origin: string) {
 export function llmDecisionSheet(): string {
   return `# dimah-survey
 
-> Backend lifecycle layer for SurveyJS JSON. The library owns publish, response snapshots, drafts, and submit validation. SurveyJS owns the schema, Creator, and renderer. Your application owns authentication, database migrations, and UI.
+> Server-owned publishing and response lifecycles for SurveyJS JSON. Publish a document, freeze the definition each response starts with, and validate submit against that same snapshot.
+
+SurveyJS owns the schema, Creator, question behavior, and renderer. Your application owns authentication, database migrations, files, and UI. dimah-survey owns publish, response snapshots, drafts, collection policy, and submit validation.
 
 TypeScript packages: \`@dimah-survey/core\` (protocol, browser clients, schemas, errors, store types), \`@dimah-survey/server\` (\`dimahSurvey()\`, guards, validation, adapters, \`memoryAdapter()\`), \`@dimah-survey/react\` (SurveyJS Model and Creator bindings), \`@dimah-survey/db\` (SQL store). HTTP adapters: Next.js App Router, Express, Hono, Fastify, Elysia, SvelteKit, and Node.
 
-Use it when a SurveyJS app needs a server-owned publish and response lifecycle. Skip it for a visual form builder, a hosted survey product, a SurveyJS renderer, or a dimah-form integration.
+Use it when a SurveyJS app needs explicit publish and reproducible response history. Skip it for a visual form builder, hosted survey product, SurveyJS renderer, or dimah-form integration.
 
 Install: \`npm i @dimah-survey/server @dimah-survey/react survey-core survey-react-ui\`. Add \`@dimah-survey/db\` for the SQL store.
 
@@ -98,7 +101,8 @@ export function llmFileLists(origin = getSiteUrl().origin): string {
 ## Optional
 
 - [Full docs dump](${origin}/llms-full.txt): every page as markdown
-- [GitHub](${githubUrl}): source and the example app
+- [Next.js example](${githubUrl}/tree/${gitConfig.branch}/examples/next): complete SQLite-backed integration
+- [GitHub](${githubUrl}): source repository
 - [X](${xProfileUrl}): updates
 `;
 }

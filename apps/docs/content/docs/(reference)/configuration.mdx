@@ -1,19 +1,21 @@
 ---
-title: Configuration reference
-description: Options for the server factory, browser clients, and React bindings.
+title: Configuration
+description: Configure server audiences, browser clients, validation, hooks, and React bindings.
 icon: Settings
 ---
 
-`database` is required. `@dimah-survey/db` is optional:
-`memoryAdapter()` ships in `@dimah-survey/server` for tests and local work.
-
-Fill and editor configurations intentionally differ. A fill instance cannot
-take publish hooks; an editor instance cannot take `validateResult`.
+Fill and editor have separate configuration types because they expose different
+trust boundaries. Both require the same `database`; only fill accepts response
+validation and only editor accepts publish hooks.
 
 ## Fill instance
 
 ```ts
-import { dimahSurvey, guardAnonymous, memoryAdapter } from "@dimah-survey/server";
+import {
+  dimahSurvey,
+  guardAnonymous,
+  memoryAdapter,
+} from "@dimah-survey/server";
 
 export const fill = dimahSurvey({
   audience: "fill",
@@ -22,15 +24,15 @@ export const fill = dimahSurvey({
 });
 ```
 
-| Option            | Required | Default             | Role                                                                    |
-| ----------------- | -------- | ------------------- | ----------------------------------------------------------------------- |
-| `audience`        | Yes      | —                   | `"fill"`                                                                |
-| `database`        | Yes      | —                   | `SurveyStore`                                                           |
-| `guard`           | Yes      | —                   | Returns `{ respondentId }` or `{ anonymous: true }`, or throws          |
-| `basePath`        | No       | `"/api/survey"`     | Must match the fill client `baseURL`                                    |
-| `hooks`           | No       | —                   | `onStart`, `afterStart`, `onSubmit`, `afterSubmit`                      |
-| `sanitizePartial` | No       | `"clear"`           | `"clear"` runs `clearIncorrectValues(true)`. `"replace"` stores as sent |
-| `validateResult`  | No       | `checkSurveyResult` | Runs on the response snapshot during submit                             |
+| Option            | Required | Default             | Purpose                                                |
+| ----------------- | -------- | ------------------- | ------------------------------------------------------ |
+| `audience`        | Yes      | —                   | Must be `"fill"`                                       |
+| `database`        | Yes      | —                   | Shared `SurveyStore`                                   |
+| `guard`           | Yes      | —                   | Return an identified or anonymous principal, or throw  |
+| `basePath`        | No       | `"/api/survey"`     | Must match the fill client `baseURL`                   |
+| `hooks`           | No       | —                   | `onStart`, `afterStart`, `onSubmit`, and `afterSubmit` |
+| `sanitizePartial` | No       | `"clear"`           | Clear values invalid for the snapshot or store as sent |
+| `validateResult`  | No       | `checkSurveyResult` | Validate and normalize submit data                     |
 
 `checkSurveyResult` drops values that cannot be assigned, runs `validate`, and
 returns the `survey.data` to persist. Questions with `choicesByUrl` keep their
@@ -42,12 +44,12 @@ to reject the submit. See [Responses](/docs/responses).
 
 ### Lifecycle hooks
 
-| Hook          | When                                            | A throw           |
-| ------------- | ----------------------------------------------- | ----------------- |
-| `onStart`     | Inside the store lock, only before a new insert | Aborts the insert |
-| `afterStart`  | After that insert, still inside the lock        | Leaves the row    |
-| `onSubmit`    | After validation, before the submitted write    | Aborts the write  |
-| `afterSubmit` | After the row is stored, still inside the lock  | Leaves the row    |
+| Hook          | Timing                                       | If it throws         |
+| ------------- | -------------------------------------------- | -------------------- |
+| `onStart`     | Inside the store lock, before a new insert   | Abort the insert     |
+| `afterStart`  | After the insert, still inside the lock      | Leave the row stored |
+| `onSubmit`    | After validation, before the submitted write | Abort the write      |
+| `afterSubmit` | After the submitted row is stored            | Leave the row stored |
 
 A start that returns an existing row does not call `onStart` or `afterStart`.
 A replayed submit does not call `onSubmit` or `afterSubmit`. The HTTP body
@@ -64,18 +66,18 @@ export const editor = dimahSurvey({
 });
 ```
 
-| Option     | Required | Default               | Role                                                 |
-| ---------- | -------- | --------------------- | ---------------------------------------------------- |
-| `audience` | Yes      | —                     | `"editor"`                                           |
-| `database` | Yes      | —                     | Same store as fill                                   |
-| `guard`    | No       | Allows the request    | Returns nothing, or throws. A principal is forbidden |
-| `basePath` | No       | `"/api/admin/survey"` | Must match the editor client `baseURL`               |
-| `hooks`    | No       | —                     | `onPublish`, `afterPublish`                          |
+| Option     | Required | Default               | Purpose                                         |
+| ---------- | -------- | --------------------- | ----------------------------------------------- |
+| `audience` | Yes      | —                     | Must be `"editor"`                              |
+| `database` | Yes      | —                     | Same store used by fill                         |
+| `guard`    | No       | Allow                 | Return nothing or throw; principals are invalid |
+| `basePath` | No       | `"/api/admin/survey"` | Must match the editor client `baseURL`          |
+| `hooks`    | No       | —                     | `onPublish` and `afterPublish`                  |
 
-| Hook           | When                              | A throw          |
-| -------------- | --------------------------------- | ---------------- |
-| `onPublish`    | Before `draftJson` is copied      | Aborts the write |
-| `afterPublish` | After the published row is stored | Leaves the row   |
+| Hook           | Timing                            | If it throws         |
+| -------------- | --------------------------------- | -------------------- |
+| `onPublish`    | Before `draftJson` is promoted    | Abort the write      |
+| `afterPublish` | After the published row is stored | Leave the row stored |
 
 `resumeSurvey` does not call publish hooks.
 
@@ -83,36 +85,36 @@ export const editor = dimahSurvey({
 
 `createFillClient` and `createEditorClient` accept:
 
-| Option        | Role                                                                       |
-| ------------- | -------------------------------------------------------------------------- |
-| `baseURL`     | Fill defaults to `"/api/survey"`. Editor defaults to `"/api/admin/survey"` |
-| `credentials` | Passed to `fetch`. Use `"include"` when the session cookie is cross-site   |
-| `headers`     | A `HeadersInit` value, or a function that returns one                      |
-| `fetch`       | Replace the global `fetch`                                                 |
+| Option        | Purpose                                                       |
+| ------------- | ------------------------------------------------------------- |
+| `baseURL`     | Fill defaults to `/api/survey`; editor to `/api/admin/survey` |
+| `credentials` | Forwarded to `fetch`; use `"include"` for cross-site cookies  |
+| `headers`     | Static `HeadersInit` or a function that returns headers       |
+| `fetch`       | Replace the global fetch implementation                       |
 
-Browser methods take flat objects. `survey.api` takes `{ body }` or `{ query }`,
-and optional `headers` or `request` so `guard` can see the caller. See
-[Integration](/docs/integration).
+Browser methods take flat objects. `fill.api` and `editor.api` take `{ body }`
+or `{ query }`, plus optional `headers` or `request` for guards. See
+[Mount the server](/docs/integration).
 
 ## React
 
 `useSurveyResponse({ client, responseId, partial })`
 
-| Option       | Default  | Role                                                   |
-| ------------ | -------- | ------------------------------------------------------ |
-| `client`     | —        | `getResponse`, `savePartial`, `submitResponse`         |
-| `responseId` | —        | The row to load                                        |
-| `partial`    | `"page"` | `"page"` saves on page next. `"off"` saves on complete |
+| Option       | Default  | Purpose                                                 |
+| ------------ | -------- | ------------------------------------------------------- |
+| `client`     | —        | Fill client used for load, partial save, and submit     |
+| `responseId` | —        | Response row to hydrate                                 |
+| `partial`    | `"page"` | Save on page next, or `"off"` to write only on complete |
 
 Returned fields are documented in [React](/docs/react).
 
 `useSurveyDraft({ client, surveyId, creator, updatedAt })`
 
-| Option      | Role                                                     |
+| Option      | Purpose                                                  |
 | ----------- | -------------------------------------------------------- |
-| `client`    | `saveSurvey`                                             |
+| `client`    | Editor client used for `saveSurvey`                      |
 | `surveyId`  | Draft to write                                           |
-| `creator`   | An existing Creator instance. `null` skips the binding   |
-| `updatedAt` | Compare-and-swap token from the load that filled Creator |
+| `creator`   | Existing Creator instance; `null` skips binding          |
+| `updatedAt` | Compare-and-swap token from the read that loaded Creator |
 
 The hook does not construct Creator. See [Creator](/docs/creator).

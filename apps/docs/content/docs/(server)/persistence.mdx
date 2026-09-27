@@ -1,21 +1,30 @@
 ---
-title: Persist the lifecycle
-description: Use memory for local work, SQL through db(), or your own SurveyStore.
+title: Persistence
+description: Use memory locally, connect the SQL store, or implement SurveyStore.
 icon: Database
 ---
 
-`database` implements `SurveyStore`. `memoryAdapter()` is the process-local
-reference for tests and local work. `@dimah-survey/db` provides the SQL store;
-`@dimah-survey/server` deliberately does not import it. Pass `db(client)` to
-each server instance.
+Every server instance requires a `SurveyStore` as `database`.
+`memoryAdapter()` is the process-local reference implementation.
+`@dimah-survey/db` adapts a FumaDB client for durable SQL storage. You may also
+implement the contract directly.
 
 <Callout>
-  Your application owns its tables, migrations, and indexes. The schema exports
-  in `@dimah-survey/db` are references to copy or generate, not runtime models
-  to import.
+  Your application owns its tables, migrations, indexes, and database client.
+  dimah-survey owns the behavioral contract.
 </Callout>
 
-## Use SQL
+## Choose a store
+
+| Store                | Use it for                                 | Persistence         |
+| -------------------- | ------------------------------------------ | ------------------- |
+| `memoryAdapter()`    | Tests, examples, and local experiments     | Process only        |
+| `db(client)`         | Supported SQL databases through FumaDB     | Durable             |
+| Custom `SurveyStore` | Existing data layer or specialized storage | Your implementation |
+
+Pass the same store object to both fill and editor.
+
+## Connect the SQL store
 
 ```ts title="lib/survey.ts"
 import { DimahSurveyDB, db } from "@dimah-survey/db";
@@ -34,16 +43,18 @@ export const editor = dimahSurvey({
 });
 ```
 
-The application owns the tables and the migration. SQL names are `dimah_survey`
-and `dimah_response`. Drizzle export names stay `survey` and `response`,
-because those are the names `db()` queries.
+The SQL table names are `dimah_survey` and `dimah_response`. Drizzle export
+names remain `survey` and `response`, because those are the model keys `db()`
+queries.
 
 `draft_json`, `published_json`, and `settings` are separate columns. `settings`
 is not null and has no database default. Each response stores a copy of the
 published document in `definition`. `db()` does not update `definition` after
 insert.
 
-Generate the ORM file into the app, then migrate that file:
+## Generate an application-owned schema
+
+Configure the FumaDB CLI in your application:
 
 ```ts
 import { createCli } from "fumadb/cli";
@@ -56,18 +67,25 @@ await createCli({
     drizzleAdapter({ db: drizzle(":memory:"), provider: "sqlite" }),
   ),
   command: "dimah-survey",
-  version: "0.0.0",
+  version: "YOUR_APP_VERSION",
 }).main();
 ```
 
-`dimah-survey generate 1.0.0 -o ./db/survey.ts` writes the schema. FumaDB does
-not emit secondary indexes. After you generate, keep the partial unique index
-`dimah_response_one_open_draft` in the app schema: one open draft per survey
-and identified respondent. Prisma cannot express that predicate, so apply the
-index SQL after the Prisma tables exist.
+The CLI `version` identifies your wrapper command; the schema version to
+generate is currently `1.0.0`:
 
-These package paths are references. Read them. Do not import them into the
-running schema:
+```bash
+dimah-survey generate 1.0.0 -o ./db/survey.ts
+```
+
+Migrate the generated file as part of your application. FumaDB does not emit
+secondary indexes, so also apply
+`dimah_response_one_open_draft`: one draft per survey and identified
+respondent. Prisma cannot express that predicate; apply the index SQL after
+creating the tables.
+
+These exported files are readable references to copy or generate from. Do not
+import them as your runtime ORM schema:
 
 - `@dimah-survey/db/schema/drizzle.ts`
 - `@dimah-survey/db/schema/tables.sql`
@@ -78,34 +96,35 @@ There is no survey version table. History is `response.definition`.
 
 ## Implement a custom store
 
-A custom `SurveyStore` follows the same rules as `memoryAdapter()` and `db()`:
+A conforming store preserves these invariants:
 
-- Keep `draftJson`, `publishedJson`, and `settings` apart. `saveSurvey` inserts
-  default settings and does not update that column later.
-- Copy `publishedJson` into `definition` at start, and never write that column
-  again.
-- Reject a stale `expectedUpdatedAt` inside the write, not only in memory.
-- Refuse start unless status is `active` and `publishedJson` is present.
-- Identified start looks up the open draft or the latest row inside the write.
-  `"one-open"` returns the draft. `"single"` returns the latest row of any
-  status. Anonymous start always inserts.
-- Outside `opensAt` and `closesAt`, start, partial save, and submit throw
-  `SURVEY_CLOSED`.
-- `maxResponses` counts `submitted` rows and rejects a new insert and a submit
-  with `RESPONSE_LIMIT`.
-- `reopen: false` makes reopen throw `RESPONSE_CLOSED`. Otherwise reopen throws
-  `OPEN_DRAFT` when another draft exists for that survey and respondent.
-- `resumeSurvey` sets `archived` plus `publishedJson` back to `active` and does
-  not copy `draftJson`.
-- Enforce one open draft per identified respondent in the write. The SQL index
-  is the backstop, not a replacement for that check.
-- `listSurveys` and `listResponses` honor `limit` and `offset` and sort by
-  `updatedAt` descending. Summary rows omit `definition` and `data`.
+### Documents and snapshots
 
-`startResponse` and `submitResponse` accept lifecycle callbacks. Those
-callbacks are not on the HTTP body. The server passes them. Run them inside
-the same lock as the write. `onStart` runs only before a new insert.
-`afterSubmit` runs after the row is stored. A throw there leaves the row.
+- Keep `draftJson`, `publishedJson`, and `settings` independent.
+- Insert default settings with a new survey; only
+  `saveSurveySettings` changes them afterward.
+- Copy `publishedJson` into `response.definition` at start and never update
+  that column.
+- Partial save replaces `data`; persist the object passed by the server.
 
-Partial save replaces `data`. The HTTP layer may clear invalid values before
-it calls the store. The store persists the object it is given.
+### Atomic writes
+
+- Check `expectedUpdatedAt` inside the write.
+- Evaluate start reuse, collection windows, response caps, and one-open-draft
+  rules in the same lock or transaction as the mutation.
+- Enforce one draft per survey and identified respondent in application logic;
+  use the partial unique index as a database backstop.
+- Run the start and submit lifecycle callbacks inside that same boundary.
+
+### Queries and transitions
+
+- Anonymous start always inserts. Identified start follows `"one-open"` or
+  `"single"` settings.
+- Start, partial save, and submit enforce the collection window and response
+  cap.
+- Reopen enforces `reopen` and refuses a second identified draft.
+- Lists honor pagination, sort by `updatedAt` descending, and omit
+  `definition` and `data` from summaries.
+
+Use `memoryAdapter()` and the shared store contract tests as the behavioral
+reference when implementing an adapter.

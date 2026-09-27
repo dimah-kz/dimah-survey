@@ -1,4 +1,4 @@
 {
-  "title": "Server",
-  "pages": ["integration", "persistence", "security"]
+  "title": "Build the backend",
+  "pages": ["integration", "security", "persistence"]
 }

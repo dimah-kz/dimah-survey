@@ -1,23 +1,46 @@
 name: Documentation
-description: Improve README, package docs, or examples
+description: Report a gap or mistake in the docs, a package README, or an example
 title: "[Docs]: "
 labels:
   - documentation
+  - "needs triage"
 body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping improve the docs. Link the page if you can.
+
+        Bugs in package behavior belong in a bug report. Security issues must be reported [privately](https://github.com/dimah-kz/dimah-survey/security/advisories/new).
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checks
+      options:
+        - label: I searched existing [issues](https://github.com/dimah-kz/dimah-survey/issues).
+          required: true
   - type: dropdown
     id: location
     attributes:
       label: Where?
       options:
-        - README
+        - survey.dimah.dev
         - Package README
-        - CONTRIBUTING / SECURITY
+        - Root README
+        - Example app
+        - CONTRIBUTING, SECURITY, or CODE_OF_CONDUCT
         - Other
     validations:
       required: true
+  - type: input
+    id: url
+    attributes:
+      label: Page
+      description: Optional URL or file path.
+      placeholder: "https://survey.dimah.dev/docs/quickstart"
   - type: textarea
     id: suggestion
     attributes:
       label: What should change?
+      description: What is wrong or missing, and what should it say instead?
     validations:
       required: true

@@ -1,56 +1,60 @@
 ---
 title: HTTP protocol
-description: Routes, client methods, and the in-process server API.
+description: Map fill and editor routes to browser clients and the in-process API.
 icon: Waypoints
 ---
 
-Paths and payloads live in `@dimah-survey/core`. Fill defaults to
-`/api/survey`; editor defaults to `/api/admin/survey`. The suffixes below are
-appended to those bases.
+Route constants and payload schemas live in `@dimah-survey/core`.
 
-Browser clients take flat objects. `fill.api` and `editor.api` take `{ query }`
-or `{ body }`. A method called on the wrong audience is not mounted, so the
-handler returns `NOT_FOUND`.
+| Audience | Default base path   | Operations                                          |
+| -------- | ------------------- | --------------------------------------------------- |
+| Fill     | `/api/survey`       | Published read and respondent response lifecycle    |
+| Editor   | `/api/admin/survey` | Authoring, settings, publish, and response analysis |
+
+The suffixes below are appended to those bases. Browser clients take flat
+objects; `fill.api` and `editor.api` take `{ query }` or `{ body }`. An
+operation from the wrong audience is not mounted and returns `NOT_FOUND`.
 
 List endpoints default to 50 rows and cap at 100.
 
-## Fill
+## Fill routes
 
-| Method | Path                | Client                                              | `fill.api`                      |
-| ------ | ------------------- | --------------------------------------------------- | ------------------------------- |
-| `GET`  | `/survey/published` | `getPublishedSurvey(id)`                            | `getPublishedSurvey({ query })` |
-| `POST` | `/response/start`   | `startResponse({ surveyId, respondentId? })`        | `startResponse({ body })`       |
-| `GET`  | `/response`         | `getResponse(id)`                                   | `getResponse({ query })`        |
-| `GET`  | `/responses`        | `listResponses({ ... })`                            | `listResponses({ query })`      |
-| `POST` | `/response/partial` | `savePartial({ id, data, expectedUpdatedAt? })`     | `savePartial({ body })`         |
-| `POST` | `/response/submit`  | `submitResponse({ id, data?, expectedUpdatedAt? })` | `submitResponse({ body })`      |
-| `POST` | `/response/abandon` | `abandonResponse({ id, expectedUpdatedAt? })`       | `abandonResponse({ body })`     |
-| `POST` | `/response/reopen`  | `reopenResponse({ id, expectedUpdatedAt? })`        | `reopenResponse({ body })`      |
+| Method | Path                | Browser client                               | In-process API                  |
+| ------ | ------------------- | -------------------------------------------- | ------------------------------- |
+| `GET`  | `/survey/published` | `getPublishedSurvey(id)`                     | `getPublishedSurvey({ query })` |
+| `POST` | `/response/start`   | `startResponse({ surveyId, respondentId? })` | `startResponse({ body })`       |
+| `GET`  | `/response`         | `getResponse(id)`                            | `getResponse({ query })`        |
+| `GET`  | `/responses`        | `listResponses(query)`                       | `listResponses({ query })`      |
+| `POST` | `/response/partial` | `savePartial(input)`                         | `savePartial({ body })`         |
+| `POST` | `/response/submit`  | `submitResponse(input)`                      | `submitResponse({ body })`      |
+| `POST` | `/response/abandon` | `abandonResponse(input)`                     | `abandonResponse({ body })`     |
+| `POST` | `/response/reopen`  | `reopenResponse(input)`                      | `reopenResponse({ body })`      |
 
-`id` and `surveyId` accept a survey id or a slug, except on response routes,
-where `id` is the response id.
+On survey reads, `id` accepts a survey id or slug. `startResponse.surveyId`
+accepts either as well. Every response mutation uses the response row id.
 
 `getPublishedSurvey` returns `publishedJson` and `settings`. It omits
 `draftJson`. It is available to both fill principals and does not stamp a
 respondent.
 
-The fill handler refuses `listResponses` for an anonymous principal, and
-refuses `include: "full"` for an identified principal. See
-[Security](/docs/security).
+The guard stamps `respondentId` for identified callers. A matching value in the
+body is tolerated, but the browser cannot claim another owner. Anonymous
+callers cannot list responses; identified callers cannot request
+`include: "full"`.
 
-## Editor
+## Editor routes
 
-| Method | Path               | Client                                                     | `editor.api`                   |
-| ------ | ------------------ | ---------------------------------------------------------- | ------------------------------ |
-| `GET`  | `/survey`          | `getSurvey(id)`                                            | `getSurvey({ query })`         |
-| `POST` | `/survey`          | `saveSurvey({ id, slug?, draftJson, expectedUpdatedAt? })` | `saveSurvey({ body })`         |
-| `GET`  | `/surveys`         | `listSurveys({ status?, limit?, offset? })`                | `listSurveys({ query })`       |
-| `POST` | `/survey/publish`  | `publishSurvey({ id, expectedUpdatedAt? })`                | `publishSurvey({ body })`      |
-| `POST` | `/survey/archive`  | `archiveSurvey({ id, expectedUpdatedAt? })`                | `archiveSurvey({ body })`      |
-| `POST` | `/survey/settings` | `saveSurveySettings({ id, settings, expectedUpdatedAt? })` | `saveSurveySettings({ body })` |
-| `POST` | `/survey/resume`   | `resumeSurvey({ id, expectedUpdatedAt? })`                 | `resumeSurvey({ body })`       |
-| `GET`  | `/response`        | `getResponse(id)`                                          | `getResponse({ query })`       |
-| `GET`  | `/responses`       | `listResponses({ ... })`                                   | `listResponses({ query })`     |
+| Method | Path               | Browser client              | In-process API                 |
+| ------ | ------------------ | --------------------------- | ------------------------------ |
+| `GET`  | `/survey`          | `getSurvey(id)`             | `getSurvey({ query })`         |
+| `POST` | `/survey`          | `saveSurvey(input)`         | `saveSurvey({ body })`         |
+| `GET`  | `/surveys`         | `listSurveys(query)`        | `listSurveys({ query })`       |
+| `POST` | `/survey/publish`  | `publishSurvey(input)`      | `publishSurvey({ body })`      |
+| `POST` | `/survey/archive`  | `archiveSurvey(input)`      | `archiveSurvey({ body })`      |
+| `POST` | `/survey/settings` | `saveSurveySettings(input)` | `saveSurveySettings({ body })` |
+| `POST` | `/survey/resume`   | `resumeSurvey(input)`       | `resumeSurvey({ body })`       |
+| `GET`  | `/response`        | `getResponse(id)`           | `getResponse({ query })`       |
+| `GET`  | `/responses`       | `listResponses(query)`      | `listResponses({ query })`     |
 
 `saveSurvey` creates the survey when the id is new. `slug` defaults to `id`.
 Pass `expectedUpdatedAt` when updating. A create that includes the token fails
@@ -59,28 +63,31 @@ with `STALE_UPDATE`.
 `listSurveys` returns `{ surveys, limit, offset, nextOffset }`.
 `listResponses` returns `{ responses, limit, offset, nextOffset, total }`.
 
-## Lists
+## List queries
 
 `listResponses` query:
 
-| Field           | Role                                                                  |
-| --------------- | --------------------------------------------------------------------- |
-| `surveyId`      | Limit to one survey                                                   |
-| `respondentId`  | Limit to one respondent. Fill overwrites this with the stamped id     |
-| `status`        | `draft`, `submitted`, or `abandoned`                                  |
-| `submittedFrom` | Inclusive lower bound on `submittedAt`. Unsubmitted rows are excluded |
-| `submittedTo`   | Inclusive upper bound on `submittedAt`. Unsubmitted rows are excluded |
-| `updatedAfter`  | Exclusive lower bound on `updatedAt`                                  |
-| `include`       | `"summary"` (default) or `"full"`                                     |
-| `limit`         | 1–100. Default 50                                                     |
-| `offset`        | Default 0                                                             |
+| Field           | Meaning                                                           |
+| --------------- | ----------------------------------------------------------------- |
+| `surveyId`      | Filter to one survey                                              |
+| `respondentId`  | Filter to one respondent; fill replaces it with the guarded id    |
+| `status`        | `draft`, `submitted`, or `abandoned`                              |
+| `submittedFrom` | Inclusive lower bound on `submittedAt`; excludes unsubmitted rows |
+| `submittedTo`   | Inclusive upper bound on `submittedAt`; excludes unsubmitted rows |
+| `updatedAfter`  | Exclusive lower bound on `updatedAt`                              |
+| `include`       | `"summary"` by default, or `"full"` for editor                    |
+| `limit`         | 1–100; default 50                                                 |
+| `offset`        | Default 0                                                         |
 
 `"summary"` omits `definition` and `data`. `"full"` is the editor analytics
 read. `listSurveys` can filter `status` to `draft`, `active`, or `archived`.
 
-## Compare and swap
+## Compare-and-swap inputs
 
 `expectedUpdatedAt` is optional on draft, publish, archive, settings, resume,
 partial save, submit, abandon, and reopen. When it is set, the stored
 `updatedAt` must match or the write fails with `STALE_UPDATE`. The React
-bindings always send the token from the last read.
+bindings always send the token from their last successful read or write.
+
+The exported Zod schemas are the authoritative payload definitions. See
+[Errors](/docs/errors) for the stable failure codes.

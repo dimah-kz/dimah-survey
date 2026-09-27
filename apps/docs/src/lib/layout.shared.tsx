@@ -8,7 +8,15 @@ export function baseOptions(): BaseLayoutProps {
     nav: {
       title: <BrandTitle />,
       url: "/",
+      transparentMode: "top",
     },
     githubUrl,
+    links: [
+      {
+        text: "Documentation",
+        url: "/docs",
+        active: "nested-url",
+      },
+    ],
   };
 }

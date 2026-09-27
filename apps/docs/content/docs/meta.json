@@ -4,13 +4,15 @@
     "---Get started---",
     "index",
     "quickstart",
+    "example",
     "comparison",
-    "---Guides---",
+    "---Concepts---",
     "(surveys)",
+    "---Server---",
     "(server)",
-    "---Client---",
+    "---React---",
     "(client)",
-    "---Resources---",
+    "---Reference---",
     "(reference)"
   ]
 }

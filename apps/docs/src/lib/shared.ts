@@ -2,12 +2,12 @@ import { createGetUrl } from "fumadocs-core/source";
 
 export const appName = "dimah-survey";
 /** Landing H1, browser tab, and Open Graph title — keep these in sync. */
-export const siteHeadline = "The backend lifecycle layer";
-export const siteHeadlineAccent = "for SurveyJS.";
+export const siteHeadline = "Own the SurveyJS lifecycle";
+export const siteHeadlineAccent = "on your server.";
 const siteTagline = `${siteHeadline} ${siteHeadlineAccent}`;
 export const siteTitle = `${appName} — ${siteTagline}`;
 export const siteDescription =
-  "A backend lifecycle layer for SurveyJS. Publish survey JSON, freeze each response definition, and validate submissions on your server.";
+  "Publish SurveyJS JSON, freeze the definition each response starts with, and validate submissions against that same snapshot.";
 
 /** Site-wide terms for the homepage, layout, and JSON-LD. */
 export const siteKeywords = [
@@ -15,8 +15,10 @@ export const siteKeywords = [
   "dimah survey",
   "surveyjs",
   "survey.js",
+  "surveyjs backend",
   "survey backend",
   "survey lifecycle",
+  "survey response lifecycle",
   "response snapshot",
   "headless survey",
   "typescript",
@@ -64,24 +66,59 @@ export function docsArticleJsonLd(input: {
   description: string;
 }) {
   const pageUrl = `${input.origin}${input.url}`;
+  const breadcrumbId = `${pageUrl}#breadcrumb`;
+  const breadcrumbs = [
+    {
+      "@type": "ListItem",
+      position: 1,
+      name: appName,
+      item: input.origin,
+    },
+    {
+      "@type": "ListItem",
+      position: 2,
+      name: "Documentation",
+      item: `${input.origin}${docsRoute}`,
+    },
+  ];
+
+  if (input.url !== docsRoute) {
+    breadcrumbs.push({
+      "@type": "ListItem",
+      position: 3,
+      name: input.title,
+      item: pageUrl,
+    });
+  }
 
   return {
     "@context": "https://schema.org",
-    "@type": "TechArticle",
-    headline: input.title,
-    description: input.description,
-    url: pageUrl,
-    inLanguage: "en",
-    isPartOf: {
-      "@type": "WebSite",
-      name: appName,
-      url: input.origin,
-    },
-    author: {
-      "@type": "Organization",
-      name: appName,
-      url: input.origin,
-    },
+    "@graph": [
+      {
+        "@type": "TechArticle",
+        "@id": `${pageUrl}#article`,
+        headline: input.title,
+        description: input.description,
+        url: pageUrl,
+        inLanguage: "en",
+        breadcrumb: { "@id": breadcrumbId },
+        isPartOf: {
+          "@type": "WebSite",
+          name: appName,
+          url: input.origin,
+        },
+        author: {
+          "@type": "Organization",
+          name: appName,
+          url: input.origin,
+        },
+      },
+      {
+        "@type": "BreadcrumbList",
+        "@id": breadcrumbId,
+        itemListElement: breadcrumbs,
+      },
+    ],
   };
 }
 
@@ -128,10 +165,10 @@ export function siteJsonLd(origin: string) {
           priceCurrency: "USD",
         },
         featureList: [
-          "Backend lifecycle for SurveyJS JSON",
-          "Editable draft and explicit publish",
-          "Frozen response definitions",
-          "Submit validation against the stored definition",
+          "Explicit draft and publish lifecycle for SurveyJS JSON",
+          "Immutable definition snapshot for every response",
+          "Partial save, submit, abandon, and reopen",
+          "Submit validation against each response snapshot",
           "Separate fill and editor audiences",
           "SurveyJS renderer stays in the application",
           "Next.js, Hono, Express, Fastify, Elysia, SvelteKit, and Node adapters",

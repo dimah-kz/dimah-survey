@@ -1,6 +1,7 @@
-# Source of truth for repo labels. Synced by .github/workflows/sync-labels.yml
-# (existing GitHub defaults not listed here are left in place).
+# Complete label set. .github/workflows/sync-labels.yml deletes labels that are
+# not listed here.
 
+# Type
 - name: bug
   color: "d73a4a"
   description: Something isn't working
@@ -13,30 +14,81 @@
   color: "0075ca"
   description: Improvements or additions to documentation
 
-- name: good first issue
-  color: "7057ff"
-  description: Good for newcomers
-
-- name: breaking
-  color: "b60205"
-  description: Breaking change for package consumers
+- name: question
+  color: "d876e3"
+  description: Further information is requested
 
 - name: dependencies
   color: "0366d6"
   description: Dependency or GitHub Actions updates
 
+- name: release
+  color: "006b75"
+  description: Versioning, changelog, or npm publish
+
+- name: breaking
+  color: "b60205"
+  description: Breaking change for package consumers
+
+# Status
+- name: good first issue
+  color: "7057ff"
+  description: Good for newcomers
+
+- name: help wanted
+  color: "008672"
+  description: Extra attention is needed
+
+- name: needs triage
+  color: "d93f0b"
+  description: Needs a maintainer to confirm scope
+
+- name: needs reproduction
+  color: "f9d0c4"
+  description: Needs a minimal reproduction
+
+- name: duplicate
+  color: "cfd3d7"
+  description: This issue or pull request already exists
+
+- name: invalid
+  color: "e4e669"
+  description: This doesn't seem right
+
+- name: wontfix
+  color: "ffffff"
+  description: This will not be worked on
+
+# Packages
 - name: pkg:core
   color: "0e8a16"
-  description: "@dimah-survey/core"
+  description: Changes in @dimah-survey/core
 
 - name: pkg:server
   color: "1d76db"
-  description: "@dimah-survey/server"
+  description: Changes in @dimah-survey/server
 
 - name: pkg:db
   color: "fbca04"
-  description: "@dimah-survey/db"
+  description: Changes in @dimah-survey/db
 
 - name: pkg:react
-  color: "d4c5f9"
-  description: "@dimah-survey/react"
+  color: "61dafb"
+  description: Changes in @dimah-survey/react
+
+# Areas
+- name: area:ci
+  color: "5319e7"
+  description: GitHub Actions, publish, or repository automation
+
+- name: area:example
+  color: "c2e0c6"
+  description: The examples/next application
+
+- name: area:tooling
+  color: "bfd4f2"
+  description: Shared ESLint, TypeScript, tsup, and Vitest config
+
+- name: accessibility
+  color: "f143ab"
+  description: Barrier affecting people with disabilities

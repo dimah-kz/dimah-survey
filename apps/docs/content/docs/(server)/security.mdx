@@ -1,12 +1,12 @@
 ---
-title: Secure the two audiences
-description: Authorize fill and editor requests independently, then stamp identity on the server.
+title: Authorization and identity
+description: Guard fill and editor independently, then establish response ownership on the server.
 icon: Shield
 ---
 
-dimah-survey does not provide sessions or roles. Your application authorizes
-every request in `guard`. Fill and editor are separate instances on separate
-paths, with intentionally different guard contracts.
+dimah-survey has no session, account, or role system. Your application
+authorizes requests in `guard`; the library turns the result into response
+ownership and audience isolation.
 
 <Flow
   label="Fill request"
@@ -18,25 +18,25 @@ paths, with intentionally different guard contracts.
   ]}
 />
 
-## Keep fill and editor separate
+## Isolate the audiences
 
-| Instance | Guard returns                               | Routes                                                |
-| -------- | ------------------------------------------- | ----------------------------------------------------- |
-| `fill`   | `{ respondentId }` or `{ anonymous: true }` | Published read, start, draft, submit, abandon, reopen |
-| `editor` | Nothing. Throw to reject                    | Draft, publish, settings, archive, resume, lists      |
+| Audience | Guard contract                                     | Access                                                |
+| -------- | -------------------------------------------------- | ----------------------------------------------------- |
+| Fill     | Return `{ respondentId }` or `{ anonymous: true }` | Published read and response lifecycle                 |
+| Editor   | Return nothing; throw to reject                    | Authoring, publish, settings, and full response reads |
 
 A fill instance requires `guard`. Returning nothing from a fill guard is
-forbidden. An editor guard that returns a principal is forbidden. Do not mount
-both audiences on one handler.
+invalid. An editor guard must not return a principal. Keep the routes and
+instances separate even when both use the same store.
 
 `getPublishedSurvey` is on the fill handler. It does not stamp a respondent and
 does not require a response id. The editor draft is not on that route.
 
-The editor can `getResponse` and `listResponses`, including `include: "full"`.
-It cannot start, save a partial, submit, abandon, or reopen. Put submit hooks
-and `validateResult` on the fill instance. Put publish hooks on the editor.
+Only editor may request `include: "full"` and read response definitions and
+data in bulk. Fill owns response mutations. Submit hooks and `validateResult`
+therefore belong to fill; publish hooks belong to editor.
 
-## Identify a respondent on the server
+## Stamp an identified respondent
 
 `guardRespondent(id)` returns `{ respondentId }`. The server then:
 
@@ -67,17 +67,17 @@ export const fill = dimahSurvey({
 });
 ```
 
-The browser does not choose the owner. If the client sends `respondentId`, it
-must match the guard. Omit it and the server still stamps the session id.
+The browser never chooses ownership. A supplied `respondentId` must match the
+guard; omitting it still stamps the server-established id.
 
 Identified start follows `settings.responses`. See [Settings](/docs/settings).
 
-## Use an anonymous capability carefully
+## Treat anonymous ids as capabilities
 
 `guardAnonymous()` returns `{ anonymous: true }`. Each start inserts a row.
-List is refused. A body `respondentId` is refused. The response id is the
-capability: get, partial save, submit, abandon, and reopen require that id,
-and the row's `respondentId` must be null.
+Listing and a body `respondentId` are refused. The response id itself becomes
+the capability for read and mutation, and the row must have a null
+`respondentId`.
 
 ```ts title="lib/survey.ts"
 import { guardAnonymous, guardRespondent } from "@dimah-survey/server";
@@ -94,11 +94,11 @@ export const fill = dimahSurvey({
 ```
 
 <Callout type="warn">
-  Treat an anonymous response id as a secret. Anyone who has it can read and
-  submit that row.
+  Store and transmit an anonymous response id like a secret. Anyone who has it
+  can read and mutate that response.
 </Callout>
 
-## Protect the editor
+## Protect the editor route
 
 ```ts title="lib/survey.ts"
 import { APIError, SURVEY_ERROR_CODES, dimahSurvey } from "@dimah-survey/server";
@@ -114,17 +114,18 @@ export const editor = dimahSurvey({
 });
 ```
 
-Returning `{ respondentId }` from this guard throws. The editor is not a
-respondent.
+Returning a principal from this guard is an error. Editor authorization only
+allows the request or throws.
 
 `include: "full"` belongs here. It returns `definition` and `data` for
 analytics. Do not expose that route on the fill path.
 
-## Side effects
+## Place side effects deliberately
 
-`onSubmit` can still abort the write. `afterSubmit` and `afterStart` run after
-the row exists. A throw does not roll it back, so email, webhooks, and other
-side effects belong in `after*`. A replayed submit does not call submit hooks
-again.
+`onStart`, `onSubmit`, and `onPublish` may abort their write. Their `after*`
+counterparts run after storage; throwing there does not roll the row back.
+Email, webhooks, and queue work generally belong in `after*` callbacks and must
+be safe to retry at the application boundary.
 
-Publish hooks live on the editor. `resumeSurvey` does not call them.
+A successful idempotent resubmit does not run submit hooks again.
+`resumeSurvey` does not run publish hooks.

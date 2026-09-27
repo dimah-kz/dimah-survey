@@ -97,8 +97,17 @@ export async function generateMetadata(
       description: page.data.description,
       url: page.url,
       siteName: appName,
-      images: image,
+      locale: "en_US",
+      images: [
+        {
+          url: image,
+          width: 1200,
+          height: 630,
+          alt: `${page.data.title} — ${appName} documentation`,
+        },
+      ],
       type: "article",
+      section: "Documentation",
     },
     twitter: {
       card: "summary_large_image",
@@ -106,7 +115,12 @@ export async function generateMetadata(
       creator: "@dimahkzx",
       title: page.data.title,
       description: page.data.description,
-      images: image,
+      images: [
+        {
+          url: image,
+          alt: `${page.data.title} — ${appName} documentation`,
+        },
+      ],
     },
   };
 }

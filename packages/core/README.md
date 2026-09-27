@@ -1,24 +1,17 @@
 # @dimah-survey/core
 
-Protocol primitives for the dimah-survey response lifecycle.
+Typed protocol primitives for the
+[dimah-survey](https://survey.dimah.dev) response lifecycle.
 
-It owns route constants, Zod payload schemas, stable errors, fill/editor
-clients, settings helpers, list helpers, and the `SurveyStore` contract.
+Use this package for non-React browser clients, shared protocol code, or a
+custom persistence adapter. Most React applications consume its clients
+through `@dimah-survey/react`.
 
 ## Install
 
 ```bash
 npm i @dimah-survey/core
 ```
-
-## Use it when
-
-- your browser client is not React
-- a shared package needs protocol types, schemas, or error codes
-- you are implementing a custom `SurveyStore`
-
-Most applications import the server factory from `@dimah-survey/server` and
-browser bindings from `@dimah-survey/react`.
 
 ## Create a browser client
 
@@ -29,15 +22,26 @@ const fill = createFillClient({ baseURL: "/api/survey" });
 const response = await fill.startResponse({ surveyId: "welcome" });
 ```
 
-Client methods take flat objects. In-process server calls instead take
-`{ body }` or `{ query }`; see the protocol reference for the complete route
-map.
+Browser methods take flat objects. Server-side `fill.api` and `editor.api`
+instead take `{ body }` or `{ query }`.
+
+## Includes
+
+- fill and editor clients
+- route and base-path constants
+- Zod payload schemas
+- `APIError` and stable survey error codes
+- settings and pagination helpers
+- domain types and the `SurveyStore` contract
+- `createSurveyFetch()` for lower-level better-fetch control
+
+SurveyJS is intentionally not a runtime dependency of `core`.
 
 ## Documentation
 
-<https://survey.dimah.dev/docs/protocol> covers routes, client methods, and the
-in-process server API. The [package map](https://survey.dimah.dev/docs/packages)
-and [error reference](https://survey.dimah.dev/docs/errors) sit beside it.
+- [HTTP protocol](https://survey.dimah.dev/docs/protocol)
+- [Package map](https://survey.dimah.dev/docs/packages)
+- [Errors](https://survey.dimah.dev/docs/errors)
 
 ## License
 

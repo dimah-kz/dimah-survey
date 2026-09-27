@@ -1,11 +1,10 @@
 # @dimah-survey/server
 
-Server factory, guards, validation, framework adapters, and the in-memory
-reference store for dimah-survey.
+Server factory, guards, SurveyJS validation, runtime adapters, and local memory
+storage for [dimah-survey](https://survey.dimah.dev).
 
-`dimahSurvey()` creates a Fetch `handler` for one audience and an in-process
-`api` for server code. Submit validation runs on the response definition that
-was frozen at start.
+`dimahSurvey()` creates an isolated fill or editor audience with both a Fetch
+handler and a typed in-process API.
 
 ## Install
 
@@ -13,18 +12,14 @@ was frozen at start.
 npm i @dimah-survey/server survey-core
 ```
 
-## Create two audiences
+## Create the backend
 
-Both instances share one `database`. Fill is for respondents and always
-requires a guard. Editor is for draft/publish operations and its guard returns
-nothing or throws.
+Create two instances over one store. Fill always requires a principal; editor
+authorization allows the request or throws.
 
 ```ts
 import {
-  APIError,
-  SURVEY_ERROR_CODES,
   dimahSurvey,
-  guardAnonymous,
   guardRespondent,
   memoryAdapter,
 } from "@dimah-survey/server";
@@ -34,21 +29,15 @@ const database = memoryAdapter();
 export const editor = dimahSurvey({
   audience: "editor",
   database,
-  guard: ({ request }) => {
-    if (!isEditor(request)) {
-      throw APIError.from("FORBIDDEN", SURVEY_ERROR_CODES.FORBIDDEN);
-    }
-  },
+  guard: ({ request }) => assertEditor(request),
 });
 
 export const fill = dimahSurvey({
   audience: "fill",
   database,
   guard: (context) => {
-    const userId = userIdFromSession(context.request);
-    return userId
-      ? guardRespondent(userId)(context)
-      : guardAnonymous()(context);
+    const userId = requireUserId(context.request);
+    return guardRespondent(userId)(context);
   },
 });
 ```
@@ -56,9 +45,9 @@ export const fill = dimahSurvey({
 `memoryAdapter()` is process-local. Use `db(client)` from
 `@dimah-survey/db`, or a custom `SurveyStore`, for durable storage.
 
-## Mount a handler
+## Mount a runtime adapter
 
-For Next.js, mount the fill and editor handlers on separate routes:
+For Next.js App Router:
 
 ```ts
 import { toNextJsHandler } from "@dimah-survey/server/next";
@@ -67,24 +56,22 @@ import { fill } from "@/lib/survey";
 export const { GET, POST, PUT, PATCH, DELETE } = toNextJsHandler(fill);
 ```
 
-The default base paths are `/api/survey` for fill and `/api/admin/survey` for
-editor. Adapters are also available for Node, Express, Hono, Fastify, Elysia,
-and SvelteKit.
+Mount editor separately at `/api/admin/survey`. Adapters are also available
+for Node.js, Express, Hono, Fastify, Elysia, and SvelteKit.
 
 ## Guarantees
 
-- Fill cannot publish or read editor drafts.
-- Editor cannot start, partially save, or submit responses.
-- Identified respondents are stamped by the server; callers cannot claim a
-  different identity.
-- `validateResult` defaults to SurveyJS validation on `response.definition`.
-- A repeated submit with the same cleaned data is idempotent.
+- fill cannot publish or read editor drafts
+- editor cannot start or mutate respondent responses
+- the guard establishes response ownership on the server
+- submit validation runs on the stored `response.definition`
+- a matching repeated submit is idempotent
 
 ## Documentation
 
-<https://survey.dimah.dev/docs/integration> covers handlers and the in-process
-API. Also see [security](https://survey.dimah.dev/docs/security) and
-[persistence](https://survey.dimah.dev/docs/persistence).
+- [Mount the server](https://survey.dimah.dev/docs/integration)
+- [Authorization and identity](https://survey.dimah.dev/docs/security)
+- [Persistence](https://survey.dimah.dev/docs/persistence)
 
 ## License
 

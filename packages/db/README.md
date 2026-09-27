@@ -1,18 +1,16 @@
 # @dimah-survey/db
 
-SQL `SurveyStore` and schema references for the dimah-survey lifecycle.
+SQL `SurveyStore` and schema references for
+[dimah-survey](https://survey.dimah.dev).
 
-`draft_json` and `published_json` are separate columns. Every response stores a
-copy of the published document in `definition`.
+Your application owns its database client, tables, migrations, and indexes.
+This package supplies the FumaDB schema and store behavior.
 
 ## Install
 
 ```bash
 npm i @dimah-survey/db fumadb
 ```
-
-Do not import this package from `@dimah-survey/server`. Create `db(client)` in
-your application and pass it to both server audiences.
 
 ## Create the store
 
@@ -31,25 +29,27 @@ const editor = dimahSurvey({
 });
 ```
 
-## Own your schema and migrations
+Pass the same `database` to both the fill and editor instances.
 
-Your application owns the tables, migrations, indexes, and extensions. SQL names
-are `dimah_survey` and `dimah_response`; the Drizzle export names remain
-`survey` and `response` because those are the models `db()` queries.
+## Own the schema
 
-Generate or copy the reference schema into the application, then migrate that
-application-owned file. Keep
-`dimah_response_one_open_draft`: one draft per identified respondent and
-survey depends on that partial unique index.
+SQL table names are `dimah_survey` and `dimah_response`. Drizzle model keys
+remain `survey` and `response`, because those are the keys `db()` queries.
 
-## Reference files
+Generate or copy the schema into your application and migrate that file. Keep
+the `dimah_response_one_open_draft` partial unique index as a backstop for one
+draft per survey and identified respondent.
 
-These exports are source references, not runtime models:
+Readable reference exports:
 
 - `@dimah-survey/db/schema/drizzle.ts`
 - `@dimah-survey/db/schema/tables.sql`
 - `@dimah-survey/db/schema/indexes.sql`
 - `@dimah-survey/db/schema/schema.prisma`
+
+They are source references, not runtime ORM models.
+
+## Generate with FumaDB
 
 ```ts
 import { createCli } from "fumadb/cli";
@@ -62,20 +62,29 @@ await createCli({
     drizzleAdapter({ db: drizzle(":memory:"), provider: "sqlite" }),
   ),
   command: "dimah-survey",
-  version: "0.0.0",
+  version: "YOUR_APP_VERSION",
 }).main();
 ```
 
-`dimah-survey generate 1.0.0 -o ./db/survey.ts` writes the ORM schema into the
-app. FumaDB does not emit secondary indexes. Prisma cannot express the partial
-open-draft rule, so apply `@dimah-survey/db/schema/indexes.sql` after Prisma
-creates its tables.
+```bash
+dimah-survey generate 1.0.0 -o ./db/survey.ts
+```
+
+FumaDB does not emit secondary indexes. Prisma also cannot express the partial
+open-draft predicate, so apply the exported `indexes.sql` separately.
+
+## Storage guarantees
+
+- `draft_json`, `published_json`, and `settings` remain separate
+- `definition` is an insert-only copy of the published document
+- compare-and-swap and collection policy checks happen inside writes
+- summary lists omit response definition and data
 
 ## Documentation
 
-<https://survey.dimah.dev/docs/persistence> covers `db()`, schema ownership, and
-custom stores. The [package map](https://survey.dimah.dev/docs/packages) shows
-where this package sits next to `server`.
+- [Persistence](https://survey.dimah.dev/docs/persistence)
+- [Package map](https://survey.dimah.dev/docs/packages)
+- [Example application](https://survey.dimah.dev/docs/example)
 
 ## License
 

@@ -42,7 +42,9 @@ Shared protocol changes start in `core`, then wire `server` and the fetch client
 - `audience: "fill"` mounts response routes plus `getPublishedSurvey` and requires `guard`. The guard returns `{ respondentId }` (`guardRespondent`) or `{ anonymous: true }` (`guardAnonymous`). Returning nothing is forbidden. The server stamps a respondent id onto start and list, refuses `include: "full"`, and refuses another respondent's row. Anonymous fill refuses list and a claimed `respondentId`; the response id is the capability. `getPublishedSurvey` does not stamp a respondent. `audience: "editor"` mounts survey routes, including `saveSurveySettings` and `resumeSurvey`, plus `getResponse` and `listResponses` (including `include: "full"`). It does not mount start, partial, submit, abandon, or reopen. An editor guard returns nothing, or throws. Returning a respondent is forbidden. Defaults are `/api/survey` and `/api/admin/survey`.
 - Framework adapters (`next`, `node`, `express`, `hono`, `fastify`, `elysia`, `svelte-kit`) only forward `handler`. They do not interpret SurveyJS JSON.
 - Optional `expectedUpdatedAt` is compare-and-swap against `updatedAt`. SQL adapters must enforce it in the write, not only in memory. The React fill hook sends the token it last read.
-- HTTP is a better-call router. The browser client is better-fetch. `survey.api` takes `{ body }` or `{ query }`; the fetch client takes flat objects.
+- HTTP is a better-call router. The browser client is better-fetch. `fill.api`
+  and `editor.api` take `{ body }` or `{ query }`; the fetch client takes flat
+  objects.
 
 ## Pre-release
 
