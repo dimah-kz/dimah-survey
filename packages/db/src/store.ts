@@ -65,8 +65,10 @@ function toSurvey(row: SurveyRow): SurveyRecord {
     id: row.id,
     slug: row.slug,
     status: row.status as SurveyRecord["status"],
-    draftJson: row.draftJson,
-    publishedJson: row.publishedJson,
+    draftJson: structuredClone(row.draftJson),
+    publishedJson: row.publishedJson
+      ? structuredClone(row.publishedJson)
+      : null,
     publishedAt: isoOrNull(row.publishedAt),
     settings: readSurveySettings(row.settings),
     createdAt: iso(row.createdAt),
@@ -92,8 +94,8 @@ function toResponse(row: ResponseRow): ResponseRecord {
     surveyId: row.surveyId,
     respondentId: row.respondentId ?? null,
     status: row.status as ResponseRecord["status"],
-    definition: row.definition,
-    data: row.data,
+    definition: structuredClone(row.definition),
+    data: structuredClone(row.data),
     createdAt: iso(row.createdAt),
     updatedAt: iso(row.updatedAt),
     submittedAt: isoOrNull(row.submittedAt),
@@ -417,7 +419,7 @@ export function db(client: DimahSurveyDbClient): SurveyStore {
             id: input.id,
             slug,
             status: "draft",
-            draftJson: input.draftJson,
+            draftJson: structuredClone(input.draftJson),
             publishedJson: null,
             publishedAt: null,
             settings: { ...DEFAULT_SURVEY_SETTINGS },
@@ -432,7 +434,7 @@ export function db(client: DimahSurveyDbClient): SurveyStore {
         {
           ...existing,
           slug,
-          draftJson: input.draftJson,
+          draftJson: structuredClone(input.draftJson),
           updatedAt: now,
         },
         input.expectedUpdatedAt,
@@ -480,7 +482,7 @@ export function db(client: DimahSurveyDbClient): SurveyStore {
       return writeSurvey(
         {
           ...existing,
-          settings: input.settings,
+          settings: structuredClone(input.settings),
           updatedAt: new Date().toISOString(),
         },
         input.expectedUpdatedAt,
@@ -508,7 +510,9 @@ export function db(client: DimahSurveyDbClient): SurveyStore {
     },
     async startResponse(input, lifecycle?: StartResponseLifecycle) {
       const survey = await readSurvey(input.surveyId);
-      if (!survey) throw notPublished();
+      if (!survey) {
+        throw APIError.from("NOT_FOUND", SURVEY_ERROR_CODES.SURVEY_NOT_FOUND);
+      }
       return exclusive(surveyKey(survey.id), () =>
         beginResponse(survey.id, input.respondentId, lifecycle),
       );
@@ -565,7 +569,7 @@ export function db(client: DimahSurveyDbClient): SurveyStore {
         if (row.status !== "draft") {
           throw APIError.from("CONFLICT", SURVEY_ERROR_CODES.RESPONSE_CLOSED);
         }
-        return { ...row, data: input.data };
+        return { ...row, data: structuredClone(input.data) };
       });
     },
     async submitResponse(input, lifecycle) {
@@ -602,7 +606,7 @@ export function db(client: DimahSurveyDbClient): SurveyStore {
         const prepared = lifecycle?.prepare
           ? await lifecycle.prepare(current)
           : undefined;
-        const data = prepared ?? input.data ?? current.data;
+        const data = structuredClone(prepared ?? input.data ?? current.data);
         const saved = await updateResponse(
           input.id,
           input.expectedUpdatedAt,

@@ -36,6 +36,14 @@ export function bindSurveyModel(
   // SurveyJS 2 reads `sendResultOnPageNext`. SurveyJS 3 reads `partialSendEnabled`.
   model.sendResultOnPageNext = partial === "page";
   model.partialSendEnabled = partial === "page";
+  const onQuestionAdded = (
+    _sender: Model,
+    event: { question: { getType(): string } },
+  ) => {
+    storeFilesAsUrls(event.question);
+  };
+  for (const question of model.getAllQuestions()) storeFilesAsUrls(question);
+  model.onQuestionAdded.add(onQuestionAdded);
   const onPartial = () => {
     void actions.savePartial({ ...model.data }).catch((error: unknown) => {
       actions.onWriteError?.(error);
@@ -55,7 +63,15 @@ export function bindSurveyModel(
   if (partial === "page") model.onPartialSend.add(onPartial);
   model.onCompleting.add(onCompleting);
   return () => {
+    model.onQuestionAdded.remove(onQuestionAdded);
     if (partial === "page") model.onPartialSend.remove(onPartial);
     model.onCompleting.remove(onCompleting);
   };
+}
+
+/** File and signature answers stay URLs. The app handles the bytes. */
+function storeFilesAsUrls(question: { getType(): string }) {
+  const type = question.getType();
+  if (type !== "file" && type !== "signaturepad") return;
+  (question as { storeDataAsText?: boolean }).storeDataAsText = false;
 }

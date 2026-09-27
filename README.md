@@ -42,7 +42,7 @@ pnpm example
 [`apps/docs`](./apps/docs) is the Fumadocs site.
 
 ```bash
-pnpm docs
+pnpm dev:docs
 ```
 
 ## License

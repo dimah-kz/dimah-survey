@@ -7,7 +7,7 @@ Public documentation site for this library. [Fumadocs](https://fumadocs.dev) ren
 From the repository root:
 
 ```bash
-pnpm docs
+pnpm dev:docs
 ```
 
 http://localhost:3001
