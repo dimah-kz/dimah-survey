@@ -294,10 +294,10 @@ export const baseConfig = defineConfig(
     rules: {
       // `apps/*` is product docs; keep valid even if the glob is empty.
       "pnpm/yaml-valid-packages": "off",
-      // Next apps need ESLint 9 and the TypeScript 6 API beside the default catalog.
+      // Next apps need the TypeScript 6 API beside the default catalog.
       "pnpm/yaml-no-duplicate-catalog-item": [
         "error",
-        { allow: ["eslint", "typescript"] },
+        { allow: ["typescript"] },
       ],
     },
   },

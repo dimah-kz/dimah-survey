@@ -41,7 +41,7 @@
     "@types/react-dom": "catalog:",
     "@typescript/native": "catalog:typescript6",
     "drizzle-kit": "catalog:",
-    "eslint": "catalog:next",
+    "eslint": "catalog:",
     "eslint-config-next": "catalog:",
     "tailwindcss": "^4.3.3",
     "typescript": "catalog:typescript6"

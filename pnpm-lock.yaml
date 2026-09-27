@@ -338,10 +338,6 @@ catalogs:
     zod:
       specifier: ^4.6.5
       version: 4.6.5
-  next:
-    eslint:
-      specifier: 10.11.0
-      version: 10.11.0
   typescript6:
     '@typescript/native':
       specifier: npm:typescript@7.0.2
@@ -446,7 +442,7 @@ importers:
         specifier: catalog:typescript6
         version: typescript@7.0.2
       eslint:
-        specifier: catalog:next
+        specifier: 'catalog:'
         version: 10.11.0(jiti@2.7.0)
       eslint-config-next:
         specifier: 'catalog:'
@@ -543,7 +539,7 @@ importers:
         specifier: 'catalog:'
         version: 1.0.0-rc.4
       eslint:
-        specifier: catalog:next
+        specifier: 'catalog:'
         version: 10.11.0(jiti@2.7.0)
       eslint-config-next:
         specifier: 'catalog:'
