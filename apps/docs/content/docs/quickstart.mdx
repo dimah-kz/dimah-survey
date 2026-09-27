@@ -38,8 +38,6 @@ must share the same store.
 
 ```ts title="lib/survey.ts"
 import {
-  SURVEY_API_BASE_PATH,
-  SURVEY_EDITOR_API_BASE_PATH,
   dimahSurvey,
   guardRespondent,
   memoryAdapter,
@@ -50,13 +48,11 @@ const database = memoryAdapter();
 export const editor = dimahSurvey({
   audience: "editor",
   database,
-  basePath: SURVEY_EDITOR_API_BASE_PATH,
 });
 
 export const fill = dimahSurvey({
   audience: "fill",
   database,
-  basePath: SURVEY_API_BASE_PATH,
   guard: guardRespondent("demo"),
 });
 ```
@@ -85,9 +81,10 @@ import { editor } from "@/lib/survey";
 export const { GET, POST, PUT, PATCH, DELETE } = toNextJsHandler(editor);
 ```
 
-The paths match the default base paths: `/api/survey` for fill and
-`/api/admin/survey` for editor. See [Mount the server](/docs/integration) for
-other runtimes.
+These folders are the defaults: `/api/survey` for fill and `/api/admin/survey`
+for editor. `dimahSurvey()` already uses them. Set `basePath` when the folder
+is different, and pass that same path as the browser client's `baseURL`. See
+[Mount the server](/docs/integration) for other runtimes.
 
 </Step>
 
@@ -148,9 +145,7 @@ return `null`.
 
 import { createFillClient } from "@dimah-survey/react";
 
-export const fillClient = createFillClient({
-  baseURL: "/api/survey",
-});
+export const fillClient = createFillClient();
 ```
 
 Browser clients take flat input objects. In-process APIs use `{ body }` or
