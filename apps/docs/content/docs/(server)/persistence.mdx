@@ -4,18 +4,43 @@ description: Add the tables and connect Drizzle, Prisma, or Kysely.
 icon: Database
 ---
 
-Paste the schema, migrate it, then pass `database` to both audiences. Model
-keys are `survey` and `response`. SQL tables are `dimah_survey` and
+Copy the schema for your ORM, run a migration, then pass the resulting store to
+both server audiences. dimah-survey never runs migrations for you.
+
+```npm
+npm i @dimah-survey/db fumadb
+```
+
+Model keys are `survey` and `response`; SQL tables are `dimah_survey` and
 `dimah_response`.
+
+The examples use SQLite with Drizzle and PostgreSQL with Prisma or Kysely.
 
 <Tabs items={["Drizzle", "Prisma", "Kysely"]}>
 <Tab value="Drizzle">
 
 ```npm
 npm i drizzle-orm
+npm i -D drizzle-kit
 ```
 
 <include>../../_includes/db/drizzle.mdx</include>
+
+```ts title="drizzle.config.ts"
+import { defineConfig } from "drizzle-kit";
+
+export default defineConfig({
+  dialect: "sqlite",
+  schema: "./db/schema.ts",
+  out: "./drizzle",
+  dbCredentials: { url: "./survey.db" },
+});
+```
+
+```bash
+npx drizzle-kit generate
+npx drizzle-kit migrate
+```
 
 ```ts title="db/index.ts"
 import { DimahSurveyDB, db } from "@dimah-survey/db";
@@ -31,20 +56,35 @@ export const database = db(
 );
 ```
 
-For PostgreSQL or MySQL, use that driver's table builder and set `provider`.
+This setup uses SQLite. For PostgreSQL, use its Drizzle table builder and
+driver, then set `provider: "postgresql"`.
 
 </Tab>
 <Tab value="Prisma">
 
 ```npm
-npm i prisma @prisma/client
+npm i @prisma/client
+npm i -D prisma
 ```
 
 <include>../../_includes/db/prisma.mdx</include>
 
-Prisma cannot express the partial unique index. Apply this after migrate:
+Generate the migration without applying it:
+
+```bash
+npx prisma migrate dev --create-only --name dimah-survey
+```
+
+Prisma cannot express the partial unique index. Add this statement to the
+generated migration:
 
 <include>../../_includes/db/indexes.mdx</include>
+
+Then apply the migration:
+
+```bash
+npx prisma migrate dev
+```
 
 ```ts title="db/index.ts"
 import { DimahSurveyDB, db } from "@dimah-survey/db";
@@ -69,6 +109,12 @@ npm i kysely pg
 
 <include>../../_includes/db/sql.mdx</include>
 
+Apply the SQL with your migration system or the PostgreSQL client:
+
+```bash
+psql "$DATABASE_URL" -f db/schema.sql
+```
+
 ```ts title="db/index.ts"
 import { Pool } from "pg";
 import { DimahSurveyDB, db } from "@dimah-survey/db";
@@ -89,7 +135,15 @@ export const database = db(
 </Tab>
 </Tabs>
 
-`provider` is `"sqlite"`, `"postgresql"`, or `"mysql"`.
+`provider` is `"sqlite"`, `"postgresql"`, or `"mysql"`. Copy the reference
+schema into your application and migrate that copy; do not import it at
+runtime.
+
+<Callout>
+  The store accepts `provider: "mysql"`, but this page does not provide a MySQL
+  schema. Translate the tables and indexes for your MySQL ORM before connecting
+  the adapter.
+</Callout>
 
 ## Custom store
 
@@ -99,8 +153,8 @@ import type { SurveyStore } from "@dimah-survey/core";
 
 <AutoTypeTable path="packages/core/src/types.ts" name="SurveyStore" />
 
-Start and submit callbacks are not part of the HTTP body. The server passes
-them into the store write:
+Start and submit callbacks are server-only. They are never accepted from the
+HTTP body:
 
 ```ts
 import type {
@@ -143,8 +197,8 @@ A conforming store preserves these invariants:
 
 - Anonymous start always inserts. Identified start follows `"one-open"` or
   `"single"` settings.
-- Start, partial save, and submit enforce the collection window and response
-  cap.
+- Start, partial save, and submit enforce the collection window.
+- New starts and submits enforce the response cap.
 - Reopen enforces `reopen` and refuses a second identified draft.
 - Lists honor pagination, sort by `updatedAt` descending, and omit
   `definition` and `data` from summaries.

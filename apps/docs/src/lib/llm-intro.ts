@@ -15,8 +15,8 @@ export const LLM_PAGE_PRIORITY = [
   "/docs/surveys",
   "/docs/settings",
   "/docs/responses",
-  "/docs/integration",
   "/docs/persistence",
+  "/docs/integration",
   "/docs/security",
   "/docs/react",
   "/docs/creator",
@@ -74,7 +74,7 @@ TypeScript packages: \`@dimah-survey/core\` (protocol, browser clients, schemas,
 
 Use it when a SurveyJS app needs explicit publish and reproducible response history. Skip it for a visual form builder, hosted survey product, SurveyJS renderer, or dimah-form integration.
 
-Install: \`npm i @dimah-survey/server @dimah-survey/db @dimah-survey/react survey-core survey-react-ui fumadb\`. Database setup for Drizzle, Prisma, and Kysely is \`/docs/persistence\`. Published and still before \`1.0.0\`. A release may change the API.
+Install: \`npm i @dimah-survey/server @dimah-survey/db @dimah-survey/react react react-dom survey-core survey-react-ui fumadb\`. Database setup for Drizzle, Prisma, and Kysely is \`/docs/persistence\`. Published and still before \`1.0.0\`. A release may change the API.
 
 - Auth stays in the consumer \`guard\`. Do not look for library auth.
 - \`draftJson\` is the editor copy. \`publishedJson\` is what new responses clone. A later publish does not change \`response.definition\`.

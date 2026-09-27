@@ -14,9 +14,9 @@ type SurveyErrorBody = {
 };
 ```
 
-Throw with `APIError.from` and a code from `SURVEY_ERROR_CODES`. A plain
-`Error` is normalized to `INTERNAL_ERROR`. Treat `code` as the stable contract;
-messages are for diagnostics.
+Treat `code` as the stable contract; messages are diagnostic. Throw known
+failures with `APIError.from` and `SURVEY_ERROR_CODES`. A plain `Error`
+becomes `INTERNAL_ERROR`.
 
 ```ts
 import {
@@ -39,22 +39,22 @@ is no `UNAUTHORIZED` code; guards reject callers with `FORBIDDEN`.
 
 ## Codes
 
-| Code                 | HTTP | Meaning                                                          |
-| -------------------- | ---- | ---------------------------------------------------------------- |
-| `NOT_FOUND`          | 404  | No route for the requested operation on this audience            |
-| `SURVEY_NOT_FOUND`   | 404  | Survey id or slug is missing, or no active published read exists |
-| `RESPONSE_NOT_FOUND` | 404  | Response id is missing                                           |
-| `FORBIDDEN`          | 403  | Guard rejected the caller or ownership check failed              |
-| `NOT_PUBLISHED`      | 409  | Start or resume has no eligible published document               |
-| `SURVEY_CLOSED`      | 409  | Start, partial save, or submit is outside the collection window  |
-| `RESPONSE_LIMIT`     | 409  | Submitted rows reached `maxResponses`                            |
-| `SLUG_TAKEN`         | 409  | Another survey owns the slug                                     |
-| `STALE_UPDATE`       | 409  | `expectedUpdatedAt` no longer matches                            |
-| `RESPONSE_CLOSED`    | 409  | Response state forbids the write or reopen is disabled           |
-| `OPEN_DRAFT`         | 409  | Another draft already exists for this survey and respondent      |
-| `VALIDATION_ERROR`   | 400  | Request body or query failed schema validation                   |
-| `VALIDATION_FAILED`  | 400  | The response definition rejected answer data                     |
-| `INTERNAL_ERROR`     | 500  | An unhandled exception reached the handler                       |
+| Code                 | HTTP | Meaning                                                         |
+| -------------------- | ---- | --------------------------------------------------------------- |
+| `NOT_FOUND`          | 404  | No route for the requested operation on this audience           |
+| `SURVEY_NOT_FOUND`   | 404  | No survey matches, or no active published read exists           |
+| `RESPONSE_NOT_FOUND` | 404  | Response id is missing                                          |
+| `FORBIDDEN`          | 403  | Guard rejected the caller or ownership check failed             |
+| `NOT_PUBLISHED`      | 409  | Start or resume has no eligible published document              |
+| `SURVEY_CLOSED`      | 409  | Start, partial save, or submit is outside the collection window |
+| `RESPONSE_LIMIT`     | 409  | Submitted rows reached `maxResponses`                           |
+| `SLUG_TAKEN`         | 409  | Another survey owns the slug                                    |
+| `STALE_UPDATE`       | 409  | `expectedUpdatedAt` no longer matches                           |
+| `RESPONSE_CLOSED`    | 409  | Response state forbids the write or reopen is disabled          |
+| `OPEN_DRAFT`         | 409  | Another draft already exists for this survey and respondent     |
+| `VALIDATION_ERROR`   | 400  | Request body or query failed schema validation                  |
+| `VALIDATION_FAILED`  | 400  | The response definition rejected answer data                    |
+| `INTERNAL_ERROR`     | 500  | An unhandled exception reached the handler                      |
 
 `SURVEY_NOT_FOUND` on `getPublishedSurvey` also covers a draft or archived
 survey. The editor `getSurvey` uses the same code when the id is missing, and
@@ -82,36 +82,5 @@ A resubmit that fails validation on an already submitted row is
 `RESPONSE_CLOSED`, not `VALIDATION_FAILED`. The row is already closed. See
 [Responses](/docs/responses).
 
----
-
-## Frequently asked questions
-
-<Accordions>
-
-<Accordion title="How do I tell a bad request from a failed survey?">
-
-`VALIDATION_ERROR` means the body or query failed schema checks, such as
-`closesAt` not after `opensAt`. `VALIDATION_FAILED` means the stored definition
-rejected the answers and includes `questions`. A different payload on an
-already submitted row is `RESPONSE_CLOSED`.
-
-</Accordion>
-
-<Accordion title="Why is there no UNAUTHORIZED code?">
-
-Guards reject callers with `FORBIDDEN`. A plain `Error` becomes
-`INTERNAL_ERROR`. Throw
-`APIError.from("FORBIDDEN", SURVEY_ERROR_CODES.FORBIDDEN)` when the session is
-missing or the caller does not own the row.
-
-</Accordion>
-
-<Accordion title="Which code means I should reload and retry?">
-
-`STALE_UPDATE`. `expectedUpdatedAt` no longer matches the stored row. Read the
-row again and retry from that `updatedAt`. `OPEN_DRAFT` and `RESPONSE_CLOSED`
-are state conflicts, not a stale token.
-
-</Accordion>
-
-</Accordions>
+On `STALE_UPDATE`, read the row again and retry from its new `updatedAt`.
+`OPEN_DRAFT` and `RESPONSE_CLOSED` are state conflicts, not retry tokens.

@@ -4,13 +4,12 @@ description: Decide whether your SurveyJS application needs a server-owned respo
 icon: Scale
 ---
 
-Use dimah-survey when SurveyJS remains your schema, Creator, and renderer, but
-the server must control which document a respondent sees and preserve that
-document with the response.
+Use dimah-survey when SurveyJS remains your schema and UI, but the server must
+control what respondents see and preserve that definition with every response.
 
 <Callout>
   The deciding requirement is a durable response snapshot—not simply rendering a
-  SurveyJS form in React.
+  SurveyJS form.
 </Callout>
 
 ## It is a good fit when
@@ -21,8 +20,8 @@ document with the response.
 - submit must validate against the definition that started the response
 - your application must keep ownership of auth, data, and deployment
 
-Choose another approach when you only need the SurveyJS renderer, want a hosted
-inbox and account system, or do not use SurveyJS JSON as the form definition.
+It is not a fit when you only need a renderer, want a hosted survey product,
+or do not use SurveyJS JSON.
 
 ## Compare the ownership model
 
@@ -36,54 +35,19 @@ inbox and account system, or do not use SurveyJS JSON as the form definition.
 | Data and migrations            | Your application          | Your application        | Vendor storage   |
 | Authoring                      | Creator stays in your app | Survey Creator          | Hosted builder   |
 
-This compares responsibility, not performance. The same application can use
-SurveyJS with dimah-survey for surveys and a different form library for
-unrelated UI.
+This compares ownership, not performance.
 
 ---
 
 ## Deliberate non-goals
 
 dimah-survey does not render questions, ship Creator, define question types,
-store file bytes, or provide accounts, dashboards, PDF generation, or an
-analytics warehouse. It also has no plugin system and no survey-version table;
+store file bytes, or provide accounts, dashboards, PDF generation, or
+analytics. It has no plugin system or survey-version table;
 `response.definition` is the historical record.
 
 SurveyJS Analytics or PDF tooling can consume each response's `definition` and
-`data`. Do not interpret old response data against the current survey draft.
-
----
-
-## Frequently asked questions
-
-<Accordions>
-
-<Accordion title="Can I keep using SurveyJS Creator and Analytics?">
-
-Yes. Creator stays in your application and writes `draftJson`. Analytics or PDF
-tooling should read each response's stored `definition` and `data`, not the
-current draft.
-
-</Accordion>
-
-<Accordion title="Is dimah-survey a hosted form backend?">
-
-No. You run the handlers, choose the database, and keep authentication. A
-hosted product is the better fit when you want its accounts, inbox, and
-storage.
-
-</Accordion>
-
-<Accordion title="Where is the survey version history?">
-
-On the response. There is no survey-version table. `response.definition` is
-the document that response was started and validated against.
-
-</Accordion>
-
-</Accordions>
-
----
+`data`. Never interpret old data against the current survey draft.
 
 Next, review the concrete [package boundaries](/docs/packages) or build the
 [quickstart](/docs/quickstart).
