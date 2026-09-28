@@ -22,6 +22,7 @@ export const SURVEY_API_ROUTES = {
   surveySettings: "/survey/settings",
   resumeSurvey: "/survey/resume",
   publishedSurvey: "/survey/published",
+  surveyVersions: "/survey/versions",
   startResponse: "/response/start",
   response: "/response",
   responses: "/responses",
@@ -45,6 +46,10 @@ export const SURVEY_API_OPERATIONS = {
   getPublishedSurvey: {
     method: "GET",
     path: SURVEY_API_ROUTES.publishedSurvey,
+  },
+  listSurveyVersions: {
+    method: "GET",
+    path: SURVEY_API_ROUTES.surveyVersions,
   },
   startResponse: { method: "POST", path: SURVEY_API_ROUTES.startResponse },
   getResponse: { method: "GET", path: SURVEY_API_ROUTES.response },
@@ -78,6 +83,7 @@ export const EDITOR_AUDIENCE_OPERATIONS = [
   "archiveSurvey",
   "saveSurveySettings",
   "resumeSurvey",
+  "listSurveyVersions",
   "getResponse",
   "listResponses",
 ] as const satisfies readonly SurveyApiOperation[];

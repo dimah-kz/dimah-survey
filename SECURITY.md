@@ -36,7 +36,7 @@ We credit reporters in the advisory unless you ask to stay anonymous.
 In scope:
 
 - The four published packages and their npm artifacts
-- Publish not rewriting an existing `response.definition`
+- Publish not changing the version an existing response started on
 - Submit validation running on the stored definition
 - Fill and editor audience separation in `@dimah-survey/server`
 - The Publish workflow and npm Trusted Publishing (OIDC)

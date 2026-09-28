@@ -164,7 +164,7 @@ export function siteJsonLd(origin: string) {
         },
         featureList: [
           "Explicit draft and publish lifecycle for SurveyJS JSON",
-          "Immutable definition snapshot for every response",
+          "Immutable published versions referenced by every response",
           "Partial save, submit, abandon, and reopen",
           "Submit validation against each response snapshot",
           "Separate fill and editor audiences",

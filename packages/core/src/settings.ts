@@ -103,6 +103,7 @@ export function toPublishedSurvey(
 ): PublishedSurvey | null {
   if (
     survey.status !== "active" ||
+    survey.publishedVersionId === null ||
     survey.publishedJson === null ||
     survey.publishedAt === null
   ) {
@@ -111,6 +112,7 @@ export function toPublishedSurvey(
   return {
     id: survey.id,
     slug: survey.slug,
+    publishedVersionId: survey.publishedVersionId,
     publishedJson: survey.publishedJson,
     publishedAt: survey.publishedAt,
     settings: survey.settings,

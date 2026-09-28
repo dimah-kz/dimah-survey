@@ -20,15 +20,17 @@ describe("schema copies", () => {
   it("names the same tables and columns", () => {
     for (const source of copies) {
       expect(source).toContain("dimah_survey");
+      expect(source).toContain("dimah_survey_version");
       expect(source).toContain("dimah_response");
       for (const column of [
         "draft_json",
-        "published_json",
+        "published_version_id",
         "published_at",
         "settings",
+        "content_hash",
         "survey_id",
         "respondent_id",
-        "definition",
+        "version_id",
         "submitted_at",
       ]) {
         expect(source).toContain(column);
@@ -46,6 +48,10 @@ describe("schema copies", () => {
       expect(source).toContain("dimah_response_survey_id_updated_at_idx");
       expect(source).toContain("dimah_response_respondent_lookup_idx");
       expect(source).toContain("dimah_response_one_open_draft");
+      expect(source).toContain("dimah_survey_version_survey_id_created_at_idx");
+    }
+    for (const source of [tables, drizzle, prisma, sqliteSchemaSql, v1]) {
+      expect(source).toContain("dimah_survey_version_survey_hash");
     }
     expect(indexes).toContain("status = 'draft' and respondent_id is not null");
     expect(sqliteSchemaSql).toContain(

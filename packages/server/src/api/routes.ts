@@ -5,6 +5,7 @@ import {
   isAPIError,
   listResponsesQuerySchema,
   listSurveysQuerySchema,
+  listSurveyVersionsQuerySchema,
   normalizeListPage,
   pageFromOverfetch,
   publishSurveyBodySchema,
@@ -16,6 +17,7 @@ import {
   startResponseBodySchema,
   submitResponseBodySchema,
   toPublishedSurvey,
+  toResponseData,
   toResponseSummary,
   type ResponseRecord,
   type SurveyJson,
@@ -35,6 +37,7 @@ import { clearSurveyResult } from "@/validate";
 const save = SURVEY_API_OPERATIONS.saveSurvey;
 const getSurveyOp = SURVEY_API_OPERATIONS.getSurvey;
 const listSurveysOp = SURVEY_API_OPERATIONS.listSurveys;
+const listVersionsOp = SURVEY_API_OPERATIONS.listSurveyVersions;
 const publish = SURVEY_API_OPERATIONS.publishSurvey;
 const archive = SURVEY_API_OPERATIONS.archiveSurvey;
 const saveSettings = SURVEY_API_OPERATIONS.saveSurveySettings;
@@ -77,6 +80,31 @@ export const surveyEndpoints = {
       const page = pageFromOverfetch(rows, limit, offset);
       return {
         surveys: page.items,
+        limit,
+        offset,
+        nextOffset: page.nextOffset,
+      };
+    },
+  ),
+  listSurveyVersions: createSurveyEndpoint(
+    listVersionsOp.path,
+    { method: listVersionsOp.method, query: listSurveyVersionsQuerySchema },
+    async (ctx) => {
+      const { limit, offset } = normalizeListPage(ctx.query);
+      const survey = await ctx.context.config.database.getSurvey(
+        ctx.query.surveyId,
+      );
+      if (!survey) {
+        return { versions: [], limit, offset, nextOffset: null };
+      }
+      const rows = await ctx.context.config.database.listSurveyVersions({
+        surveyId: survey.id,
+        limit: limit + 1,
+        offset,
+      });
+      const page = pageFromOverfetch(rows, limit, offset);
+      return {
+        versions: page.items,
         limit,
         offset,
         nextOffset: page.nextOffset,
@@ -148,6 +176,7 @@ export const surveyEndpoints = {
         if (!survey) {
           return {
             responses: [],
+            versions: [],
             limit,
             offset,
             nextOffset: null,
@@ -173,9 +202,21 @@ export const surveyEndpoints = {
       });
       const page = pageFromOverfetch(rows, limit, offset);
       const total = await database.countResponses(filter);
+      const versions =
+        include === "full"
+          ? await database.readSurveyVersions(
+              page.items.map((row) => row.versionId),
+            )
+          : [];
       return {
         responses:
-          include === "full" ? page.items : page.items.map(toResponseSummary),
+          include === "full"
+            ? page.items.map((row) => {
+                if (!("data" in row)) throw errors.internalError();
+                return toResponseData(row);
+              })
+            : page.items.map(toResponseSummary),
+        versions,
         limit,
         offset,
         nextOffset: page.nextOffset,
@@ -270,6 +311,7 @@ export const editorSurveyEndpoints = {
   archiveSurvey: surveyEndpoints.archiveSurvey,
   saveSurveySettings: surveyEndpoints.saveSurveySettings,
   resumeSurvey: surveyEndpoints.resumeSurvey,
+  listSurveyVersions: surveyEndpoints.listSurveyVersions,
   getResponse: surveyEndpoints.getResponse,
   listResponses: surveyEndpoints.listResponses,
 };

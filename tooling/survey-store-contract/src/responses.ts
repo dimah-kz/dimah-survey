@@ -49,6 +49,9 @@ export function responseContract(open: OpenSurveyStore) {
       const started = await store.startResponse({ surveyId: "friendly" });
       expect(started.surveyId).toBe("survey-1");
       expect(started.definition).toEqual(v1);
+      expect(started.versionId).toBe(
+        (await store.getSurvey("survey-1"))?.publishedVersionId,
+      );
       expect(started.data).toEqual({});
       expect(started.respondentId).toBeNull();
 
@@ -458,15 +461,23 @@ export function responseContract(open: OpenSurveyStore) {
       const summaries = await store.listResponses({ surveyId: "pulse" });
       expect(summaries[0]).not.toHaveProperty("definition");
       expect(summaries[0]).not.toHaveProperty("data");
+      expect(summaries[0]).toMatchObject({ versionId: submitted.versionId });
       const full = await store.listResponses({
         surveyId: "pulse",
         include: "full",
       });
       expect(full).toHaveLength(2);
       expect(full.find((row) => row.id === submitted.id)).toMatchObject({
-        definition: v1,
+        versionId: submitted.versionId,
         data: { q1: "yes" },
       });
+      expect(full[0]).not.toHaveProperty("definition");
+      expect(await store.readSurveyVersions([submitted.versionId])).toEqual([
+        expect.objectContaining({
+          id: submitted.versionId,
+          definition: v1,
+        }),
+      ]);
 
       expect(
         await store.countResponses({

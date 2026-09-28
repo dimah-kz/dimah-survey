@@ -1,6 +1,7 @@
 export {
   normalizeListPage,
   pageFromOverfetch,
+  toResponseData,
   toResponseSummary,
 } from "./list";
 export { createEditorClient, createFillClient } from "./client";
@@ -13,7 +14,7 @@ export type {
 export { APIError, isAPIError } from "./error";
 export { SURVEY_ERROR_CODES } from "./error-codes";
 export type { SurveyErrorCode } from "./error-codes";
-export { sameJson } from "./json";
+export { sameJson, surveyContentHash } from "./json";
 export {
   DEFAULT_SURVEY_SETTINGS,
   assertReopenAllowed,
@@ -47,6 +48,7 @@ export {
   idQuerySchema,
   listResponsesQuerySchema,
   listSurveysQuerySchema,
+  listSurveyVersionsQuerySchema,
   publishSurveyBodySchema,
   saveSurveySettingsBodySchema,
   surveySettingsSchema,
@@ -64,11 +66,13 @@ export type {
   GuardContext,
   ListResponsesQuery,
   ListSurveysQuery,
+  ListSurveyVersionsQuery,
   AnonymousPrincipal,
   FillPrincipal,
   Operation,
   PublishSurveyInput,
   PublishedSurvey,
+  ResponseData,
   ResponseList,
   ResponseMutationInput,
   ResponseRecord,
@@ -91,6 +95,8 @@ export type {
   SurveyResult,
   SurveyStatus,
   SurveyStore,
+  SurveyVersion,
+  SurveyVersionList,
   ValidateResult,
   ValidateResultInput,
 } from "./types";

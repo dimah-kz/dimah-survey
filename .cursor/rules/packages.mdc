@@ -12,7 +12,7 @@ SurveyJS JSON stays opaque. Do not import `@dimah-form/*`. Auth stays in consume
 
 Published on npm and still before `1.0.0`. Ship the current design and delete the previous API in the same change. Policy: [docs/agents/architecture.md](docs/agents/architecture.md) **Before 1.0**. Changelog rules are in `docs/agents/release.md`.
 
-`draftJson` and `publishedJson` are different documents. A response stores `definition` copied at start. Submit validates that snapshot.
+`draftJson` and the current published version are different documents. A response stores `versionId` at start. Submit validates that version's document.
 
 Do not wrap the SurveyJS renderer.
 

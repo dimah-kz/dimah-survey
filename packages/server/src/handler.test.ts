@@ -314,15 +314,24 @@ describe("handler", () => {
     });
     expect(listed.responses[0]).not.toHaveProperty("definition");
     expect(listed.responses[0]).not.toHaveProperty("data");
+    expect(listed.versions).toEqual([]);
 
     const full = await editor.listResponses({ surveyId: "a", include: "full" });
     expect(full.responses[0]).toMatchObject({
-      definition: textSurvey,
+      versionId: started.versionId,
       data: { q1: "yes" },
     });
+    expect(full.responses[0]).not.toHaveProperty("definition");
+    expect(full.versions).toEqual([
+      expect.objectContaining({
+        id: started.versionId,
+        definition: textSurvey,
+      }),
+    ]);
     const unknown = await editor.listResponses({ surveyId: "missing" });
     expect(unknown).toMatchObject({
       responses: [],
+      versions: [],
       total: 0,
       nextOffset: null,
     });

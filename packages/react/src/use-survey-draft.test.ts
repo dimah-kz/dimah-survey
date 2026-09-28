@@ -20,6 +20,7 @@ function record(updatedAt: string): SurveyRecord {
     slug: "pulse",
     status: "draft",
     draftJson: { title: "v1" },
+    publishedVersionId: null,
     publishedJson: null,
     publishedAt: null,
     settings: { ...DEFAULT_SURVEY_SETTINGS },

@@ -7,8 +7,11 @@ import {
   assertSurveyAccepting,
   existingResponseForStart,
   readSurveySettings,
+  surveyContentHash,
   type ListResponsesQuery,
+  type ListSurveyVersionsQuery,
   type ListSurveysQuery,
+  type ResponseData,
   type ResponseRecord,
   type ResponseSummary,
   type ResumeSurveyInput,
@@ -17,6 +20,7 @@ import {
   type SurveyRecord,
   type SurveySettings,
   type SurveyStore,
+  type SurveyVersion,
 } from "@dimah-survey/core";
 import type { InferFumaDB } from "fumadb";
 
@@ -32,11 +36,19 @@ type SurveyRow = {
   slug: string;
   status: string;
   draftJson: SurveyRecord["draftJson"];
-  publishedJson: SurveyRecord["publishedJson"];
+  publishedVersionId?: string | null;
   publishedAt: Date | string | null;
   settings?: SurveySettings | null;
   createdAt: Date | string;
   updatedAt: Date | string;
+};
+
+type VersionRow = {
+  id: string;
+  surveyId: string;
+  definition: SurveyVersion["definition"];
+  contentHash: string;
+  createdAt: Date | string;
 };
 
 type ResponseRow = {
@@ -44,7 +56,7 @@ type ResponseRow = {
   surveyId: string;
   respondentId?: string | null;
   status: string;
-  definition: ResponseRecord["definition"];
+  versionId: string;
   data: ResponseRecord["data"];
   submittedAt: Date | string | null;
   createdAt: Date | string;
@@ -60,15 +72,24 @@ function isoOrNull(value: Date | string | null | undefined): string | null {
   return iso(value);
 }
 
-function toSurvey(row: SurveyRow): SurveyRecord {
+function toVersion(row: VersionRow): SurveyVersion {
+  return {
+    id: row.id,
+    surveyId: row.surveyId,
+    definition: structuredClone(row.definition) as SurveyVersion["definition"],
+    contentHash: row.contentHash,
+    createdAt: iso(row.createdAt),
+  };
+}
+
+function toSurvey(row: SurveyRow, version: SurveyVersion | null): SurveyRecord {
   return {
     id: row.id,
     slug: row.slug,
     status: row.status as SurveyRecord["status"],
     draftJson: structuredClone(row.draftJson),
-    publishedJson: row.publishedJson
-      ? structuredClone(row.publishedJson)
-      : null,
+    publishedVersionId: row.publishedVersionId ?? null,
+    publishedJson: version ? structuredClone(version.definition) : null,
     publishedAt: isoOrNull(row.publishedAt),
     settings: readSurveySettings(row.settings),
     createdAt: iso(row.createdAt),
@@ -82,23 +103,17 @@ function toSummary(row: ResponseRow): ResponseSummary {
     surveyId: row.surveyId,
     respondentId: row.respondentId ?? null,
     status: row.status as ResponseSummary["status"],
+    versionId: row.versionId,
     createdAt: iso(row.createdAt),
     updatedAt: iso(row.updatedAt),
     submittedAt: isoOrNull(row.submittedAt),
   };
 }
 
-function toResponse(row: ResponseRow): ResponseRecord {
+function toData(row: ResponseRow): ResponseData {
   return {
-    id: row.id,
-    surveyId: row.surveyId,
-    respondentId: row.respondentId ?? null,
-    status: row.status as ResponseRecord["status"],
-    definition: structuredClone(row.definition),
+    ...toSummary(row),
     data: structuredClone(row.data),
-    createdAt: iso(row.createdAt),
-    updatedAt: iso(row.updatedAt),
-    submittedAt: isoOrNull(row.submittedAt),
   };
 }
 
@@ -107,6 +122,7 @@ const RESPONSE_SUMMARY_COLUMNS = [
   "surveyId",
   "respondentId",
   "status",
+  "versionId",
   "submittedAt",
   "createdAt",
   "updatedAt",
@@ -166,6 +182,13 @@ function openDraft() {
   return APIError.from("CONFLICT", SURVEY_ERROR_CODES.OPEN_DRAFT);
 }
 
+function internalError() {
+  return APIError.from(
+    "INTERNAL_SERVER_ERROR",
+    SURVEY_ERROR_CODES.INTERNAL_ERROR,
+  );
+}
+
 function notPublished() {
   return APIError.from("CONFLICT", SURVEY_ERROR_CODES.NOT_PUBLISHED);
 }
@@ -183,15 +206,54 @@ export function db(client: DimahSurveyDbClient): SurveyStore {
   const orm = client.orm(v1.version);
   const exclusive = createKeyLock();
 
+  async function loadVersions(ids: readonly string[]) {
+    const unique = [...new Set(ids)];
+    if (unique.length === 0) return new Map<string, SurveyVersion>();
+    const rows = await orm.findMany("surveyVersion", {
+      where: (b) => b("id", "in", unique),
+    });
+    return new Map(
+      rows.map((row) => {
+        const version = toVersion(row as VersionRow);
+        return [version.id, version] as const;
+      }),
+    );
+  }
+
+  async function surveyFrom(row: SurveyRow) {
+    const versionId = row.publishedVersionId ?? null;
+    if (!versionId) return toSurvey(row, null);
+    const version = (await loadVersions([versionId])).get(versionId);
+    if (!version) throw internalError();
+    return toSurvey(row, version);
+  }
+
+  async function responseFrom(row: ResponseRow): Promise<ResponseRecord> {
+    const version = (await loadVersions([row.versionId])).get(row.versionId);
+    if (!version) throw internalError();
+    return {
+      id: row.id,
+      surveyId: row.surveyId,
+      respondentId: row.respondentId ?? null,
+      status: row.status as ResponseRecord["status"],
+      versionId: row.versionId,
+      definition: structuredClone(version.definition),
+      data: structuredClone(row.data),
+      createdAt: iso(row.createdAt),
+      updatedAt: iso(row.updatedAt),
+      submittedAt: isoOrNull(row.submittedAt),
+    };
+  }
+
   async function readSurvey(idOrSlug: string) {
     const byId = await orm.findFirst("survey", {
       where: (b) => b("id", "=", idOrSlug),
     });
-    if (byId) return toSurvey(byId as SurveyRow);
+    if (byId) return surveyFrom(byId as SurveyRow);
     const bySlug = await orm.findFirst("survey", {
       where: (b) => b("slug", "=", idOrSlug),
     });
-    return bySlug ? toSurvey(bySlug as SurveyRow) : null;
+    return bySlug ? surveyFrom(bySlug as SurveyRow) : null;
   }
 
   async function writeSurvey(
@@ -204,7 +266,7 @@ export function db(client: DimahSurveyDbClient): SurveyStore {
       slug: row.slug,
       status: row.status,
       draftJson: row.draftJson,
-      publishedJson: row.publishedJson,
+      publishedVersionId: row.publishedVersionId,
       publishedAt: row.publishedAt ? new Date(row.publishedAt) : null,
       settings: row.settings,
       updatedAt,
@@ -264,7 +326,7 @@ export function db(client: DimahSurveyDbClient): SurveyStore {
       limit: 1,
     });
     const row = rows[0];
-    return row ? toResponse(row as ResponseRow) : null;
+    return row ? responseFrom(row as ResponseRow) : null;
   }
 
   async function latestResponse(query: {
@@ -281,7 +343,7 @@ export function db(client: DimahSurveyDbClient): SurveyStore {
       limit: 1,
     });
     const row = rows[0];
-    return row ? toResponse(row as ResponseRow) : null;
+    return row ? responseFrom(row as ResponseRow) : null;
   }
 
   async function countSubmitted(surveyId: string) {
@@ -295,21 +357,28 @@ export function db(client: DimahSurveyDbClient): SurveyStore {
     const row = await orm.findFirst("response", {
       where: (b) => b("id", "=", id),
     });
-    return row ? toResponse(row as ResponseRow) : null;
+    return row ? responseFrom(row as ResponseRow) : null;
   }
 
   async function insertResponse(
     survey: SurveyRecord,
     respondentId?: string,
   ): Promise<{ row: ResponseRecord; inserted: boolean }> {
-    if (survey.status !== "active" || !survey.publishedJson)
+    if (
+      survey.status !== "active" ||
+      survey.publishedVersionId === null ||
+      !survey.publishedJson
+    ) {
       throw notPublished();
+    }
     const now = new Date().toISOString();
+    const versionId = survey.publishedVersionId;
     const row: ResponseRecord = {
       id: crypto.randomUUID(),
       surveyId: survey.id,
       respondentId: respondentId ?? null,
       status: "draft",
+      versionId,
       definition: structuredClone(survey.publishedJson),
       data: {},
       createdAt: now,
@@ -322,7 +391,7 @@ export function db(client: DimahSurveyDbClient): SurveyStore {
         surveyId: row.surveyId,
         respondentId: row.respondentId,
         status: row.status,
-        definition: row.definition,
+        versionId: row.versionId,
         data: row.data,
         submittedAt: null,
         createdAt: new Date(now),
@@ -354,7 +423,12 @@ export function db(client: DimahSurveyDbClient): SurveyStore {
     lifecycle: StartResponseLifecycle | undefined,
   ) {
     const fresh = await readSurvey(surveyId);
-    if (!fresh || fresh.status !== "active" || !fresh.publishedJson) {
+    if (
+      !fresh ||
+      fresh.status !== "active" ||
+      fresh.publishedVersionId === null ||
+      !fresh.publishedJson
+    ) {
       throw notPublished();
     }
     assertSurveyAccepting(fresh.settings);
@@ -367,7 +441,11 @@ export function db(client: DimahSurveyDbClient): SurveyStore {
     }
     return exclusive(draftKey(fresh.id, respondentId), async () => {
       const current = (await readSurvey(fresh.id)) ?? fresh;
-      if (current.status !== "active" || !current.publishedJson) {
+      if (
+        current.status !== "active" ||
+        current.publishedVersionId === null ||
+        !current.publishedJson
+      ) {
         throw notPublished();
       }
       assertSurveyAccepting(current.settings);
@@ -392,6 +470,20 @@ export function db(client: DimahSurveyDbClient): SurveyStore {
     });
   }
 
+  async function releaseUnreferencedVersion(versionId: string) {
+    const pointed = await orm.findFirst("survey", {
+      where: (b) => b("publishedVersionId", "=", versionId),
+    });
+    if (pointed) return;
+    const used = await orm.findFirst("response", {
+      where: (b) => b("versionId", "=", versionId),
+    });
+    if (used) return;
+    await orm.deleteMany("surveyVersion", {
+      where: (b) => b("id", "=", versionId),
+    });
+  }
+
   return {
     async getSurvey(idOrSlug) {
       return readSurvey(idOrSlug);
@@ -405,7 +497,18 @@ export function db(client: DimahSurveyDbClient): SurveyStore {
         limit: query?.limit,
         offset: query?.offset,
       });
-      return rows.map((row) => toSurvey(row as SurveyRow));
+      const versionIds = rows.flatMap((row) => {
+        const id = (row as SurveyRow).publishedVersionId;
+        return id ? [id] : [];
+      });
+      const versions = await loadVersions(versionIds);
+      return rows.map((row) => {
+        const survey = row as SurveyRow;
+        const versionId = survey.publishedVersionId ?? null;
+        const version = versionId ? versions.get(versionId) : null;
+        if (versionId && !version) throw internalError();
+        return toSurvey(survey, version ?? null);
+      });
     },
     async saveSurvey(input) {
       const existing = await readSurvey(input.id);
@@ -421,6 +524,7 @@ export function db(client: DimahSurveyDbClient): SurveyStore {
             slug,
             status: "draft",
             draftJson: structuredClone(input.draftJson),
+            publishedVersionId: null,
             publishedJson: null,
             publishedAt: null,
             settings: { ...DEFAULT_SURVEY_SETTINGS },
@@ -448,17 +552,56 @@ export function db(client: DimahSurveyDbClient): SurveyStore {
         throw APIError.from("NOT_FOUND", SURVEY_ERROR_CODES.SURVEY_NOT_FOUND);
       }
       const now = new Date().toISOString();
-      return writeSurvey(
-        {
-          ...existing,
-          status: "active",
-          publishedJson: structuredClone(existing.draftJson),
-          publishedAt: now,
-          updatedAt: now,
-        },
-        input.expectedUpdatedAt,
-        false,
-      );
+      const contentHash = await surveyContentHash(existing.draftJson);
+      const found = await orm.findFirst("surveyVersion", {
+        where: (b) =>
+          b.and(
+            b("surveyId", "=", existing.id),
+            b("contentHash", "=", contentHash),
+          ),
+      });
+      let versionId = found ? (found as VersionRow).id : crypto.randomUUID();
+      let created = false;
+      if (!found) {
+        try {
+          await orm.create("surveyVersion", {
+            id: versionId,
+            surveyId: existing.id,
+            definition: structuredClone(existing.draftJson),
+            contentHash,
+            createdAt: new Date(now),
+          });
+          created = true;
+        } catch (error) {
+          if (!isUniqueViolation(error)) throw error;
+          const again = await orm.findFirst("surveyVersion", {
+            where: (b) =>
+              b.and(
+                b("surveyId", "=", existing.id),
+                b("contentHash", "=", contentHash),
+              ),
+          });
+          if (!again) throw error;
+          versionId = (again as VersionRow).id;
+        }
+      }
+      try {
+        return await writeSurvey(
+          {
+            ...existing,
+            status: "active",
+            publishedVersionId: versionId,
+            publishedJson: structuredClone(existing.draftJson),
+            publishedAt: now,
+            updatedAt: now,
+          },
+          input.expectedUpdatedAt,
+          false,
+        );
+      } catch (error) {
+        if (created) await releaseUnreferencedVersion(versionId);
+        throw error;
+      }
     },
     async archiveSurvey(input) {
       const existing = await readSurvey(input.id);
@@ -496,7 +639,10 @@ export function db(client: DimahSurveyDbClient): SurveyStore {
         throw APIError.from("NOT_FOUND", SURVEY_ERROR_CODES.SURVEY_NOT_FOUND);
       }
       if (existing.status === "active") return existing;
-      if (existing.status === "archived" && existing.publishedJson !== null) {
+      if (
+        existing.status === "archived" &&
+        existing.publishedVersionId !== null
+      ) {
         return writeSurvey(
           {
             ...existing,
@@ -521,6 +667,24 @@ export function db(client: DimahSurveyDbClient): SurveyStore {
     async getResponse(id) {
       return readResponse(id);
     },
+    async listSurveyVersions(query: ListSurveyVersionsQuery) {
+      const survey = await readSurvey(query.surveyId);
+      if (!survey) return [];
+      const rows = await orm.findMany("surveyVersion", {
+        where: (b) => b("surveyId", "=", survey.id),
+        orderBy: ["createdAt", "desc"],
+        limit: query.limit,
+        offset: query.offset,
+      });
+      return rows.map((row) => toVersion(row as VersionRow));
+    },
+    async readSurveyVersions(ids) {
+      const versions = await loadVersions(ids);
+      return [...versions.values()].toSorted(
+        (a, b) =>
+          a.createdAt.localeCompare(b.createdAt) || a.id.localeCompare(b.id),
+      );
+    },
     async listResponses(query?: ListResponsesQuery) {
       const include = query?.include === "full" ? "full" : "summary";
       const filtered = hasListResponseFilters(query);
@@ -542,7 +706,7 @@ export function db(client: DimahSurveyDbClient): SurveyStore {
         limit: query?.limit,
         offset: query?.offset,
       });
-      return rows.map((row) => toResponse(row as ResponseRow));
+      return rows.map((row) => toData(row as ResponseRow));
     },
     async countResponses(query?: ListResponsesQuery) {
       const filtered = hasListResponseFilters(query);
@@ -693,13 +857,13 @@ export function db(client: DimahSurveyDbClient): SurveyStore {
     if (!currentRow) {
       throw APIError.from("NOT_FOUND", SURVEY_ERROR_CODES.RESPONSE_NOT_FOUND);
     }
-    const current = toResponse(currentRow as ResponseRow);
+    const current = await responseFrom(currentRow as ResponseRow);
     const next = change(current);
     const updatedAt =
       next.updatedAt === current.updatedAt
         ? new Date().toISOString()
         : next.updatedAt;
-    const row = { ...next, updatedAt, definition: current.definition };
+    const row = { ...next, updatedAt, versionId: current.versionId };
     const set = {
       respondentId: row.respondentId,
       status: row.status,
@@ -720,7 +884,7 @@ export function db(client: DimahSurveyDbClient): SurveyStore {
         where: (b) => b("id", "=", id),
       });
       if (!fresh) throw stale();
-      const saved = toResponse(fresh as ResponseRow);
+      const saved = await responseFrom(fresh as ResponseRow);
       if (!responseWriteLanded(saved, row)) throw stale();
       return saved;
     }
@@ -734,7 +898,7 @@ export function db(client: DimahSurveyDbClient): SurveyStore {
     if (!fresh) {
       throw APIError.from("NOT_FOUND", SURVEY_ERROR_CODES.RESPONSE_NOT_FOUND);
     }
-    return toResponse(fresh as ResponseRow);
+    return responseFrom(fresh as ResponseRow);
   }
 
   async function assertSlugAvailable(id: string, slug: string) {

@@ -28,8 +28,9 @@ const database = db(DimahSurveyDB.client(adapter));
 
 ## Own the schema
 
-SQL table names are `dimah_survey` and `dimah_response`. Drizzle model keys
-remain `survey` and `response`, because those are the keys `db()` queries.
+SQL table names are `dimah_survey`, `dimah_survey_version`, and `dimah_response`.
+Drizzle model keys remain `survey`, `surveyVersion`, and `response`, because
+those are the keys `db()` queries.
 
 Generate or copy the schema into your application and migrate that file. Keep
 the `dimah_response_one_open_draft` partial unique index as a backstop for one
@@ -59,10 +60,11 @@ open-draft predicate, so apply the exported `indexes.sql` separately.
 
 ## Storage guarantees
 
-- `draft_json`, `published_json`, and `settings` remain separate
-- `definition` is an insert-only copy of the published document
+- `draft_json`, the current `published_version_id`, and `settings` remain separate
+- each distinct publish is one immutable `dimah_survey_version` row
+- `version_id` is an insert-only pointer at the version a response started on
 - compare-and-swap and collection policy checks happen inside writes
-- summary lists omit response definition and data
+- summary lists omit response data; a full list returns each version once
 
 ## Documentation
 

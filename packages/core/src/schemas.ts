@@ -86,6 +86,11 @@ export const listSurveysQuerySchema = z
   })
   .optional();
 
+export const listSurveyVersionsQuerySchema = z.object({
+  surveyId: idSchema,
+  ...listPageQueryFields,
+});
+
 export const listResponsesQuerySchema = z
   .object({
     surveyId: idSchema.optional(),

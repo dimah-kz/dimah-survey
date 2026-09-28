@@ -7,8 +7,9 @@ import { drizzle } from "drizzle-orm/node-sqlite";
 import { migrate } from "drizzle-orm/node-sqlite/migrator";
 
 import { relations } from "@/db/schema";
+import { rehashSurveyVersions } from "@/db/rehash";
 
-function open() {
+async function open() {
   const file = path.join(process.cwd(), "data", "survey.db");
   fs.mkdirSync(path.dirname(file), { recursive: true });
   const sqlite = drizzle(file, { relations });
@@ -27,11 +28,12 @@ function open() {
   } finally {
     sqlite.$client.exec(`pragma foreign_keys = on;`);
   }
+  await rehashSurveyVersions(sqlite);
   return sqlite;
 }
 
 const globalForDb = globalThis as typeof globalThis & {
-  sqlite?: ReturnType<typeof open>;
+  sqlite?: Awaited<ReturnType<typeof open>>;
 };
 
-export const sqlite = (globalForDb.sqlite ??= open());
+export const sqlite = (globalForDb.sqlite ??= await open());

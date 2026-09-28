@@ -62,7 +62,7 @@ for Node.js, Express, Hono, Fastify, Elysia, and SvelteKit.
 - fill cannot publish or read editor drafts
 - editor cannot start or mutate respondent responses
 - the guard establishes response ownership on the server
-- submit validation runs on the stored `response.definition`
+- submit validation runs on the version the response started with
 - a matching repeated submit is idempotent
 
 ## Documentation

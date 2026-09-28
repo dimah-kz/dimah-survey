@@ -43,11 +43,12 @@ This compares ownership, not performance.
 
 dimah-survey does not render questions, ship Creator, define question types,
 store file bytes, or provide accounts, dashboards, PDF generation, or
-analytics. It has no plugin system or survey-version table;
-`response.definition` is the historical record.
+analytics. It has no plugin system. Published documents live in an immutable
+version table; each response stores the version it started on.
 
-SurveyJS Analytics or PDF tooling can consume each response's `definition` and
-`data`. Never interpret old data against the current survey draft.
+SurveyJS Analytics or PDF tooling can consume one version's document and the
+`data` rows that point at it. Never interpret old data against the current
+survey draft.
 
 Next, review the concrete [package boundaries](/docs/packages) or build the
 [quickstart](/docs/quickstart).

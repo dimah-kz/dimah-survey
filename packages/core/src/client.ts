@@ -8,6 +8,7 @@ import type {
   ArchiveSurveyInput,
   ListResponsesQuery,
   ListSurveysQuery,
+  ListSurveyVersionsQuery,
   PublishSurveyInput,
   PublishedSurvey,
   ResponseList,
@@ -21,6 +22,7 @@ import type {
   SubmitResponseInput,
   SurveyList,
   SurveyRecord,
+  SurveyVersionList,
 } from "./types";
 
 export type SurveyClient = {
@@ -32,6 +34,9 @@ export type SurveyClient = {
   getSurvey(id: string): Promise<SurveyRecord>;
   getPublishedSurvey(id: string): Promise<PublishedSurvey>;
   listSurveys(input?: ListSurveysQuery): Promise<SurveyList>;
+  listSurveyVersions(
+    input: ListSurveyVersionsQuery,
+  ): Promise<SurveyVersionList>;
   startResponse(input: StartResponseInput): Promise<ResponseRecord>;
   listResponses(input?: ListResponsesQuery): Promise<ResponseList>;
   savePartial(input: SavePartialInput): Promise<ResponseRecord>;
@@ -62,6 +67,7 @@ export type EditorClient = Pick<
   | "resumeSurvey"
   | "getSurvey"
   | "listSurveys"
+  | "listSurveyVersions"
   | "listResponses"
   | "getResponse"
 >;
@@ -104,6 +110,8 @@ function createSurveyClient(
       }),
     listSurveys: (query) =>
       $fetch(SURVEY_API_ROUTES.surveys, { method: "GET", query }),
+    listSurveyVersions: (query) =>
+      $fetch(SURVEY_API_ROUTES.surveyVersions, { method: "GET", query }),
     startResponse: (body) =>
       $fetch(SURVEY_API_ROUTES.startResponse, { method: "POST", body }),
     listResponses: (query) =>
@@ -154,6 +162,7 @@ export function createEditorClient(
     resumeSurvey: client.resumeSurvey,
     getSurvey: client.getSurvey,
     listSurveys: client.listSurveys,
+    listSurveyVersions: client.listSurveyVersions,
     listResponses: client.listResponses,
     getResponse: client.getResponse,
   };

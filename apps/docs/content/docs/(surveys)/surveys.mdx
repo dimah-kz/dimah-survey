@@ -4,9 +4,10 @@ description: Author a draft, publish explicitly, and preserve every response sna
 icon: FileText
 ---
 
-Each survey row keeps `draftJson`, `publishedJson`, and `settings` independent.
-Creator writes the draft. Publishing promotes it. Starting a response copies
-the published document into `response.definition`.
+Each survey row keeps `draftJson`, the current published version, and
+`settings` independent. Creator writes the draft. Publishing inserts a version
+when the document changed and points `publishedVersionId` at it. Starting a
+response stores that version id.
 
 ```ts
 import type { SurveyRecord } from "@dimah-survey/core";
@@ -34,13 +35,13 @@ with `SURVEY_CLOSED`.
 
 ## Authoring operations
 
-| Operation            | Effect                                                                      |
-| -------------------- | --------------------------------------------------------------------------- |
-| `saveSurvey`         | Create the row or replace `draftJson`; insert default settings once         |
-| `publishSurvey`      | Copy `draftJson` to `publishedJson`, set `active`, and update `publishedAt` |
-| `archiveSurvey`      | Set `archived` without deleting either document                             |
-| `resumeSurvey`       | Return an archived, previously published survey to `active`                 |
-| `saveSurveySettings` | Replace the complete `settings` object without touching either document     |
+| Operation            | Effect                                                                             |
+| -------------------- | ---------------------------------------------------------------------------------- |
+| `saveSurvey`         | Create the row or replace `draftJson`; insert default settings once                |
+| `publishSurvey`      | Publish `draftJson` as the current version, set `active`, and update `publishedAt` |
+| `archiveSurvey`      | Set `archived` without deleting either document                                    |
+| `resumeSurvey`       | Return an archived, previously published survey to `active`                        |
+| `saveSurveySettings` | Replace the complete `settings` object without touching either document            |
 
 `resumeSurvey` restores the last published document; it does not publish the
 current draft. An already active survey is returned unchanged; an archived
@@ -73,6 +74,9 @@ Omit the token only for an intentional last-write-wins update. A create with
 
 ---
 
-Only new responses copy the latest `publishedJson`. Existing drafts, submitted
-responses, and abandoned responses keep their stored `definition`; that
-snapshot is the historical record.
+Only new responses start on the current version. Existing drafts, submitted
+responses, and abandoned responses keep their `versionId`. Identical publishes
+reuse one version row. A changed document, including a single character in a
+title, creates a new version. `listSurveyVersions` returns that history, newest
+first, even when a version has no responses. `include: "full"` on
+`listResponses` returns `data` plus each referenced version once.

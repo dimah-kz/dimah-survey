@@ -16,8 +16,8 @@ export type ResponseStatus = "draft" | "submitted" | "abandoned";
 export type SurveyResponsePolicy = "one-open" | "single";
 
 /**
- * Collection rules for one survey. Not part of SurveyJS JSON and not copied
- * onto `response.definition`.
+ * Collection rules for one survey. Not part of SurveyJS JSON and not stored
+ * on a published version.
  *
  * `saveSurvey` inserts `DEFAULT_SURVEY_SETTINGS` once.
  * `saveSurveySettings` replaces the whole object.
@@ -51,7 +51,24 @@ export type SurveySettings = {
   maxResponses: number | null;
 };
 
-/** Stored survey. `draftJson`, `publishedJson`, and `settings` stay independent. */
+/**
+ * One immutable published document.
+ * A later publish does not update this row.
+ */
+export type SurveyVersion = {
+  /** Version row id. */
+  id: string;
+  /** Survey this version belongs to. */
+  surveyId: string;
+  /** SurveyJS document frozen at publish. */
+  definition: SurveyJson;
+  /** Canonical hash of `definition`. Identical publishes reuse the row. */
+  contentHash: string;
+  /** When this version was first published. */
+  createdAt: string;
+};
+
+/** Stored survey. `draftJson`, the current version, and `settings` stay independent. */
 export type SurveyRecord = {
   /** Application-chosen id. */
   id: string;
@@ -61,9 +78,11 @@ export type SurveyRecord = {
   status: SurveyStatus;
   /** Editable SurveyJS document. `saveSurvey` replaces this and does not publish. */
   draftJson: SurveyJson;
-  /** Document new responses may start. `null` before the first publish. */
+  /** Current published version. `null` before the first publish. */
+  publishedVersionId: string | null;
+  /** Document of `publishedVersionId`. `null` before the first publish. */
   publishedJson: SurveyJson | null;
-  /** When `publishedJson` was last promoted. `null` before the first publish. */
+  /** When the current version was last promoted. `null` before the first publish. */
   publishedAt: string | null;
   /** Server-owned collection policy. Not copied into SurveyJS JSON. */
   settings: SurveySettings;
@@ -79,15 +98,17 @@ export type PublishedSurvey = {
   id: string;
   /** Unique public identifier. */
   slug: string;
-  /** Copy of the document new responses start from. */
+  /** Current published version. */
+  publishedVersionId: string;
+  /** Document new responses start from. */
   publishedJson: SurveyJson;
-  /** When `publishedJson` was last promoted. */
+  /** When the current version was last promoted. */
   publishedAt: string;
   /** Server-owned collection policy. Not copied into SurveyJS JSON. */
   settings: SurveySettings;
 };
 
-/** One response. `definition` is the published document from the moment it started. */
+/** One response. `definition` is the version it started on. */
 export type ResponseRecord = {
   /** Response row id. */
   id: string;
@@ -97,7 +118,9 @@ export type ResponseRecord = {
   respondentId: string | null;
   /** `draft`, `submitted`, or `abandoned`. */
   status: ResponseStatus;
-  /** Copy of `publishedJson` at start. Later publishes must not change it. */
+  /** Published version captured at start. Later publishes must not change it. */
+  versionId: string;
+  /** Document of `versionId`, joined for a single-response read. */
   definition: SurveyJson;
   /** Stored `survey.data`. Partial save replaces the whole object. */
   data: SurveyResult;
@@ -209,6 +232,12 @@ export type ListSurveysQuery = ListPageQuery & {
   status?: SurveyStatus;
 };
 
+/** `listSurveyVersions` filter. Rows sort by `createdAt` descending. */
+export type ListSurveyVersionsQuery = ListPageQuery & {
+  /** Survey id or slug. The handler resolves a slug before the store sees it. */
+  surveyId: string;
+};
+
 /**
  * `listResponses` filter. Rows sort by `updatedAt` descending.
  * `countResponses` ignores `limit`, `offset`, and `include`.
@@ -230,13 +259,14 @@ export type ListResponsesQuery = ListPageQuery & {
   /** Exclusive lower bound on `updatedAt`. */
   updatedAfter?: string;
   /**
-   * `"summary"` omits `definition` and `data`. Fill refuses `"full"`.
+   * `"summary"` omits `data`. `"full"` adds `data` and returns each
+   * referenced version once. Fill refuses `"full"`.
    * @default "summary"
    */
   include?: "summary" | "full";
 };
 
-/** List row when `include` is `"summary"`. `definition` and `data` are omitted. */
+/** List row when `include` is `"summary"`. `data` is omitted. */
 export type ResponseSummary = {
   /** Response row id. */
   id: string;
@@ -246,12 +276,32 @@ export type ResponseSummary = {
   respondentId: string | null;
   /** `draft`, `submitted`, or `abandoned`. */
   status: ResponseStatus;
+  /** Published version captured at start. */
+  versionId: string;
   /** When the row was inserted. */
   createdAt: string;
   /** Compare-and-swap token for later writes. */
   updatedAt: string;
   /** When status became `submitted`. Cleared on reopen. */
   submittedAt: string | null;
+};
+
+/** List row when `include` is `"full"`. The definition lives on `versions`. */
+export type ResponseData = ResponseSummary & {
+  /** Stored `survey.data`. */
+  data: SurveyResult;
+};
+
+/** One page of published versions, `createdAt` descending. */
+export type SurveyVersionList = {
+  /** Versions on this page. */
+  versions: SurveyVersion[];
+  /** Page size that produced this result. */
+  limit: number;
+  /** Rows skipped before this page. */
+  offset: number;
+  /** Offset of the next page. `null` when this page is the last. */
+  nextOffset: number | null;
 };
 
 /** One page of surveys, `updatedAt` descending. */
@@ -268,8 +318,16 @@ export type SurveyList = {
 
 /** One page of responses. `total` ignores `limit` and `offset`. */
 export type ResponseList = {
-  /** Rows on this page. `"summary"` omits `definition` and `data`. */
-  responses: (ResponseRecord | ResponseSummary)[];
+  /**
+   * Rows on this page.
+   * `"summary"` omits `data`. `"full"` includes `data` and omits `definition`.
+   */
+  responses: (ResponseSummary | ResponseData)[];
+  /**
+   * Versions referenced by this page when `include` is `"full"`.
+   * Empty for a summary page. Sorted by `createdAt` ascending.
+   */
+  versions: SurveyVersion[];
   /** Page size that produced this result. */
   limit: number;
   /** Rows skipped before this page. */
@@ -337,9 +395,9 @@ export type AnonymousPrincipal = {
 
 export type FillPrincipal = SurveyPrincipal | AnonymousPrincipal;
 
-/** Input to {@link ValidateResult}. The snapshot is the stored definition. */
+/** Input to {@link ValidateResult}. The snapshot is the response version. */
 export type ValidateResultInput = {
-  /** `publishedJson` copied onto the response at start. */
+  /** Document of the version the response started on. */
   definition: SurveyJson;
   /** Posted `survey.data`, or the stored object when submit omits `data`. */
   data: SurveyResult;
@@ -356,23 +414,27 @@ export type ValidateResult = (
 ) => SurveyResult | void | Promise<SurveyResult | void>;
 
 /**
- * Persistence for surveys and response rows.
+ * Persistence for surveys, published versions, and response rows.
  *
- * `draftJson`, `publishedJson`, and `settings` stay independent.
- * `response.definition` is copied from `publishedJson` at start and then left
- * unchanged. Honor `expectedUpdatedAt` inside the write.
+ * `draftJson`, the current version, and `settings` stay independent.
+ * `publishSurvey` inserts a version when the canonical document is new and
+ * otherwise reuses the existing row. A response stores that version id at
+ * start and never changes it. Honor `expectedUpdatedAt` inside the write.
  */
 export type SurveyStore = {
   /** Create the survey or replace `draftJson`. Insert default settings once. */
   saveSurvey(input: SaveSurveyInput): Promise<SurveyRecord>;
-  /** Copy `draftJson` onto `publishedJson`, set `active`, and update `publishedAt`. */
+  /**
+   * Publish `draftJson` as the current version, set `active`, and update
+   * `publishedAt`. An unchanged document reuses its version row.
+   */
   publishSurvey(input: PublishSurveyInput): Promise<SurveyRecord>;
-  /** Set `archived`. Keep both documents. */
+  /** Set `archived`. Keep the draft and every version. */
   archiveSurvey(input: ArchiveSurveyInput): Promise<SurveyRecord>;
-  /** Replace `settings`. Do not change `draftJson` or `publishedJson`. */
+  /** Replace `settings`. Do not change `draftJson` or any version. */
   saveSurveySettings(input: SaveSurveySettingsInput): Promise<SurveyRecord>;
   /**
-   * Archived survey with `publishedJson` becomes `active` again.
+   * Archived survey with a current version becomes `active` again.
    * Does not copy `draftJson`. An active survey is returned unchanged.
    */
   resumeSurvey(input: ResumeSurveyInput): Promise<SurveyRecord>;
@@ -381,8 +443,15 @@ export type SurveyStore = {
   /** Surveys matching {@link ListSurveysQuery}, `updatedAt` descending. */
   listSurveys(query?: ListSurveysQuery): Promise<SurveyRecord[]>;
   /**
+   * Versions of one survey, `createdAt` descending.
+   * An unknown survey id yields an empty page.
+   */
+  listSurveyVersions(query: ListSurveyVersionsQuery): Promise<SurveyVersion[]>;
+  /** Versions with these ids, `createdAt` ascending. Missing ids are omitted. */
+  readSurveyVersions(ids: readonly string[]): Promise<SurveyVersion[]>;
+  /**
    * Insert a draft, or return the row selected by `settings.responses`.
-   * Copy `publishedJson` into `definition`. Anonymous starts always insert.
+   * Store the current version id. Anonymous starts always insert.
    */
   startResponse(
     input: StartResponseInput,
@@ -390,11 +459,12 @@ export type SurveyStore = {
   ): Promise<ResponseRecord>;
   /**
    * Page of rows, `updatedAt` descending.
-   * `"summary"` omits `definition` and `data`. Omitted `include` is `"summary"`.
+   * `"summary"` omits `data`. `"full"` includes `data` and omits `definition`.
+   * Omitted `include` is `"summary"`.
    */
   listResponses(
     query?: ListResponsesQuery,
-  ): Promise<(ResponseRecord | ResponseSummary)[]>;
+  ): Promise<(ResponseSummary | ResponseData)[]>;
   /** Matching row count. Ignores `limit`, `offset`, and `include`. */
   countResponses(query?: ListResponsesQuery): Promise<number>;
   /** Replace `data` on a draft. */
@@ -407,13 +477,13 @@ export type SurveyStore = {
     input: SubmitResponseInput,
     lifecycle?: SubmitResponseLifecycle,
   ): Promise<ResponseRecord>;
-  /** Close a draft without changing `definition` or `data`. */
+  /** Close a draft without changing `versionId` or `data`. */
   abandonResponse(input: ResponseMutationInput): Promise<ResponseRecord>;
   /**
    * Move a submitted or abandoned row back to `draft`.
-   * Clears `submittedAt`. Does not change `definition` or `data`.
+   * Clears `submittedAt`. Does not change `versionId` or `data`.
    */
   reopenResponse(input: ResponseMutationInput): Promise<ResponseRecord>;
-  /** Full response row, including `definition` and `data`. `null` when missing. */
+  /** Full response row, including the joined `definition`. `null` when missing. */
   getResponse(id: string): Promise<ResponseRecord | null>;
 };

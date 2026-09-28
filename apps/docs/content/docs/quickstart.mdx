@@ -75,7 +75,7 @@ anonymous responses.
 
 ### Publish a SurveyJS document [step]
 
-Saving writes `draftJson`. Publishing copies that draft to `publishedJson`.
+Saving writes `draftJson`. Publishing stores that draft as the current version.
 Seed one document when the server starts:
 
 ```ts title="lib/welcome.ts"
@@ -162,8 +162,8 @@ export async function startWelcomeResponse() {
 }
 ```
 
-Forward `headers()` so the fill guard sees the session. The first call copies
-`publishedJson` onto the response. A later call returns that respondent's open
+Forward `headers()` so the fill guard sees the session. The first call stores
+the current version on the response. A later call returns that respondent's open
 draft.
 
 ### Render the response [step]
