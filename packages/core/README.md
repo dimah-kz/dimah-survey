@@ -1,7 +1,6 @@
 # @dimah-survey/core
 
-Typed protocol primitives for the
-[dimah-survey](https://survey.dimah.dev) response lifecycle.
+Typed protocol for the [dimah-survey](https://survey.dimah.dev) backend.
 
 Use this package for non-React browser clients, shared protocol code, or a
 custom persistence adapter. Most React applications consume its clients

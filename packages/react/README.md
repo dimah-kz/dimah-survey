@@ -14,7 +14,7 @@ npm i @dimah-survey/react survey-core survey-react-ui
 
 Published on npm, still before `1.0.0`. A release may change the API.
 
-## Render a response snapshot
+## Render a response
 
 ```tsx
 import { createFillClient, useSurveyResponse } from "@dimah-survey/react";

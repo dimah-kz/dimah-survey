@@ -8,8 +8,8 @@ icon: SlidersHorizontal
 capacity for one survey.
 
 <Callout>
-  Settings are not SurveyJS JSON and are never stored on a published version.
-  `saveSurveySettings` replaces the complete object.
+  Settings live beside the SurveyJS document. `saveSurveySettings` replaces the
+  whole object.
 </Callout>
 
 ## Fields
@@ -58,11 +58,12 @@ existing response does not consume capacity.
 ## Reopen a response
 
 `reopen: true` lets `reopenResponse` move a submitted or abandoned row back to
-`draft`. It clears `submittedAt` and does not change `versionId` or `data`.
+`draft`. It clears `submittedAt`. The answers and the stored survey stay as
+they are.
 
 Reopening fails with `OPEN_DRAFT` if it would create a second draft for the
 same identified respondent. When `reopen` is `false`, it fails with
 `RESPONSE_CLOSED`.
 
-Settings are not copied to the response. Existing snapshots stay unchanged,
-but later start, save, submit, and reopen calls use the current policy.
+Settings apply to later calls. They are not stored on the response, so a
+response already started keeps its survey.

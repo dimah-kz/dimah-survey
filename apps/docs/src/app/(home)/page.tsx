@@ -14,22 +14,23 @@ const display = Instrument_Serif({
 
 const surveyName = "SurveyJS";
 const surveyUrl = "https://surveyjs.io/";
+const betterAuthUrl = "https://www.better-auth.com";
 
 const features = [
   {
-    title: "Explicit publishing",
+    title: "In your application",
     description:
-      "The editor works on a draft. Respondents can start a survey only after you publish it.",
+      "Authentication, the database, and the UI stay yours. Mount the API on Next.js, Hono, Express, Fastify, Elysia, SvelteKit, or Node.",
   },
   {
-    title: "Reproducible responses",
+    title: "Publish when it is ready",
     description:
-      "Each response keeps the survey it started with. A later publish does not change that copy, and submit is checked against it.",
+      "The editor saves a draft. Respondents see the survey only after you publish it.",
   },
   {
-    title: "Runs in your app",
+    title: "Checked on submit",
     description:
-      "Authentication and the database stay yours. Adapters cover Next.js, Hono, Express, Fastify, Elysia, SvelteKit, and Node.",
+      "Progress is saved while someone answers. The server checks the submission against the survey that response started with.",
   },
 ] as const;
 
@@ -104,8 +105,18 @@ export default function HomePage() {
             >
               <HeroHeading />
             </h1>
-            <p className="mt-6 max-w-md text-base leading-7 text-pretty text-fd-muted-foreground">
-              {siteDescription}
+            <p className="mt-6 max-w-lg text-base leading-7 text-pretty text-fd-muted-foreground">
+              {siteDescription} The architecture matches{" "}
+              <a
+                href={betterAuthUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="text-fd-primary italic no-underline transition-colors hover:text-fd-primary/80"
+              >
+                Better Auth
+                <span className="sr-only"> (opens in a new tab)</span>
+              </a>
+              {": a library you mount in your app, on your database."}
             </p>
             <div className="mt-8 flex flex-wrap items-center gap-2.5">
               <Link

@@ -1,7 +1,7 @@
 {
   "name": "dimah-survey",
   "private": true,
-  "description": "Server-owned publishing and response lifecycles for SurveyJS JSON. Publish an editable survey, freeze the definition each response starts with, save drafts, and validate submissions against that snapshot.",
+  "description": "Backend for SurveyJS surveys. Publish, save progress, and collect responses in your own application.",
   "homepage": "https://survey.dimah.dev",
   "bugs": {
     "url": "https://github.com/dimah-kz/dimah-survey/issues"

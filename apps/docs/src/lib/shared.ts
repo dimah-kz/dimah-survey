@@ -5,7 +5,7 @@ export const appName = "dimah-survey";
 export const siteHeadline = "The backend for SurveyJS";
 export const siteTitle = `${appName} — ${siteHeadline}`;
 export const siteDescription =
-  "Publish surveys, save progress as people answer, and validate every submission against the exact version they saw.";
+  "Publish surveys from your app, save progress as people answer, and collect each submission in your database.";
 
 /** Site-wide terms for the homepage, layout, and JSON-LD. */
 export const siteKeywords = [
@@ -19,6 +19,8 @@ export const siteKeywords = [
   "survey response lifecycle",
   "response snapshot",
   "headless survey",
+  "better auth",
+  "better-auth",
   "typescript",
   "react",
   "next.js",
@@ -163,14 +165,15 @@ export function siteJsonLd(origin: string) {
           priceCurrency: "USD",
         },
         featureList: [
-          "Explicit draft and publish lifecycle for SurveyJS JSON",
-          "Immutable published versions referenced by every response",
+          "Backend for SurveyJS surveys in your application",
+          "Better Auth–style integration: mount a handler on your database",
+          "Draft editing with an explicit publish",
           "Partial save, submit, abandon, and reopen",
-          "Submit validation against each response snapshot",
-          "Separate fill and editor audiences",
-          "SurveyJS renderer stays in the application",
+          "Submit checks against the survey the response started with",
+          "Separate fill and editor HTTP APIs",
+          "Your authentication and your database",
           "Next.js, Hono, Express, Fastify, Elysia, SvelteKit, and Node adapters",
-          "SQL store through @dimah-survey/db",
+          "SQL store for Drizzle, Prisma, and Kysely",
         ],
       },
       {

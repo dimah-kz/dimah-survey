@@ -1,8 +1,11 @@
 ---
 title: Quickstart
-description: Set up the server, publish a survey, and render a frozen response.
+description: Add the tables, mount the API, and render a survey.
 icon: Rocket
 ---
+
+The setup matches [Better Auth](https://www.better-auth.com): add the tables,
+create the instance, and mount the handler.
 
 ### Install [step]
 
@@ -43,7 +46,7 @@ export const fill = dimahSurvey({
 
 ### Publish a survey [step]
 
-Call `seedWelcomeSurvey()` when the process starts. Product authoring should use the editor API so publish hooks run.
+Call this once at startup so there is a survey to fill. In the product, create and publish through the editor API.
 
 ```ts title="lib/welcome.ts"
 import { database } from "@/db";
@@ -274,9 +277,7 @@ export async function startWelcomeResponse(req: IncomingMessage) {
   </Tab>
 </Tabs>
 
-The first call stores the current version on the response.
-
-### Render the response [step]
+### Render the survey [step]
 
 ```tsx title="fill.tsx"
 import { Survey } from "survey-react-ui";
@@ -314,9 +315,9 @@ export function Fill({ responseId }: { responseId: string }) {
     description="Harden fill and editor guards."
   />
   <Card
-    title="Response lifecycle"
+    title="Responses"
     href="/docs/responses"
-    description="Understand partial save, submit, and reopen."
+    description="Save progress, submit, and reopen."
   />
   <Card
     title="Survey Creator"

@@ -1,21 +1,16 @@
 ---
 title: Fill with React
-description: Hydrate a SurveyJS Model from the response snapshot and bind server writes.
+description: Load a response into a SurveyJS model and connect save and submit.
 icon: Component
 ---
 
-`useSurveyResponse()` loads a response, creates a SurveyJS `Model` from its
-stored definition, restores its data, and binds partial save and submit. Your
-application renders the model with `survey-react-ui`.
+`useSurveyResponse()` loads a response, builds a SurveyJS `Model` from the
+stored survey, restores the answers, and connects partial save and submit.
+Render that model with `survey-react-ui`.
 
 ```npm
 npm i @dimah-survey/react survey-core survey-react-ui
 ```
-
-<Callout>
-  `@dimah-survey/react` is a lifecycle binding, not a renderer wrapper. You
-  retain direct access to the SurveyJS model and component.
-</Callout>
 
 ```tsx title="fill.tsx"
 import { Survey } from "survey-react-ui";

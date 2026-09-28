@@ -13,8 +13,7 @@ npm i @dimah-survey/db fumadb
 ```
 
 Model keys are `survey`, `surveyVersion`, and `response`. Copy the tables into
-your application.
-Do not import them from `@dimah-survey/db` at runtime.
+your application. Do not import them from `@dimah-survey/db` at runtime.
 
 <Tabs defaultValue="drizzle">
   <TabsList>
@@ -161,32 +160,19 @@ import type {
   name="SubmitResponseLifecycle"
 />
 
-A conforming store preserves these invariants:
+A conforming store keeps `draftJson`, the published survey, and `settings`
+independent. New surveys receive default settings; only `saveSurveySettings`
+changes them afterward. Publish stores the document and reuses that row when
+it is unchanged. At start, the response stores that document's id and never
+changes it. Partial save replaces `data` with the object the server passes.
 
-### Documents and snapshots
+Apply these inside the same lock or transaction as the write:
 
-- Keep `draftJson`, the current version, and `settings` independent.
-- Insert default settings with a new survey; only
-  `saveSurveySettings` changes them afterward.
-- Publish an immutable version. Reuse it when the canonical document matches.
-  Store that version id on the response at start and never update it.
-- Partial save replaces `data`; persist the object passed by the server.
-
-### Atomic writes
-
-- Check `expectedUpdatedAt` inside the write.
-- Evaluate start reuse, collection windows, response caps, and one-open-draft
-  rules in the same lock or transaction as the mutation.
-- Enforce one draft per survey and identified respondent in application logic;
-  use the partial unique index as a database backstop.
-- Run the start and submit lifecycle callbacks inside that same boundary.
-
-### Queries and transitions
-
-- Anonymous start always inserts. Identified start follows `"one-open"` or
-  `"single"` settings.
-- Start, partial save, and submit enforce the collection window.
-- New starts and submits enforce the response cap.
+- Compare `expectedUpdatedAt` inside the write.
+- Apply start reuse, the collection window, the response cap, and the one-open-draft rule there too.
+- Keep one draft per survey and identified respondent. The partial unique index is the database backstop.
+- Run the start and submit callbacks inside that same boundary.
+- Anonymous start always inserts. Identified start follows `"one-open"` or `"single"`.
+- Start, partial save, and submit enforce the collection window. New starts and submits enforce the response cap.
 - Reopen enforces `reopen` and refuses a second identified draft.
-- Lists honor pagination. Survey and response lists sort by `updatedAt`
-  descending. Summary rows omit `data` and include `versionId`.
+- Lists are paginated. Survey and response lists sort by `updatedAt` descending. Summaries omit `data` and include `versionId`.
