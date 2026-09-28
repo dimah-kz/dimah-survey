@@ -166,7 +166,7 @@ export function siteJsonLd(origin: string) {
         },
         featureList: [
           "Backend for SurveyJS surveys in your application",
-          "Better Auth–style integration: mount a handler on your database",
+          "Better Auth–like backend mounted on your database",
           "Draft editing with an explicit publish",
           "Partial save, submit, abandon, and reopen",
           "Submit checks against the survey the response started with",

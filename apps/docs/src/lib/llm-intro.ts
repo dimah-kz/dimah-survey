@@ -68,7 +68,7 @@ export function llmDecisionSheet(): string {
 
 > Backend for SurveyJS surveys. Store the draft, publish it, collect responses, and validate each submission in your application.
 
-SurveyJS owns the form schema, Creator, and renderer. Your application owns authentication, migrations, files, and UI. dimah-survey is the HTTP API and the store: publish, drafts, collection policy, and submit checks. The integration shape matches Better Auth: create an instance, pass your database, and mount the handler.
+SurveyJS owns the form schema, Creator, and renderer. Your application owns authentication, migrations, files, and UI. dimah-survey is the HTTP API and the store: publish, drafts, collection policy, and submit checks. It is Better Auth–like: create an instance, pass your database, and mount the handler.
 
 TypeScript packages: \`@dimah-survey/core\` (protocol, browser clients, schemas, errors, store types), \`@dimah-survey/server\` (\`dimahSurvey()\`, guards, validation, adapters), \`@dimah-survey/react\` (SurveyJS Model and Creator bindings), \`@dimah-survey/db\` (SQL store). HTTP adapters: Next.js App Router, Express, Hono, Fastify, Elysia, SvelteKit, and Node.
 

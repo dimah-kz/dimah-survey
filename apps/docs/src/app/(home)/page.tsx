@@ -106,7 +106,7 @@ export default function HomePage() {
               <HeroHeading />
             </h1>
             <p className="mt-6 max-w-lg text-base leading-7 text-pretty text-fd-muted-foreground">
-              {siteDescription} The architecture matches{" "}
+              {siteDescription} A{" "}
               <a
                 href={betterAuthUrl}
                 target="_blank"
@@ -116,7 +116,9 @@ export default function HomePage() {
                 Better Auth
                 <span className="sr-only"> (opens in a new tab)</span>
               </a>
-              {": a library you mount in your app, on your database."}
+              {
+                "–like backend: a library you mount in your app, on your database."
+              }
             </p>
             <div className="mt-8 flex flex-wrap items-center gap-2.5">
               <Link

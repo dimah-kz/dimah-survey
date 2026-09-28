@@ -1,44 +1,23 @@
 ---
-title: When to use
-description: Decide whether your SurveyJS app needs this backend.
+title: Comparison
+description: What dimah-survey adds beside SurveyJS alone.
 icon: Scale
 ---
 
-Use dimah-survey when SurveyJS is the form and you want publishing and
-responses in your own backend, with the same kind of integration as
-[Better Auth](https://www.better-auth.com).
+[SurveyJS](https://surveyjs.io/) renders the form either way. Authentication,
+migrations, and Creator stay in your application. dimah-survey is the
+[Better Auth](https://www.better-auth.com)–like server for publish and
+responses.
 
-<Callout>
-  SurveyJS stays the schema and the UI. dimah-survey is the server around them.
-</Callout>
+| Concern                          | dimah-survey | SurveyJS alone |
+| -------------------------------- | ------------ | -------------- |
+| Publish                          | Included     | You build it   |
+| Survey stored with each response | Included     | You design it  |
+| Save, submit, and reopen         | Included     | You build it   |
+| Fill and editor API              | Included     | You build it   |
 
-## A good fit
-
-- surveys should live in your database, behind your auth
-- authors edit a draft and publish when respondents should see it
-- save, submit, abandon, and reopen go through one API
-- a response should still match the survey the person filled, after you publish again
-- you want to keep ownership of auth, data, and deployment
-
-## Skip it when
-
-- you only need to render a SurveyJS form
-- you want a hosted survey product
-- you are not using SurveyJS JSON
-
-## Ownership
-
-| Concern                     | dimah-survey           | SurveyJS alone          | Hosted product   |
-| --------------------------- | ---------------------- | ----------------------- | ---------------- |
-| Survey renderer             | Your app uses SurveyJS | Your app uses SurveyJS  | Product or embed |
-| Publish                     | Built in               | Your implementation     | Product workflow |
-| Survey stored on a response | Built in               | Your persistence design | Vendor-specific  |
-| Draft, submit, and reopen   | Built in               | Your implementation     | Product workflow |
-| Authentication              | Your application       | Your application        | Vendor account   |
-| Data and migrations         | Your application       | Your application        | Vendor storage   |
-| Authoring                   | Creator in your app    | Survey Creator          | Hosted builder   |
-
-This compares ownership, not performance.
+Use SurveyJS alone when the renderer is enough. Skip dimah-survey when you
+want a hosted survey product, or you are not using SurveyJS JSON.
 
 ## Outside this library
 

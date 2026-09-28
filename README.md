@@ -8,9 +8,9 @@ Backend for [SurveyJS](https://surveyjs.io/) surveys.
 
 Store each survey, publish it, save progress, and collect submissions in your
 own application. SurveyJS draws the form. Authentication, the database, and
-the UI stay with you. The architecture matches
-[Better Auth](https://www.better-auth.com): a library you mount in your app,
-on your database.
+the UI stay with you. It is
+[Better Auth](https://www.better-auth.com)–like: a library you mount in your
+app, on your database.
 
 [Documentation](https://survey.dimah.dev) · [Contributing](./CONTRIBUTING.md) · [Support](./SUPPORT.md) · [Security](./SECURITY.md) · [Code of conduct](./CODE_OF_CONDUCT.md)
 
