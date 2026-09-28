@@ -27,12 +27,6 @@ export default function manifest(): MetadataRoute.Manifest {
         type: "image/png",
         purpose: "any",
       },
-      {
-        src: `/icon/${brandLogoSize}`,
-        sizes: `${brandLogoSize}x${brandLogoSize}`,
-        type: "image/png",
-        purpose: "maskable",
-      },
     ],
   };
 }

@@ -1,5 +1,5 @@
-/** Light-mode primary: teal-600 mixed 80% with cyan-600, matching the nav mark. */
-export const brandColor = "#009693";
+/** Icon tile. Darker than the light primary mix, matching the previous mark. */
+export const brandColor = "#0f766e";
 
 /**
  * Square brand tile. 512px is the Organization logo and satisfies Google's

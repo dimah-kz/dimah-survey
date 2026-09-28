@@ -34,6 +34,9 @@ export function BrandMark({
   );
 }
 
+/** Same proportion as the nav badge (6px on 24px) and the dimah-form favicon (rx 8 on 32). */
+const iconRadius = 0.25;
+
 export function BrandTile({ size }: { size: number }) {
   const mark = Math.round(size * 0.62);
 
@@ -42,7 +45,7 @@ export function BrandTile({ size }: { size: number }) {
       style={{
         alignItems: "center",
         background: brandColor,
-        borderRadius: Math.round(size * 0.22),
+        borderRadius: Math.round(size * iconRadius),
         display: "flex",
         height: size,
         justifyContent: "center",
@@ -54,15 +57,17 @@ export function BrandTile({ size }: { size: number }) {
   );
 }
 
-/** Full-bleed tile. Browsers and Google crop the corners; the mark stays inside that crop. */
-export function brandIcon(size: number) {
-  const mark = Math.round(size * 0.68);
+export function brandIcon(size: number, options?: { rounded?: boolean }) {
+  const rounded = options?.rounded ?? true;
+  const mark = Math.round(size * (rounded ? 0.62 : 0.68));
 
-  return new ImageResponse(
+  const radius = Math.round(size * iconRadius);
+  const tile = (
     <div
       style={{
         alignItems: "center",
         background: brandColor,
+        borderRadius: rounded ? radius : 0,
         display: "flex",
         height: "100%",
         justifyContent: "center",
@@ -70,7 +75,24 @@ export function brandIcon(size: number) {
       }}
     >
       <BrandMark size={mark} />
-    </div>,
+    </div>
+  );
+
+  return new ImageResponse(
+    rounded ? (
+      <div
+        style={{
+          background: "transparent",
+          display: "flex",
+          height: "100%",
+          width: "100%",
+        }}
+      >
+        {tile}
+      </div>
+    ) : (
+      tile
+    ),
     { width: size, height: size },
   );
 }

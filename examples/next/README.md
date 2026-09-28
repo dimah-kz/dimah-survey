@@ -1,11 +1,10 @@
 # Next.js example
 
-The complete reference application for `@dimah-survey/server`,
-`@dimah-survey/react`, and `@dimah-survey/db`.
+Reference application for the dimah-survey backend on Next.js.
 
-SurveyJS renders the form and Creator. This app mounts the dimah-survey API,
-stores surveys in SQLite through Drizzle, and identifies the respondent with
-an httpOnly cookie.
+SurveyJS renders the form and Creator. The app mounts fill and editor, stores
+surveys in SQLite through Drizzle, and identifies the respondent with an
+httpOnly cookie.
 
 ## Run
 

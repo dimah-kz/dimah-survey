@@ -1,10 +1,9 @@
 # @dimah-survey/react
 
-React bindings for SurveyJS responses and Creator drafts in
-[dimah-survey](https://survey.dimah.dev).
+React bindings for the [dimah-survey](https://survey.dimah.dev) backend.
 
-The package hydrates and binds SurveyJS objects; your application still renders
-them directly.
+The hooks load a response or a Creator draft and connect save and submit.
+Render the SurveyJS component yourself.
 
 ## Install
 

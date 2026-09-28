@@ -1,6 +1,6 @@
 # Documentation
 
-Public guides and the protocol reference are published at
+Public guides for the dimah-survey backend are published at
 <https://survey.dimah.dev>.
 
 The site source is [`apps/docs`](../apps/docs). From the repository root:

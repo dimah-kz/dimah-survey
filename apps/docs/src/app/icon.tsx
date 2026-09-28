@@ -1,5 +1,7 @@
 import { brandIcon } from "@/lib/brand-mark";
 
+/** Browser and Google icons. Rounded tile, same mark as the nav. */
+
 const sizes = {
   "192": 192,
   "512": 512,

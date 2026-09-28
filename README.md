@@ -4,13 +4,9 @@
 [![Docs](https://img.shields.io/badge/docs-survey.dimah.dev-0e8a16)](https://survey.dimah.dev)
 [![License: MIT](https://img.shields.io/github/license/dimah-kz/dimah-survey)](./LICENSE)
 
-Backend for [SurveyJS](https://surveyjs.io/) surveys.
+The backend for [SurveyJS](https://surveyjs.io/).
 
-Store each survey, publish it, save progress, and collect submissions in your
-own application. SurveyJS draws the form. Authentication, the database, and
-the UI stay with you. It is
-[Better Auth](https://www.better-auth.com)–like: a library you mount in your
-app, on your database.
+[Better Auth](https://www.better-auth.com)–like: mount it in your app, on your database. SurveyJS stays the form. Authentication and the UI stay yours.
 
 [Documentation](https://survey.dimah.dev) · [Contributing](./CONTRIBUTING.md) · [Support](./SUPPORT.md) · [Security](./SECURITY.md) · [Code of conduct](./CODE_OF_CONDUCT.md)
 
@@ -22,30 +18,21 @@ Published on npm, still before `1.0.0`. A release may change the API.
 
 ## What you get
 
-- an editor draft, published only when you ask
-- fill and editor HTTP APIs on one store
-- progress saved while someone answers, then checked on submit
-- collection windows, response limits, and concurrent-write checks
-- each response keeps the survey it started with
-
-SurveyJS remains the form UI. This library is the backend.
+- Creator and the renderer stay in your application
+- A draft, published only when you ask; progress saved, then checked on submit
+- Fill and editor HTTP APIs on one store
+- Your authentication and your database
 
 ## Packages
 
-| Package                                     | Purpose                                                            |
-| ------------------------------------------- | ------------------------------------------------------------------ |
-| [`@dimah-survey/core`](./packages/core)     | Protocol, browser clients, schemas, errors, and store types        |
-| [`@dimah-survey/server`](./packages/server) | Server factory, guards, validation, handlers, and runtime adapters |
-| [`@dimah-survey/react`](./packages/react)   | SurveyJS `Model` and Creator bindings                              |
-| [`@dimah-survey/db`](./packages/db)         | SQL `SurveyStore` and application-owned schema references          |
+| Package                                     | Purpose                                                     |
+| ------------------------------------------- | ----------------------------------------------------------- |
+| [`@dimah-survey/core`](./packages/core)     | Protocol, browser clients, schemas, errors, and store types |
+| [`@dimah-survey/server`](./packages/server) | Handlers, guards, validation, and runtime adapters          |
+| [`@dimah-survey/react`](./packages/react)   | SurveyJS `Model` and Creator bindings                       |
+| [`@dimah-survey/db`](./packages/db)         | SQL store and application-owned schema references           |
 
-## Documentation
-
-Read the [quickstart](https://survey.dimah.dev/docs/quickstart) or open the
-[HTTP protocol](https://survey.dimah.dev/docs/protocol).
-
-The complete documentation is published at
-[survey.dimah.dev](https://survey.dimah.dev).
+Start with the [quickstart](https://survey.dimah.dev/docs/quickstart).
 
 ## Development
 

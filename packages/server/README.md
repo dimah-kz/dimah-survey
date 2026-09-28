@@ -1,10 +1,11 @@
 # @dimah-survey/server
 
-Server factory, guards, SurveyJS validation, and runtime adapters for
-[dimah-survey](https://survey.dimah.dev).
+Handlers, guards, submit checks, and runtime adapters for the
+[dimah-survey](https://survey.dimah.dev) backend.
 
-`dimahSurvey()` creates an isolated fill or editor audience with both a Fetch
-handler and a typed in-process API.
+`dimahSurvey()` creates one fill or editor instance. Pass your database and
+mount the handler. Each instance has a Fetch handler and a typed in-process
+API.
 
 ## Install
 

@@ -1,10 +1,10 @@
 # @dimah-survey/core
 
-Typed protocol for the [dimah-survey](https://survey.dimah.dev) backend.
+Protocol, clients, and types for the [dimah-survey](https://survey.dimah.dev) backend.
 
 Use this package for non-React browser clients, shared protocol code, or a
-custom persistence adapter. Most React applications consume its clients
-through `@dimah-survey/react`.
+custom store. Most React applications import the clients from
+`@dimah-survey/react`.
 
 ## Install
 

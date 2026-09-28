@@ -1,10 +1,9 @@
 # @dimah-survey/db
 
-SQL `SurveyStore` and schema references for
-[dimah-survey](https://survey.dimah.dev).
+SQL store for the [dimah-survey](https://survey.dimah.dev) backend.
 
-Your application owns its database client, tables, migrations, and indexes.
-This package supplies the FumaDB schema and store behavior.
+Your application owns the database client, tables, migrations, and indexes.
+This package supplies the FumaDB schema and the store.
 
 ## Install
 

@@ -1,7 +1,7 @@
 # Examples
 
-[`next`](./next) is the complete reference application. It combines the four
-packages with Next.js, SurveyJS, Survey Creator, Drizzle, and SQLite.
+[`next`](./next) is the reference application. It mounts the backend on Next.js,
+with SurveyJS, Survey Creator, Drizzle, and SQLite.
 
 ```bash
 pnpm install
