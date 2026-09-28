@@ -1,3 +1,9 @@
+## @dimah-survey/react@0.5.0
+
+### Publish each survey document once
+
+Publishing stores an immutable version and points the survey at it. An unchanged document reuses that version. Each response keeps the version id it started with, and a full response list returns each of those versions once.
+
 ## @dimah-survey/react@0.4.0
 
 ### Export the option types the docs render

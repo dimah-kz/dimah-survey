@@ -1,36 +1,36 @@
 core:changelogs:
-  - content: "---\npackages:\n  group:dimah-survey:\n    type: minor\n---\n\n### Export the option types the docs render\n\n`SurveyGuard`, `CreateSurveyClientOptions`, `UseSurveyResponseOptions`, and `UseSurveyDraftOptions` are public. Configuration, settings, store, list, and React binding fields document their defaults and write behavior in JSDoc.\n"
-    filename: 2026-09-27-type-docs.md
+  - content: "---\npackages:\n  group:dimah-survey:\n    type: minor\n---\n\n### Publish each survey document once\n\nPublishing stores an immutable version and points the survey at it. An unchanged document reuses that version. Each response keeps the version id it started with, and a full response list returns each of those versions once.\n"
+    filename: 2026-09-28-survey-versions.md
     v: 0.0.0
 core:packages:
   - changelogIds:
-      - 2026-09-27-type-docs.md
+      - 2026-09-28-survey-versions.md
     id: npm:example-next
     updated: true
   - changelogIds:
-      - 2026-09-27-type-docs.md
-    id: npm:@dimah-survey/core
-    updated: true
-  - changelogIds:
-      - 2026-09-27-type-docs.md
+      - 2026-09-28-survey-versions.md
     id: npm:@dimah-survey/db
     updated: true
   - changelogIds:
-      - 2026-09-27-type-docs.md
+      - 2026-09-28-survey-versions.md
+    id: npm:@dimah-survey/core
+    updated: true
+  - changelogIds:
+      - 2026-09-28-survey-versions.md
     id: npm:@dimah-survey/react
     updated: true
   - changelogIds:
-      - 2026-09-27-type-docs.md
+      - 2026-09-28-survey-versions.md
     id: npm:@dimah-survey/server
     updated: true
   - changelogIds:
-      - 2026-09-27-type-docs.md
+      - 2026-09-28-survey-versions.md
     id: npm:@workspace/survey-store-contract
     updated: true
 npm:packages:
   - id: npm:example-next
-  - id: npm:@dimah-survey/core
   - id: npm:@dimah-survey/db
+  - id: npm:@dimah-survey/core
   - id: npm:@dimah-survey/react
   - id: npm:@dimah-survey/server
   - id: npm:@workspace/survey-store-contract
