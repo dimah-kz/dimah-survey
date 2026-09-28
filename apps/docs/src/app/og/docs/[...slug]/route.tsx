@@ -1,6 +1,8 @@
 import { source } from "@/lib/source";
 import { notFound } from "next/navigation";
 import { generateOGImage } from "fumadocs-ui/og";
+import { BrandTile } from "@/lib/brand-mark";
+import { brandColor } from "@/lib/brand";
 import { appName, getPageImageUrl } from "@/lib/shared";
 
 export const revalidate = false;
@@ -17,6 +19,9 @@ export async function GET(
     title: page.data.title,
     description: page.data.description,
     site: appName,
+    primaryColor: brandColor,
+    primaryTextColor: "#f5f5f5",
+    icon: <BrandTile size={64} />,
   });
 }
 

@@ -45,6 +45,7 @@ const nextConfig: NextConfig = {
   },
   async rewrites() {
     return [
+      { source: "/favicon.ico", destination: "/icon/192" },
       { source: "/docs.md", destination: "/llms.mdx/docs" },
       { source: "/docs.mdx", destination: "/llms.mdx/docs" },
       { source: "/docs/:path*.md", destination: "/llms.mdx/docs/:path*" },

@@ -1,5 +1,7 @@
 import { ImageResponse } from "next/og";
 
+import { brandColor } from "@/lib/brand";
+import { BrandTile } from "@/lib/brand-mark";
 import { siteDescription, siteHeadline, siteTitle } from "@/lib/shared";
 
 export const alt = siteTitle;
@@ -29,7 +31,7 @@ export default function OpenGraphImage() {
       <div
         style={{
           alignItems: "center",
-          color: "#0f766e",
+          color: brandColor,
           display: "flex",
           fontFamily: "monospace",
           fontSize: 25,
@@ -39,23 +41,7 @@ export default function OpenGraphImage() {
           textTransform: "uppercase",
         }}
       >
-        <span
-          style={{
-            alignItems: "center",
-            background: "#0f766e",
-            borderRadius: "10px",
-            color: "#ffffff",
-            display: "flex",
-            fontFamily: "sans-serif",
-            fontSize: 25,
-            height: "42px",
-            justifyContent: "center",
-            letterSpacing: "-2px",
-            width: "42px",
-          }}
-        >
-          D
-        </span>
+        <BrandTile size={42} />
         dimah-survey
       </div>
 
@@ -101,11 +87,11 @@ export default function OpenGraphImage() {
       >
         <div style={{ display: "flex", gap: "22px" }}>
           <span>draft</span>
-          <span style={{ color: "#0f766e" }}>→</span>
+          <span style={{ color: brandColor }}>→</span>
           <span>publish</span>
-          <span style={{ color: "#0f766e" }}>→</span>
+          <span style={{ color: brandColor }}>→</span>
           <span>snapshot</span>
-          <span style={{ color: "#0f766e" }}>→</span>
+          <span style={{ color: brandColor }}>→</span>
           <span>submit</span>
         </div>
         <span>survey.dimah.dev</span>

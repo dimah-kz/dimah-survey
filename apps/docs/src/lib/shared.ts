@@ -1,5 +1,7 @@
 import { createGetUrl } from "fumadocs-core/source";
 
+import { brandLogoPath, brandLogoSize } from "@/lib/brand";
+
 export const appName = "dimah-survey";
 /** Landing H1, browser tab, and Open Graph title — keep these in sync. */
 export const siteHeadline = "The backend for SurveyJS";
@@ -125,6 +127,14 @@ export function docsArticleJsonLd(input: {
 export function siteJsonLd(origin: string) {
   const orgId = `${origin}/#organization`;
   const sameAs = [githubUrl, xProfileUrl];
+  const logo = {
+    "@type": "ImageObject",
+    url: `${origin}${brandLogoPath}`,
+    contentUrl: `${origin}${brandLogoPath}`,
+    width: brandLogoSize,
+    height: brandLogoSize,
+    caption: appName,
+  };
 
   return {
     "@context": "https://schema.org",
@@ -134,7 +144,7 @@ export function siteJsonLd(origin: string) {
         "@id": orgId,
         name: appName,
         url: origin,
-        logo: `${origin}/apple-icon`,
+        logo,
         sameAs,
       },
       {
@@ -152,6 +162,7 @@ export function siteJsonLd(origin: string) {
         name: appName,
         description: siteDescription,
         url: origin,
+        image: logo,
         applicationCategory: "DeveloperApplication",
         applicationSubCategory: "Surveys / Developer Tools",
         operatingSystem: "Web",
