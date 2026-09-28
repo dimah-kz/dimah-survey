@@ -5,7 +5,7 @@ export const appName = "dimah-survey";
 export const siteHeadline = "The backend for SurveyJS";
 export const siteTitle = `${appName} — ${siteHeadline}`;
 export const siteDescription =
-  "Publish surveys from your app, save progress as people answer, and collect each submission in your database.";
+  "A Better Auth–like backend you mount in your app, on your database.";
 
 /** Site-wide terms for the homepage, layout, and JSON-LD. */
 export const siteKeywords = [
