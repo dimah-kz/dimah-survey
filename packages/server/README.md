@@ -9,7 +9,7 @@ handler and a typed in-process API.
 ## Install
 
 ```bash
-npm i @dimah-survey/server survey-core
+npm i @dimah-survey/server
 ```
 
 Published on npm, still before `1.0.0`. A release may change the API.
@@ -20,22 +20,24 @@ Create two instances over one store. Fill always requires a principal; editor
 authorization allows the request or throws.
 
 ```ts
-import { dimahSurvey, guardRespondent } from "@dimah-survey/server";
+import { dimahSurvey } from "@dimah-survey/server";
 
 import { database } from "./db";
 
 export const editor = dimahSurvey({
   audience: "editor",
   database,
-  guard: ({ request }) => assertEditor(request),
+  guard: async () => {
+    // Authorize the editor.
+  },
 });
 
 export const fill = dimahSurvey({
   audience: "fill",
   database,
-  guard: (context) => {
-    const userId = requireUserId(context.request);
-    return guardRespondent(userId)(context);
+  guard: async () => {
+    // Return { respondentId } or { anonymous: true }.
+    return { anonymous: true };
   },
 });
 ```

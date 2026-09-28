@@ -7,6 +7,12 @@ import { TypeTable } from "fumadocs-ui/components/type-table";
 import { AutoTypeTable, type AutoTypeTableProps } from "fumadocs-typescript/ui";
 import { Flow } from "@/components/flow";
 import {
+  DrizzleMark,
+  KyselyMark,
+  PrismaMark,
+  StoreLinks,
+} from "@/components/store-links";
+import {
   typeTableBasePath,
   typeTableGeneratorFor,
 } from "@/lib/type-table-generator";
@@ -16,6 +22,10 @@ export function getMDXComponents(components?: MDXComponents) {
   return {
     ...defaultMdxComponents,
     Flow,
+    StoreLinks,
+    DrizzleMark,
+    PrismaMark,
+    KyselyMark,
     ...AccordionComponents,
     ...TabsComponents,
     ...CardComponents,

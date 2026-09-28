@@ -18,8 +18,22 @@ Do not import them from `@dimah-survey/db` at runtime.
 
 `provider` is `"sqlite"`, `"postgresql"`, or `"mysql"`.
 
-<Tabs items={["Drizzle", "Prisma", "Kysely"]}>
-<Tab value="Drizzle">
+<Tabs defaultValue="drizzle">
+  <TabsList>
+    <TabsTrigger value="drizzle">
+      <DrizzleMark />
+      Drizzle
+    </TabsTrigger>
+    <TabsTrigger value="prisma">
+      <PrismaMark />
+      Prisma
+    </TabsTrigger>
+    <TabsTrigger value="kysely">
+      <KyselyMark />
+      Kysely
+    </TabsTrigger>
+  </TabsList>
+<Tab value="drizzle">
 
 Add these tables to your Drizzle schema. This copy is SQLite. On PostgreSQL or
 MySQL, use that driver's table builder and set `provider` to match. Keep the
@@ -42,7 +56,7 @@ export const database = db(
 schema into that client.
 
 </Tab>
-<Tab value="Prisma">
+<Tab value="prisma">
 
 Add these models to your Prisma schema. This copy is PostgreSQL.
 
@@ -67,7 +81,7 @@ export const database = db(
 `prisma` is your existing `PrismaClient`.
 
 </Tab>
-<Tab value="Kysely">
+<Tab value="kysely">
 
 Add this SQL with your migration tool. This copy is PostgreSQL.
 
