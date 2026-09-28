@@ -4,8 +4,9 @@ description: Start from a frozen definition, save drafts, and validate the same 
 icon: Camera
 ---
 
-`startResponse` copies `publishedJson` into `response.definition`. Every write
-and submit check stays tied to that snapshot.
+`startResponse` stores the current `publishedVersionId` on the response. Every
+write and submit check stays tied to that version. `getResponse` joins the
+document as `definition`.
 
 <Callout>
   A response is both the answer data and the SurveyJS definition needed to
@@ -31,7 +32,7 @@ import type { ResponseRecord } from "@dimah-survey/core";
 | `startResponse`   | Create a draft or return the response selected by collection settings |
 | `savePartial`     | Replace `data` on a draft                                             |
 | `submitResponse`  | Validate the snapshot and store the accepted data                     |
-| `abandonResponse` | Close a draft without changing `definition` or `data`                 |
+| `abandonResponse` | Close a draft without changing `versionId` or `data`                  |
 | `reopenResponse`  | Move a submitted or abandoned response back to draft                  |
 
 Partial save and abandon require a draft. Reopen requires a submitted or
@@ -53,7 +54,7 @@ and submit validation. The server does not fetch that URL.
 
 ## Submit against the snapshot
 
-The default `validateResult` loads `response.definition`, removes values that
+The default `validateResult` loads the response version, removes values that
 cannot be assigned, runs SurveyJS `validate()`, and returns the resulting
 `survey.data` to persist. An invalid result throws `VALIDATION_FAILED` with the
 failing question names in `questions`.
@@ -96,9 +97,10 @@ Omit the token only when a last-write-wins update is intentional.
 
 ## Read responses
 
-`listResponses` returns summaries by default. `include: "full"` adds
-`definition` and `data` and is available only to the editor audience. Always
-interpret a full row against its own `definition`, not the current survey.
+`listResponses` returns summaries by default. `include: "full"` adds `data` and
+returns each referenced version once on `versions`. It is available only to the
+editor audience. Join a row's `versionId` to that list. `getResponse` still
+returns `definition` on the single row.
 
 ```ts
 import type { ResponseSummary } from "@dimah-survey/core";

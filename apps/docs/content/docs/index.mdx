@@ -6,14 +6,14 @@ icon: House
 
 dimah-survey adds a server-side lifecycle to
 [SurveyJS](https://surveyjs.io/) JSON. It separates authoring from publishing,
-stores the exact definition each response starts with, and validates submission
+stores the exact version each response starts with, and validates submission
 against that snapshot.
 
 SurveyJS still owns the schema, Creator, and renderer. Your application owns
 authentication, migrations, files, and UI.
 
 <Callout>
-  Publishing a new survey never changes an existing `response.definition`.
+  Publishing again never changes the version an existing response started on.
 </Callout>
 
 ## The lifecycle
@@ -22,16 +22,22 @@ authentication, migrations, files, and UI.
   label="One response"
   steps={[
     { name: "Author", kind: "data", note: "Creator writes draftJson" },
-    { name: "Publish", kind: "server", note: "Promote publishedJson" },
-    { name: "Start", kind: "server", note: "Freeze response.definition" },
+    { name: "Publish", kind: "server", note: "Store an immutable version" },
+    {
+      name: "Start",
+      kind: "server",
+      note: "Point the response at that version",
+    },
     { name: "Fill", kind: "client", note: "SurveyJS renders the snapshot" },
     { name: "Submit", kind: "server", note: "Validate the same snapshot" },
   ]}
 />
 
-`draftJson` is the editor copy. Publishing promotes it to `publishedJson`.
-Starting a response copies that document to `response.definition`; every save
-and submit stays attached to the copy.
+`draftJson` is the editor copy. Publishing stores that document as an immutable
+version, or reuses the version when the canonical JSON is unchanged.
+`publishedJson` on a survey read is the current version. Starting a response
+stores that version id; a single-response read joins the document back as
+`definition`.
 
 ## Ownership
 

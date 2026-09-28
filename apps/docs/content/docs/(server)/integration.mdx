@@ -16,44 +16,30 @@ must use the same `SurveyStore`.
 ## Create the instances
 
 ```ts title="lib/survey.ts"
-import {
-  APIError,
-  SURVEY_ERROR_CODES,
-  dimahSurvey,
-  guardRespondent,
-} from "@dimah-survey/server";
+import { dimahSurvey } from "@dimah-survey/server";
 
 import { database } from "@/db";
 
 export const editor = dimahSurvey({
   audience: "editor",
   database,
-  guard: async ({ request }) => {
-    if (!request || !(await isEditor(request))) {
-      throw APIError.from("FORBIDDEN", SURVEY_ERROR_CODES.FORBIDDEN);
-    }
+  guard: async () => {
+    // Authorize the editor.
   },
 });
 
 export const fill = dimahSurvey({
   audience: "fill",
   database,
-  guard: async (context) => {
-    const session = context.request
-      ? await getSession(context.request)
-      : null;
-    if (!session) {
-      throw APIError.from("FORBIDDEN", SURVEY_ERROR_CODES.FORBIDDEN);
-    }
-    return guardRespondent(session.user.id)(context);
+  guard: async () => {
+    // Return { respondentId } or { anonymous: true }.
+    return { anonymous: true };
   },
 });
 ```
 
 Create `database` on [Database](/docs/database). Pass that same object to
-both audiences. `isEditor` and `getSession` are your application code. For
-public capability-based responses, use `guardAnonymous()` instead; see
-[Authorization](/docs/security).
+both audiences.
 
 `basePath` is part of the request contract and must match the corresponding
 browser client's `baseURL`. The defaults are `/api/survey` for fill and

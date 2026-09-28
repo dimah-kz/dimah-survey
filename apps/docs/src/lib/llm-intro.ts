@@ -74,11 +74,11 @@ TypeScript packages: \`@dimah-survey/core\` (protocol, browser clients, schemas,
 
 Use it when a SurveyJS app needs explicit publish and reproducible response history. Skip it for a visual form builder, hosted survey product, SurveyJS renderer, or dimah-form integration.
 
-Install: \`npm i @dimah-survey/server @dimah-survey/db @dimah-survey/react react react-dom survey-core survey-react-ui\`. Adding the SQL tables, including \`fumadb\`, is \`/docs/database\`. \`memoryAdapter()\` from \`@dimah-survey/server\` is a process-local store for tests. Published and still before \`1.0.0\`. A release may change the API.
+Install: \`npm i @dimah-survey/server @dimah-survey/db @dimah-survey/react survey-core survey-react-ui\`. Adding the SQL tables, including \`fumadb\`, is \`/docs/database\`. \`memoryAdapter()\` from \`@dimah-survey/server\` is a process-local store for tests. Published and still before \`1.0.0\`. A release may change the API.
 
 - Auth stays in the consumer \`guard\`. Do not look for library auth.
-- \`draftJson\` is the editor copy. \`publishedJson\` is what new responses clone. A later publish does not change \`response.definition\`.
-- Submit validation runs on the stored response definition, not the live draft or the latest publish.
+- \`draftJson\` is the editor copy. Publishing stores an immutable version. An unchanged document reuses that version. A later publish does not change a response's \`versionId\`.
+- Submit validation runs on the version the response started with, not the live draft or the latest publish.
 - Partial save replaces \`survey.data\`. It is not a key patch.
 - Fill and editor are separate HTTP audiences over one shared store.
 - Do not wrap the SurveyJS renderer, translate SurveyJS JSON into another field model, or import \`@dimah-form/*\`.

@@ -4,79 +4,46 @@ description: Set up the server, publish a survey, and render a frozen response.
 icon: Rocket
 ---
 
-This guide uses Next.js. The same server API works on every supported runtime.
-
 ### Install [step]
 
 ```npm
-npm i @dimah-survey/server @dimah-survey/db @dimah-survey/react react react-dom survey-core survey-react-ui
+npm i @dimah-survey/server @dimah-survey/db @dimah-survey/react survey-core survey-react-ui
 ```
-
-`survey-react-ui` renders the questions.
 
 ### Add the tables [step]
 
-Add `dimah_survey` and `dimah_response` to the database you already use, migrate,
-and export `database`.
+Add the tables, migrate, and export `database`.
 
-<Cards>
-  <Card
-    title="Drizzle, Prisma, and Kysely"
-    href="/docs/database"
-    description="Copy the tables into your schema and connect the store."
-  />
-</Cards>
-
-On Next.js, that page also sets `serverExternalPackages`.
+<StoreLinks />
 
 ### Create the server [step]
 
-Create a fill instance and an editor instance. Replace `getSession` with your
-authentication code. The browser never chooses the respondent id.
-
 ```ts title="lib/survey.ts"
-import {
-  APIError,
-  SURVEY_ERROR_CODES,
-  dimahSurvey,
-  guardRespondent,
-} from "@dimah-survey/server";
+import { dimahSurvey } from "@dimah-survey/server";
 
 import { database } from "@/db";
 
 export const editor = dimahSurvey({
   audience: "editor",
   database,
-  guard: async ({ request }) => {
-    const session = request ? await getSession(request) : null;
-    if (session?.user.role !== "editor") {
-      throw APIError.from("FORBIDDEN", SURVEY_ERROR_CODES.FORBIDDEN);
-    }
+  guard: async () => {
+    // Authorize the editor.
   },
 });
 
 export const fill = dimahSurvey({
   audience: "fill",
   database,
-  guard: async (context) => {
-    const session = context.request
-      ? await getSession(context.request)
-      : null;
-    if (!session) {
-      throw APIError.from("FORBIDDEN", SURVEY_ERROR_CODES.FORBIDDEN);
-    }
-    return guardRespondent(session.user.id)(context);
+  guard: async () => {
+    // Return { respondentId } or { anonymous: true }.
+    return { anonymous: true };
   },
 });
 ```
 
-Both instances share `database`. See [Authorization](/docs/security) for
-anonymous responses.
+### Publish a survey [step]
 
-### Publish a SurveyJS document [step]
-
-Saving writes `draftJson`. Publishing copies that draft to `publishedJson`.
-Seed one document when the server starts:
+Call `seedWelcomeSurvey()` when the process starts. Product authoring should use the editor API so publish hooks run.
 
 ```ts title="lib/welcome.ts"
 import { database } from "@/db";
@@ -111,20 +78,12 @@ export async function seedWelcomeSurvey() {
 }
 ```
 
-```ts title="instrumentation.ts"
-export async function register() {
-  if (process.env.NEXT_RUNTIME !== "nodejs") return;
-  const { seedWelcomeSurvey } = await import("@/lib/welcome");
-  await seedWelcomeSurvey();
-}
-```
+### Mount the handlers [step]
 
-This seed calls the store directly. Authoring in the product should use the
-editor API so publish hooks run.
+Fill is `/api/survey`. Editor is `/api/admin/survey`.
 
-### Mount both audiences [step]
-
-Each audience has its own route. The handler serves only that audience.
+<Tabs items={["Next.js", "Express", "Hono", "Fastify", "Elysia", "SvelteKit", "Node.js"]}>
+  <Tab value="Next.js">
 
 ```ts title="app/api/survey/[[...path]]/route.ts"
 import { toNextJsHandler } from "@dimah-survey/server/next";
@@ -142,11 +101,127 @@ import { editor } from "@/lib/survey";
 export const { GET, POST, PUT, PATCH, DELETE } = toNextJsHandler(editor);
 ```
 
-Fill is `/api/survey`. Editor is `/api/admin/survey`. Set `basePath` when the
-route differs, and pass that same path as the browser client's `baseURL`.
-Other runtimes are on [Mount the server](/docs/integration).
+  </Tab>
+  <Tab value="Express">
+
+```ts
+import express from "express";
+import { toExpressHandler } from "@dimah-survey/server/express";
+import { editor, fill } from "./survey";
+
+const app = express();
+app.all("/api/admin/survey/*", toExpressHandler(editor));
+app.all("/api/survey/*", toExpressHandler(fill));
+app.use(express.json());
+```
+
+  </Tab>
+  <Tab value="Hono">
+
+```ts
+import { Hono } from "hono";
+import { toHonoHandler } from "@dimah-survey/server/hono";
+import { editor, fill } from "./survey";
+
+const app = new Hono();
+app.on(
+  ["GET", "POST", "PUT", "PATCH", "DELETE"],
+  "/api/admin/survey/*",
+  toHonoHandler(editor),
+);
+app.on(
+  ["GET", "POST", "PUT", "PATCH", "DELETE"],
+  "/api/survey/*",
+  toHonoHandler(fill),
+);
+```
+
+  </Tab>
+  <Tab value="Fastify">
+
+```ts
+import Fastify from "fastify";
+import { toFastifyHandler } from "@dimah-survey/server/fastify";
+import { editor, fill } from "./survey";
+
+const app = Fastify();
+app.all("/api/admin/survey/*", toFastifyHandler(editor));
+app.all("/api/survey/*", toFastifyHandler(fill));
+```
+
+  </Tab>
+  <Tab value="Elysia">
+
+```ts
+import { Elysia } from "elysia";
+import { toElysiaHandler } from "@dimah-survey/server/elysia";
+import { editor, fill } from "./survey";
+
+new Elysia()
+  .all("/api/admin/survey/*", toElysiaHandler(editor))
+  .all("/api/survey/*", toElysiaHandler(fill))
+  .listen(3000);
+```
+
+  </Tab>
+  <Tab value="SvelteKit">
+
+```ts title="src/routes/api/survey/[...path]/+server.ts"
+import { toSvelteKitHandler } from "@dimah-survey/server/svelte-kit";
+import { fill } from "$lib/survey";
+
+const handler = toSvelteKitHandler(fill);
+export const GET = handler;
+export const POST = handler;
+export const PUT = handler;
+export const PATCH = handler;
+export const DELETE = handler;
+```
+
+```ts title="src/routes/api/admin/survey/[...path]/+server.ts"
+import { toSvelteKitHandler } from "@dimah-survey/server/svelte-kit";
+import { editor } from "$lib/survey";
+
+const handler = toSvelteKitHandler(editor);
+export const GET = handler;
+export const POST = handler;
+export const PUT = handler;
+export const PATCH = handler;
+export const DELETE = handler;
+```
+
+  </Tab>
+  <Tab value="Node.js">
+
+```ts
+import { createServer } from "node:http";
+import { toNodeHandler } from "@dimah-survey/server/node";
+import { editor, fill } from "./survey";
+
+const handleFill = toNodeHandler(fill);
+const handleEditor = toNodeHandler(editor);
+
+createServer((req, res) => {
+  const url = req.url ?? "";
+  if (url.startsWith("/api/admin/survey")) return handleEditor(req, res);
+  if (url.startsWith("/api/survey")) return handleFill(req, res);
+  res.statusCode = 404;
+  res.end();
+}).listen(3000);
+```
+
+  </Tab>
+</Tabs>
+
+<Callout type="warn">
+  Mount Express before `express.json()`. Keep Fastify's JSON parser off these
+  paths.
+</Callout>
 
 ### Start the response [step]
+
+<Tabs items={["Next.js", "Hono", "Express"]}>
+  <Tab value="Next.js">
 
 ```ts title="lib/start-response.ts"
 import { headers } from "next/headers";
@@ -162,28 +237,54 @@ export async function startWelcomeResponse() {
 }
 ```
 
-Forward `headers()` so the fill guard sees the session. The first call copies
-`publishedJson` onto the response. A later call returns that respondent's open
-draft.
+  </Tab>
+  <Tab value="Hono">
+
+```ts
+import { fill } from "./survey";
+
+// Hono, Elysia, and SvelteKit
+export async function startWelcomeResponse(request: Request) {
+  const response = await fill.api.startResponse({
+    body: { surveyId: "welcome" },
+    headers: request.headers,
+  });
+  return response.id;
+}
+```
+
+  </Tab>
+  <Tab value="Express">
+
+```ts
+import type { IncomingMessage } from "node:http";
+import { fromNodeHeaders } from "@dimah-survey/server/node";
+import { fill } from "./survey";
+
+// Express, Fastify, and Node.js
+export async function startWelcomeResponse(req: IncomingMessage) {
+  const response = await fill.api.startResponse({
+    body: { surveyId: "welcome" },
+    headers: fromNodeHeaders(req.headers),
+  });
+  return response.id;
+}
+```
+
+  </Tab>
+</Tabs>
+
+The first call stores the current version on the response.
 
 ### Render the response [step]
 
-`createFillClient()` calls `/api/survey`. The hook reads the snapshot. `<Survey>` renders it.
-
-```tsx title="components/fill.tsx"
-"use client";
-
-import dynamic from "next/dynamic";
+```tsx title="fill.tsx"
+import { Survey } from "survey-react-ui";
 import { createFillClient, useSurveyResponse } from "@dimah-survey/react";
 
 import "survey-core/survey-core.min.css";
 
-const Survey = dynamic(
-  () => import("survey-react-ui").then((mod) => mod.Survey),
-  { ssr: false },
-);
-
-const client = createFillClient();
+const client = createFillClient({ baseURL: "/api/survey" });
 
 export function Fill({ responseId }: { responseId: string }) {
   const { model, error, saveError, stale, reload } = useSurveyResponse({
@@ -203,19 +304,6 @@ export function Fill({ responseId }: { responseId: string }) {
   );
 }
 ```
-
-```tsx title="app/page.tsx"
-import { Fill } from "@/components/fill";
-import { startWelcomeResponse } from "@/lib/start-response";
-
-export default async function Page() {
-  const responseId = await startWelcomeResponse();
-  return <Fill responseId={responseId} />;
-}
-```
-
-The hook builds a `Model` from `response.definition` and saves the complete
-`survey.data` object on the next page. It does not render SurveyJS.
 
 ## Next
 

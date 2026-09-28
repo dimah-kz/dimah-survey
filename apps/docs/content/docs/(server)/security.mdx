@@ -20,8 +20,9 @@ throws. Keep the routes separate even when both use the same store.
 `getPublishedSurvey` is on the fill handler. It does not stamp a respondent and
 does not require a response id. The editor draft is not on that route.
 
-Only editor may request `include: "full"` and read response definitions and
-data in bulk. Fill owns response mutations. Submit hooks and `validateResult`
+Only editor may request `include: "full"` and read response data plus the
+referenced versions in bulk. Fill owns response mutations. Submit hooks and
+`validateResult`
 therefore belong to fill; publish hooks belong to editor.
 
 ## Stamp an identified respondent
@@ -122,8 +123,8 @@ export const editor = dimahSurvey({
 Returning a principal from this guard is an error. Editor authorization either
 allows the request or throws.
 
-`include: "full"` belongs here. It returns `definition` and `data` for
-analytics. Do not expose that route on the fill path.
+`include: "full"` belongs here. It returns `data` and each referenced version
+once. Do not expose that route on the fill path.
 
 ---
 

@@ -52,17 +52,18 @@ callers cannot list responses; identified callers cannot request
 
 ## Editor routes
 
-| Method | Path               | Browser client              | In-process API                 |
-| ------ | ------------------ | --------------------------- | ------------------------------ |
-| `GET`  | `/survey`          | `getSurvey(id)`             | `getSurvey({ query })`         |
-| `POST` | `/survey`          | `saveSurvey(input)`         | `saveSurvey({ body })`         |
-| `GET`  | `/surveys`         | `listSurveys(query)`        | `listSurveys({ query })`       |
-| `POST` | `/survey/publish`  | `publishSurvey(input)`      | `publishSurvey({ body })`      |
-| `POST` | `/survey/archive`  | `archiveSurvey(input)`      | `archiveSurvey({ body })`      |
-| `POST` | `/survey/settings` | `saveSurveySettings(input)` | `saveSurveySettings({ body })` |
-| `POST` | `/survey/resume`   | `resumeSurvey(input)`       | `resumeSurvey({ body })`       |
-| `GET`  | `/response`        | `getResponse(id)`           | `getResponse({ query })`       |
-| `GET`  | `/responses`       | `listResponses(query)`      | `listResponses({ query })`     |
+| Method | Path               | Browser client              | In-process API                  |
+| ------ | ------------------ | --------------------------- | ------------------------------- |
+| `GET`  | `/survey`          | `getSurvey(id)`             | `getSurvey({ query })`          |
+| `POST` | `/survey`          | `saveSurvey(input)`         | `saveSurvey({ body })`          |
+| `GET`  | `/surveys`         | `listSurveys(query)`        | `listSurveys({ query })`        |
+| `POST` | `/survey/publish`  | `publishSurvey(input)`      | `publishSurvey({ body })`       |
+| `POST` | `/survey/archive`  | `archiveSurvey(input)`      | `archiveSurvey({ body })`       |
+| `POST` | `/survey/settings` | `saveSurveySettings(input)` | `saveSurveySettings({ body })`  |
+| `POST` | `/survey/resume`   | `resumeSurvey(input)`       | `resumeSurvey({ body })`        |
+| `GET`  | `/survey/versions` | `listSurveyVersions(query)` | `listSurveyVersions({ query })` |
+| `GET`  | `/response`        | `getResponse(id)`           | `getResponse({ query })`        |
+| `GET`  | `/responses`       | `listResponses(query)`      | `listResponses({ query })`      |
 
 `saveSurvey` creates the survey when the id is new. `slug` defaults to `id`.
 Pass `expectedUpdatedAt` when updating. A create that includes the token fails
@@ -78,8 +79,9 @@ import type { ListResponsesQuery } from "@dimah-survey/core";
 
 <AutoTypeTable path="packages/core/src/types.ts" name="ListResponsesQuery" />
 
-`"summary"` omits `definition` and `data`. `"full"` is the editor analytics
-read. Rows sort by `updatedAt` descending.
+`"summary"` omits `data`. `"full"` adds `data` and returns each referenced
+version once on `versions`. Rows sort by `updatedAt` descending.
+`listSurveyVersions` pages one survey's versions, newest first.
 
 `listSurveys` accepts:
 

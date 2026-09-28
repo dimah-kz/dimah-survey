@@ -16,8 +16,8 @@ pnpm + Turbo. From the root: `pnpm lint`, `pnpm check-types`, `pnpm test`.
 - Backend for SurveyJS JSON. SurveyJS owns the survey schema, renderer, and Creator. This repo owns publish, the per-response definition snapshot, drafts, and submit.
 - Do not translate SurveyJS JSON into dimah-form fields, and do not import `@dimah-form/*`.
 - Protocol SSOT is `@dimah-survey/core`. HTTP is better-call on the server and better-fetch on the client. Do not add a second router or a hand-rolled `fetch` wrapper.
-- `draftJson` is the editor copy. `publishedJson` is what new responses clone. Saving a draft must not change `publishedJson` or any existing `response.definition`.
-- Submit validation runs on `response.definition`, never on the live draft or the latest publish. `validateResult` is required. `survey-core` belongs in `server` when that check is implemented, not in `core`.
+- `draftJson` is the editor copy. Publishing stores an immutable version and points `publishedVersionId` at it. An unchanged document reuses that version. Saving a draft must not change the current version or any response's `versionId`.
+- Submit validation runs on the version the response started with, never on the live draft or the latest publish. `validateResult` is required. `survey-core` belongs in `server` when that check is implemented, not in `core`.
 - Partial save replaces `survey.data`. It is not a key patch.
 - Auth lives in the consumer `guard`. Persistence is the `database` adapter. `memoryAdapter()` is in `server`. `db(client)` from `@dimah-survey/db` is the SQL store. No ORM inside `server`.
 - Do not wrap or re-export the SurveyJS renderer. The React fill hook, when it exists, only hydrates a Model from the snapshot.

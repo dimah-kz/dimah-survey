@@ -25,13 +25,13 @@ application owns authentication, database migrations, files, and UI.
 dimah-survey owns the server lifecycle between them:
 
 - separate editable and published SurveyJS documents
-- immutable per-response definitions
+- immutable published versions, referenced by each response
 - partial save, submit, abandon, and reopen
 - collection windows, response limits, and compare-and-swap writes
-- submit validation against the stored response definition
+- submit validation against the version the response started on
 - isolated fill and editor APIs over one shared store
 
-> A later publish never rewrites an existing `response.definition`.
+> A later publish never changes the version an existing response started on.
 
 This is not a renderer, hosted survey product, or SurveyJS plugin.
 

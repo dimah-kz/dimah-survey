@@ -20,6 +20,7 @@ describe("survey clients", () => {
       "getResponse",
       "getSurvey",
       "listResponses",
+      "listSurveyVersions",
       "listSurveys",
       "publishSurvey",
       "resumeSurvey",

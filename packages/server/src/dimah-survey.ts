@@ -71,7 +71,7 @@ export type FillHooks = {
  * row stored. `resumeSurvey` does not call either hook.
  */
 export type EditorHooks = {
-  /** Before `draftJson` is copied onto `publishedJson`. */
+  /** Before `draftJson` is published as a version. */
   onPublish?: (context: SurveyPublishContext) => void | Promise<void>;
   /** After the published row is stored. A throw leaves the row stored. */
   afterPublish?: (context: SurveyPublishContext) => void | Promise<void>;

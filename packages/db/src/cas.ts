@@ -29,6 +29,7 @@ export function surveyWriteLanded(fresh: SurveyRecord, written: SurveyRecord) {
     sameInstant(fresh.updatedAt, written.updatedAt) &&
     sameInstantOrNull(fresh.publishedAt, written.publishedAt) &&
     sameJson(fresh.draftJson, written.draftJson) &&
+    fresh.publishedVersionId === written.publishedVersionId &&
     sameJson(fresh.publishedJson, written.publishedJson) &&
     sameJson(fresh.settings, written.settings)
   );
@@ -44,6 +45,7 @@ export function responseWriteLanded(
     sameInstant(fresh.updatedAt, written.updatedAt) &&
     sameInstantOrNull(fresh.submittedAt, written.submittedAt) &&
     sameJson(fresh.data, written.data) &&
+    fresh.versionId === written.versionId &&
     sameJson(fresh.definition, written.definition)
   );
 }

@@ -58,7 +58,13 @@ describe("respondent guard", () => {
 
     const analytics = await editor.listResponses({ include: "full" });
     expect(analytics.total).toBe(2);
-    expect(analytics.responses[0]).toHaveProperty("definition");
+    expect(analytics.responses[0]).toMatchObject({
+      versionId: expect.any(String),
+    });
+    expect(analytics.responses[0]).not.toHaveProperty("definition");
+    expect(analytics.versions).toEqual([
+      expect.objectContaining({ definition: textSurvey }),
+    ]);
   });
 
   it("has no editor routes on the fill handler", async () => {

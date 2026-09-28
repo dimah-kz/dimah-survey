@@ -118,11 +118,67 @@ export function surveyDocumentContract(open: OpenSurveyStore) {
         expectedUpdatedAt: edited.updatedAt,
       });
       expect(next.publishedJson).toEqual(v2);
+      expect(next.publishedVersionId).not.toBe(published.publishedVersionId);
       expect((await store.getResponse(started.id))?.definition).toEqual(v1);
+      expect((await store.getResponse(started.id))?.versionId).toBe(
+        published.publishedVersionId,
+      );
 
       const again = await store.startResponse({ surveyId: "pulse" });
       expect(again.id).not.toBe(started.id);
       expect(again.definition).toEqual(v2);
+      expect(again.versionId).toBe(next.publishedVersionId);
+    });
+
+    it("reuses a version when the published document is unchanged", async () => {
+      const store = await open();
+      const first = await publish(store);
+      await later();
+      const same = await store.publishSurvey({
+        id: "pulse",
+        expectedUpdatedAt: first.updatedAt,
+      });
+      expect(same.publishedVersionId).toBe(first.publishedVersionId);
+      expect(same.publishedAt).not.toBe(first.publishedAt);
+
+      const reordered = await store.saveSurvey({
+        id: "pulse",
+        draftJson: { pages: [], title: "v1" },
+        expectedUpdatedAt: same.updatedAt,
+      });
+      const still = await store.publishSurvey({
+        id: "pulse",
+        expectedUpdatedAt: reordered.updatedAt,
+      });
+      expect(still.publishedVersionId).toBe(first.publishedVersionId);
+      expect(
+        await store.listSurveyVersions({ surveyId: "pulse" }),
+      ).toHaveLength(1);
+
+      const edited = await store.saveSurvey({
+        id: "pulse",
+        draftJson: { title: "v1.", pages: [] },
+        expectedUpdatedAt: still.updatedAt,
+      });
+      const changed = await store.publishSurvey({
+        id: "pulse",
+        expectedUpdatedAt: edited.updatedAt,
+      });
+      expect(changed.publishedVersionId).not.toBe(first.publishedVersionId);
+      const history = await store.listSurveyVersions({ surveyId: "pulse" });
+      expect(history.map((version) => version.id)).toEqual([
+        changed.publishedVersionId,
+        first.publishedVersionId,
+      ]);
+      const kept = await store.saveSurveySettings({
+        id: "pulse",
+        settings: settings({ maxResponses: 4 }),
+        expectedUpdatedAt: changed.updatedAt,
+      });
+      expect(kept.publishedVersionId).toBe(changed.publishedVersionId);
+      expect(await store.listSurveyVersions({ surveyId: "missing" })).toEqual(
+        [],
+      );
     });
 
     it("resumes an archived survey without publishing the open draft", async () => {

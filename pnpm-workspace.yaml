@@ -21,7 +21,7 @@ catalog:
   fumadb: ^0.6.0
   eslint-config-prettier: ^10.1.8
   eslint-plugin-import-x: ^4.17.1
-  eslint-plugin-n: ^18.3.0
+  eslint-plugin-n: ^18.4.0
   eslint-plugin-package-json: ^1.10.0
   eslint-plugin-pnpm: ^1.9.1
   eslint-plugin-regexp: ^3.3.1

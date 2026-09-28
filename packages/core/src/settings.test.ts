@@ -20,6 +20,7 @@ function response(id: string): ResponseRecord {
     surveyId: "pulse",
     respondentId: "user-1",
     status: "draft",
+    versionId: "version-1",
     definition: {},
     data: {},
     createdAt: "2026-09-27T00:00:00.000Z",
@@ -34,6 +35,7 @@ function survey(patch: Partial<SurveyRecord> = {}): SurveyRecord {
     slug: "pulse",
     status: "active",
     draftJson: { title: "draft" },
+    publishedVersionId: "version-1",
     publishedJson: { title: "live" },
     publishedAt: "2026-09-27T00:00:00.000Z",
     settings: DEFAULT_SURVEY_SETTINGS,
@@ -222,6 +224,7 @@ describe("toPublishedSurvey", () => {
     expect(toPublishedSurvey(survey())).toEqual({
       id: "pulse",
       slug: "pulse",
+      publishedVersionId: "version-1",
       publishedJson: { title: "live" },
       publishedAt: "2026-09-27T00:00:00.000Z",
       settings: DEFAULT_SURVEY_SETTINGS,

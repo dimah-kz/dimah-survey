@@ -4,21 +4,36 @@ description: Add the survey tables to the database you already use.
 icon: Database
 ---
 
-Add `dimah_survey` and `dimah_response` to your schema, migrate with the tool
-you already use, and pass the same `database` to both server audiences.
-dimah-survey does not run migrations.
+Add `dimah_survey`, `dimah_survey_version`, and `dimah_response` to your
+schema, migrate with the tool you already use, and pass the same `database` to
+both server audiences. dimah-survey does not run migrations.
 
 ```npm
 npm i @dimah-survey/db fumadb
 ```
 
-Model keys are `survey` and `response`. Copy the tables into your application.
+Model keys are `survey`, `surveyVersion`, and `response`. Copy the tables into
+your application.
 Do not import them from `@dimah-survey/db` at runtime.
 
 `provider` is `"sqlite"`, `"postgresql"`, or `"mysql"`.
 
-<Tabs items={["Drizzle", "Prisma", "Kysely"]}>
-<Tab value="Drizzle">
+<Tabs defaultValue="drizzle">
+  <TabsList>
+    <TabsTrigger value="drizzle">
+      <DrizzleMark />
+      Drizzle
+    </TabsTrigger>
+    <TabsTrigger value="prisma">
+      <PrismaMark />
+      Prisma
+    </TabsTrigger>
+    <TabsTrigger value="kysely">
+      <KyselyMark />
+      Kysely
+    </TabsTrigger>
+  </TabsList>
+<Tab value="drizzle">
 
 Add these tables to your Drizzle schema. This copy is SQLite. On PostgreSQL or
 MySQL, use that driver's table builder and set `provider` to match. Keep the
@@ -41,7 +56,7 @@ export const database = db(
 schema into that client.
 
 </Tab>
-<Tab value="Prisma">
+<Tab value="prisma">
 
 Add these models to your Prisma schema. This copy is PostgreSQL.
 
@@ -66,7 +81,7 @@ export const database = db(
 `prisma` is your existing `PrismaClient`.
 
 </Tab>
-<Tab value="Kysely">
+<Tab value="kysely">
 
 Add this SQL with your migration tool. This copy is PostgreSQL.
 
@@ -152,11 +167,11 @@ A conforming store preserves these invariants:
 
 ### Documents and snapshots
 
-- Keep `draftJson`, `publishedJson`, and `settings` independent.
+- Keep `draftJson`, the current version, and `settings` independent.
 - Insert default settings with a new survey; only
   `saveSurveySettings` changes them afterward.
-- Copy `publishedJson` into `response.definition` at start and never update
-  that column.
+- Publish an immutable version. Reuse it when the canonical document matches.
+  Store that version id on the response at start and never update it.
 - Partial save replaces `data`; persist the object passed by the server.
 
 ### Atomic writes
@@ -175,5 +190,5 @@ A conforming store preserves these invariants:
 - Start, partial save, and submit enforce the collection window.
 - New starts and submits enforce the response cap.
 - Reopen enforces `reopen` and refuses a second identified draft.
-- Lists honor pagination, sort by `updatedAt` descending, and omit
-  `definition` and `data` from summaries.
+- Lists honor pagination. Survey and response lists sort by `updatedAt`
+  descending. Summary rows omit `data` and include `versionId`.

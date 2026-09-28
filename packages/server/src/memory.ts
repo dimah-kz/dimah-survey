@@ -6,11 +6,15 @@ import {
   existingResponseForStart,
   isAPIError,
   SURVEY_ERROR_CODES,
+  surveyContentHash,
+  toResponseData,
   toResponseSummary,
   type ArchiveSurveyInput,
   type ListResponsesQuery,
+  type ListSurveyVersionsQuery,
   type ListSurveysQuery,
   type PublishSurveyInput,
+  type ResponseData,
   type ResponseMutationInput,
   type ResponseRecord,
   type ResumeSurveyInput,
@@ -23,6 +27,7 @@ import {
   type SubmitResponseLifecycle,
   type SurveyRecord,
   type SurveyStore,
+  type SurveyVersion,
 } from "@dimah-survey/core";
 
 import { errors } from "./errors";
@@ -55,7 +60,7 @@ function slicePage<T>(
   return items.slice(offset, offset + query.limit);
 }
 
-function responseMatches(row: ResponseRecord, query?: ListResponsesQuery) {
+function responseMatches(row: ResponseData, query?: ListResponsesQuery) {
   if (!query) return true;
   if (query.surveyId && row.surveyId !== query.surveyId) return false;
   if (query.respondentId && row.respondentId !== query.respondentId) {
@@ -93,7 +98,8 @@ function surveyKey(surveyId: string) {
 export function memoryAdapter(): SurveyStore {
   const surveys = new Map<string, SurveyRecord>();
   const slugToId = new Map<string, string>();
-  const responses = new Map<string, ResponseRecord>();
+  const versions = new Map<string, SurveyVersion>();
+  const responses = new Map<string, ResponseData>();
   const exclusive = createKeyLock();
 
   function requireSurvey(idOrSlug: string) {
@@ -107,12 +113,30 @@ export function memoryAdapter(): SurveyStore {
     return bySlug;
   }
 
+  function requireVersion(id: string) {
+    const version = versions.get(id);
+    if (!version) throw errors.internalError();
+    return version;
+  }
+
+  function hydrate(row: ResponseData): ResponseRecord {
+    return {
+      ...clone(row),
+      definition: clone(requireVersion(row.versionId).definition),
+    };
+  }
+
+  function storeResponse(row: ResponseRecord) {
+    const { definition: _definition, ...stored } = row;
+    responses.set(row.id, stored);
+  }
+
   function requireResponse(id: string) {
     const response = responses.get(id);
     if (!response) {
       throw errors.responseNotFound();
     }
-    return response;
+    return hydrate(response);
   }
 
   function bindSlug(id: string, slug: string, previous?: string) {
@@ -124,6 +148,10 @@ export function memoryAdapter(): SurveyStore {
     slugToId.set(slug, id);
   }
 
+  function hydrateOrNull(row: ResponseData | undefined): ResponseRecord | null {
+    return row ? hydrate(row) : null;
+  }
+
   function latestDraft(surveyId: string, respondentId: string) {
     return latestFor(surveyId, respondentId, "draft");
   }
@@ -131,7 +159,7 @@ export function memoryAdapter(): SurveyStore {
   function latestFor(
     surveyId: string,
     respondentId: string,
-    status?: ResponseRecord["status"],
+    status?: ResponseData["status"],
   ) {
     return sortByUpdatedAtDesc(
       [...responses.values()].filter(
@@ -152,14 +180,22 @@ export function memoryAdapter(): SurveyStore {
   }
 
   function requireAccepting(survey: SurveyRecord) {
-    if (survey.status !== "active" || survey.publishedJson === null) {
+    if (
+      survey.status !== "active" ||
+      survey.publishedVersionId === null ||
+      survey.publishedJson === null
+    ) {
       throw errors.notPublished();
     }
     assertSurveyAccepting(survey.settings);
   }
 
   function openResponse(survey: SurveyRecord, respondentId?: string) {
-    if (survey.status !== "active" || survey.publishedJson === null) {
+    if (
+      survey.status !== "active" ||
+      survey.publishedVersionId === null ||
+      survey.publishedJson === null
+    ) {
       throw errors.notPublished();
     }
     const timestamp = now();
@@ -168,14 +204,19 @@ export function memoryAdapter(): SurveyStore {
       surveyId: survey.id,
       respondentId: respondentId ?? null,
       status: "draft",
+      versionId: survey.publishedVersionId,
       definition: clone(survey.publishedJson),
       data: {},
       createdAt: timestamp,
       updatedAt: timestamp,
       submittedAt: null,
     };
-    responses.set(response.id, response);
+    storeResponse(response);
     return clone(response);
+  }
+
+  function findSurvey(idOrSlug: string) {
+    return surveys.get(idOrSlug) ?? surveys.get(slugToId.get(idOrSlug) ?? "");
   }
 
   return {
@@ -206,6 +247,7 @@ export function memoryAdapter(): SurveyStore {
         slug,
         status: "draft",
         draftJson: clone(input.draftJson),
+        publishedVersionId: null,
         publishedJson: null,
         publishedAt: null,
         settings: { ...DEFAULT_SURVEY_SETTINGS },
@@ -218,17 +260,35 @@ export function memoryAdapter(): SurveyStore {
 
     async publishSurvey(input: PublishSurveyInput) {
       const existing = requireSurvey(input.id);
-      assertFresh(existing.updatedAt, input.expectedUpdatedAt);
-      const timestamp = now();
-      const next: SurveyRecord = {
-        ...existing,
-        status: "active",
-        publishedJson: clone(existing.draftJson),
-        publishedAt: timestamp,
-        updatedAt: timestamp,
-      };
-      surveys.set(existing.id, next);
-      return clone(next);
+      return exclusive(surveyKey(existing.id), async () => {
+        const current = requireSurvey(existing.id);
+        assertFresh(current.updatedAt, input.expectedUpdatedAt);
+        const timestamp = now();
+        const contentHash = await surveyContentHash(current.draftJson);
+        const match = [...versions.values()].find(
+          (version) =>
+            version.surveyId === current.id &&
+            version.contentHash === contentHash,
+        );
+        const version: SurveyVersion = match ?? {
+          id: crypto.randomUUID(),
+          surveyId: current.id,
+          definition: clone(current.draftJson),
+          contentHash,
+          createdAt: timestamp,
+        };
+        if (!match) versions.set(version.id, version);
+        const next: SurveyRecord = {
+          ...current,
+          status: "active",
+          publishedVersionId: version.id,
+          publishedJson: clone(version.definition),
+          publishedAt: timestamp,
+          updatedAt: timestamp,
+        };
+        surveys.set(current.id, next);
+        return clone(next);
+      });
     },
 
     async archiveSurvey(input: ArchiveSurveyInput) {
@@ -258,7 +318,10 @@ export function memoryAdapter(): SurveyStore {
     async resumeSurvey(input: ResumeSurveyInput) {
       const existing = requireSurvey(input.id);
       if (existing.status === "active") return clone(existing);
-      if (existing.status === "archived" && existing.publishedJson !== null) {
+      if (
+        existing.status === "archived" &&
+        existing.publishedVersionId !== null
+      ) {
         assertFresh(existing.updatedAt, input.expectedUpdatedAt);
         const next: SurveyRecord = {
           ...existing,
@@ -294,6 +357,30 @@ export function memoryAdapter(): SurveyStore {
       return slicePage(filtered, query).map(clone);
     },
 
+    async listSurveyVersions(query: ListSurveyVersionsQuery) {
+      const survey = findSurvey(query.surveyId);
+      if (!survey) return [];
+      const rows = [...versions.values()]
+        .filter((version) => version.surveyId === survey.id)
+        .toSorted(
+          (a, b) =>
+            b.createdAt.localeCompare(a.createdAt) || b.id.localeCompare(a.id),
+        );
+      return slicePage(rows, query).map(clone);
+    },
+
+    async readSurveyVersions(ids) {
+      return [...new Set(ids)]
+        .flatMap((id) => {
+          const version = versions.get(id);
+          return version ? [clone(version)] : [];
+        })
+        .toSorted(
+          (a, b) =>
+            a.createdAt.localeCompare(b.createdAt) || a.id.localeCompare(b.id),
+        );
+    },
+
     async startResponse(
       input: StartResponseInput,
       lifecycle?: StartResponseLifecycle,
@@ -316,8 +403,8 @@ export function memoryAdapter(): SurveyStore {
           const existing = existingResponseForStart({
             settings: current.settings,
             respondentId,
-            openDraft: latestDraft(current.id, respondentId) ?? null,
-            latest: latestFor(current.id, respondentId) ?? null,
+            openDraft: hydrateOrNull(latestDraft(current.id, respondentId)),
+            latest: hydrateOrNull(latestFor(current.id, respondentId)),
           });
           if (existing) return clone(existing);
           assertResponseLimit(current.settings, submittedCount(current.id));
@@ -341,7 +428,7 @@ export function memoryAdapter(): SurveyStore {
         data: clone(input.data),
         updatedAt: now(),
       };
-      responses.set(existing.id, next);
+      storeResponse(next);
       return clone(next);
     },
 
@@ -373,7 +460,7 @@ export function memoryAdapter(): SurveyStore {
           submittedAt: timestamp,
           updatedAt: timestamp,
         };
-        responses.set(current.id, next);
+        storeResponse(next);
         const saved = clone(next);
         await lifecycle?.afterSubmit?.(saved);
         return saved;
@@ -391,7 +478,7 @@ export function memoryAdapter(): SurveyStore {
         status: "abandoned",
         updatedAt: now(),
       };
-      responses.set(existing.id, next);
+      storeResponse(next);
       return clone(next);
     },
 
@@ -412,7 +499,7 @@ export function memoryAdapter(): SurveyStore {
           submittedAt: null,
           updatedAt: now(),
         };
-        responses.set(current.id, next);
+        storeResponse(next);
         return clone(next);
       };
       if (!existing.respondentId) return run();
@@ -421,7 +508,7 @@ export function memoryAdapter(): SurveyStore {
 
     async getResponse(id: string) {
       const response = responses.get(id);
-      return response ? clone(response) : null;
+      return response ? hydrate(response) : null;
     },
 
     async listResponses(query?: ListResponsesQuery) {
@@ -431,7 +518,7 @@ export function memoryAdapter(): SurveyStore {
         ),
         query,
       ).map(clone);
-      if (query?.include === "full") return page;
+      if (query?.include === "full") return page.map(toResponseData);
       return page.map(toResponseSummary);
     },
 

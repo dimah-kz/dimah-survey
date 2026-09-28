@@ -9,7 +9,7 @@ stored definition, restores its data, and binds partial save and submit. Your
 application renders the model with `survey-react-ui`.
 
 ```npm
-npm i @dimah-survey/react react react-dom survey-core survey-react-ui
+npm i @dimah-survey/react survey-core survey-react-ui
 ```
 
 <Callout>
@@ -17,18 +17,11 @@ npm i @dimah-survey/react react react-dom survey-core survey-react-ui
   retain direct access to the SurveyJS model and component.
 </Callout>
 
-```tsx title="components/fill.tsx"
-"use client";
-
-import dynamic from "next/dynamic";
+```tsx title="fill.tsx"
+import { Survey } from "survey-react-ui";
 import { createFillClient, useSurveyResponse } from "@dimah-survey/react";
 
 import "survey-core/survey-core.min.css";
-
-const Survey = dynamic(
-  () => import("survey-react-ui").then((mod) => mod.Survey),
-  { ssr: false },
-);
 
 const client = createFillClient({ baseURL: "/api/survey" });
 
@@ -51,9 +44,7 @@ export function Fill({ responseId }: { responseId: string }) {
 }
 ```
 
-SurveyJS UI requires a browser, so Next.js applications should load `<Survey>`
-dynamically. Submitted and abandoned responses open in `display` mode and send
-no writes.
+Submitted and abandoned responses open in `display` mode and send no writes.
 
 ## Options
 

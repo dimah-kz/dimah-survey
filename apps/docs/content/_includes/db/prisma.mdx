@@ -1,31 +1,47 @@
 ```prisma title="schema.prisma"
 model Survey {
-  id            String    @id @map("id") @db.VarChar(255)
-  slug          String    @unique(map: "dimah_survey_slug_unique") @map("slug") @db.VarChar(255)
-  status        String    @map("status")
-  draftJson     Json      @map("draft_json")
-  publishedJson Json?     @map("published_json")
-  publishedAt   DateTime? @map("published_at")
-  settings      Json      @map("settings")
-  createdAt     DateTime  @default(now()) @map("created_at")
-  updatedAt     DateTime  @default(now()) @map("updated_at")
-  responses     Response[]
+  id                 String          @id @map("id") @db.VarChar(255)
+  slug               String          @unique(map: "dimah_survey_slug_unique") @map("slug") @db.VarChar(255)
+  status             String          @map("status")
+  draftJson          Json            @map("draft_json")
+  publishedVersionId String?         @map("published_version_id") @db.VarChar(255)
+  publishedAt        DateTime?       @map("published_at")
+  settings           Json            @map("settings")
+  createdAt          DateTime        @default(now()) @map("created_at")
+  updatedAt          DateTime        @default(now()) @map("updated_at")
+  versions           SurveyVersion[]
+  responses          Response[]
 
   @@index([status, updatedAt], map: "dimah_survey_status_updated_at_idx")
   @@map("dimah_survey")
 }
 
+model SurveyVersion {
+  id          String     @id @map("id") @db.VarChar(255)
+  surveyId    String     @map("survey_id") @db.VarChar(255)
+  definition  Json       @map("definition")
+  contentHash String     @map("content_hash") @db.VarChar(64)
+  createdAt   DateTime   @default(now()) @map("created_at")
+  survey      Survey     @relation(fields: [surveyId], references: [id], onUpdate: Restrict, onDelete: Restrict, map: "dimah_survey_version_survey_fk")
+  responses   Response[]
+
+  @@unique([surveyId, contentHash], map: "dimah_survey_version_survey_hash")
+  @@index([surveyId, createdAt], map: "dimah_survey_version_survey_id_created_at_idx")
+  @@map("dimah_survey_version")
+}
+
 model Response {
-  id           String    @id @map("id") @db.VarChar(255)
-  surveyId     String    @map("survey_id") @db.VarChar(255)
-  respondentId String?   @map("respondent_id") @db.VarChar(255)
-  status       String    @map("status")
-  definition   Json      @map("definition")
-  data         Json      @map("data")
-  submittedAt  DateTime? @map("submitted_at")
-  createdAt    DateTime  @default(now()) @map("created_at")
-  updatedAt    DateTime  @default(now()) @map("updated_at")
-  survey       Survey    @relation(fields: [surveyId], references: [id], onUpdate: Restrict, onDelete: Restrict, map: "dimah_response_survey_fk")
+  id           String        @id @map("id") @db.VarChar(255)
+  surveyId     String        @map("survey_id") @db.VarChar(255)
+  respondentId String?       @map("respondent_id") @db.VarChar(255)
+  status       String        @map("status")
+  versionId    String        @map("version_id") @db.VarChar(255)
+  data         Json          @map("data")
+  submittedAt  DateTime?     @map("submitted_at")
+  createdAt    DateTime      @default(now()) @map("created_at")
+  updatedAt    DateTime      @default(now()) @map("updated_at")
+  survey       Survey        @relation(fields: [surveyId], references: [id], onUpdate: Restrict, onDelete: Restrict, map: "dimah_response_survey_fk")
+  version      SurveyVersion @relation(fields: [versionId], references: [id], onUpdate: Restrict, onDelete: Restrict, map: "dimah_response_version_fk")
 
   @@index([surveyId, updatedAt], map: "dimah_response_survey_id_updated_at_idx")
   @@index([surveyId, respondentId, status], map: "dimah_response_respondent_lookup_idx")

@@ -26,6 +26,7 @@ function response(patch?: {
     surveyId: "pulse",
     respondentId: null,
     status: patch?.status ?? "draft",
+    versionId: "version-1",
     definition,
     data: patch?.data ?? { q1: "Ada" },
     createdAt: "t0",

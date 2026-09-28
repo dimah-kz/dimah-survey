@@ -14,3 +14,6 @@ create index if not exists dimah_response_respondent_lookup_idx
 create unique index if not exists dimah_response_one_open_draft
   on dimah_response (survey_id, respondent_id)
   where status = 'draft' and respondent_id is not null;
+
+create index if not exists dimah_survey_version_survey_id_created_at_idx
+  on dimah_survey_version (survey_id, created_at);

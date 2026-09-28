@@ -3,8 +3,9 @@
  * Do not import this module from `@dimah-survey/db`. The app owns the tables
  * it migrates. Refresh them with the FumaDB CLI, then keep the indexes below.
  *
- * SQL tables are `dimah_survey` and `dimah_response`. Keep the export names
- * `survey` and `response`: those are the ORM names `db()` looks up.
+ * SQL tables are `dimah_survey`, `dimah_survey_version`, and `dimah_response`.
+ * Keep the export names `survey`, `surveyVersion`, and `response`: those are
+ * the ORM names `db()` looks up.
  */
 import { defineRelations, sql } from "drizzle-orm";
 import {
@@ -25,7 +26,7 @@ export const survey = sqliteTable(
     slug: text("slug", { length: 255 }).notNull(),
     status: text("status").notNull(),
     draftJson: blob("draft_json", { mode: "json" }).notNull(),
-    publishedJson: blob("published_json", { mode: "json" }),
+    publishedVersionId: text("published_version_id", { length: 255 }),
     publishedAt: integer("published_at", { mode: "timestamp" }),
     settings: blob("settings", { mode: "json" }).notNull(),
     createdAt: integer("created_at", { mode: "timestamp" })
@@ -48,6 +49,36 @@ export const survey = sqliteTable(
   ],
 );
 
+export const surveyVersion = sqliteTable(
+  "dimah_survey_version",
+  {
+    id: text("id", { length: 255 }).primaryKey().notNull(),
+    surveyId: text("survey_id", { length: 255 }).notNull(),
+    definition: blob("definition", { mode: "json" }).notNull(),
+    contentHash: text("content_hash", { length: 64 }).notNull(),
+    createdAt: integer("created_at", { mode: "timestamp" })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    foreignKey({
+      columns: [table.surveyId],
+      foreignColumns: [survey.id],
+      name: "dimah_survey_version_survey_fk",
+    })
+      .onUpdate("restrict")
+      .onDelete("restrict"),
+    uniqueIndex("dimah_survey_version_survey_hash").on(
+      table.surveyId,
+      table.contentHash,
+    ),
+    index("dimah_survey_version_survey_id_created_at_idx").on(
+      table.surveyId,
+      table.createdAt,
+    ),
+  ],
+);
+
 export const response = sqliteTable(
   "dimah_response",
   {
@@ -55,7 +86,7 @@ export const response = sqliteTable(
     surveyId: text("survey_id", { length: 255 }).notNull(),
     respondentId: text("respondent_id", { length: 255 }),
     status: text("status").notNull(),
-    definition: blob("definition", { mode: "json" }).notNull(),
+    versionId: text("version_id", { length: 255 }).notNull(),
     data: blob("data", { mode: "json" }).notNull(),
     submittedAt: integer("submitted_at", { mode: "timestamp" }),
     createdAt: integer("created_at", { mode: "timestamp" })
@@ -70,6 +101,13 @@ export const response = sqliteTable(
       columns: [table.surveyId],
       foreignColumns: [survey.id],
       name: "dimah_response_survey_fk",
+    })
+      .onUpdate("restrict")
+      .onDelete("restrict"),
+    foreignKey({
+      columns: [table.versionId],
+      foreignColumns: [surveyVersion.id],
+      name: "dimah_response_version_fk",
     })
       .onUpdate("restrict")
       .onDelete("restrict"),
@@ -103,18 +141,36 @@ export const privateDimahSurveySettings = sqliteTable(
 );
 
 export const relations = defineRelations(
-  { survey, response, privateDimahSurveySettings },
+  { survey, surveyVersion, response, privateDimahSurveySettings },
   (helpers) => ({
     survey: {
+      versions: helpers.many.surveyVersion({
+        from: helpers.survey.id,
+        to: helpers.surveyVersion.surveyId,
+      }),
       responses: helpers.many.response({
         from: helpers.survey.id,
         to: helpers.response.surveyId,
+      }),
+    },
+    surveyVersion: {
+      survey: helpers.one.survey({
+        from: helpers.surveyVersion.surveyId,
+        to: helpers.survey.id,
+      }),
+      responses: helpers.many.response({
+        from: helpers.surveyVersion.id,
+        to: helpers.response.versionId,
       }),
     },
     response: {
       survey: helpers.one.survey({
         from: helpers.response.surveyId,
         to: helpers.survey.id,
+      }),
+      version: helpers.one.surveyVersion({
+        from: helpers.response.versionId,
+        to: helpers.surveyVersion.id,
       }),
     },
   }),
