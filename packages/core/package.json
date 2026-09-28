@@ -1,7 +1,7 @@
 {
   "name": "@dimah-survey/core",
   "version": "0.5.0",
-  "description": "Protocol for a server-authoritative SurveyJS response lifecycle",
+  "description": "Protocol, clients, and types for the dimah-survey backend",
   "keywords": [
     "survey",
     "surveyjs",

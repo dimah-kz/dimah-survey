@@ -1,12 +1,10 @@
 # Next.js example
 
-The complete reference application for `@dimah-survey/server`,
-`@dimah-survey/react`, and `@dimah-survey/db`.
+Reference application for the dimah-survey backend on Next.js.
 
-SurveyJS renders the form and Creator. dimah-survey publishes the document,
-stores a frozen definition on each response, saves drafts, and validates
-submit. Responses persist in SQLite through Drizzle; an httpOnly cookie
-identifies the respondent.
+SurveyJS renders the form and Creator. The app mounts fill and editor, stores
+surveys in SQLite through Drizzle, and identifies the respondent with an
+httpOnly cookie.
 
 ## Run
 
@@ -21,13 +19,13 @@ Open [http://localhost:3000](http://localhost:3000). The app creates
 
 ## Routes
 
-| Path                           | Demonstrates                                      |
-| ------------------------------ | ------------------------------------------------- |
-| `/`                            | Published surveys; start or resume the open draft |
-| `/r/[responseId]`              | Partial save, submit, abandon, and reopen         |
-| `/studio`                      | Survey creation, publish, archive, and status     |
-| `/studio/[surveyId]`           | Creator autosave with explicit publish            |
-| `/studio/[surveyId]/responses` | Response summaries and frozen snapshots           |
+| Path                           | Demonstrates                                           |
+| ------------------------------ | ------------------------------------------------------ |
+| `/`                            | Published surveys; start or resume the open draft      |
+| `/r/[responseId]`              | Partial save, submit, abandon, and reopen              |
+| `/studio`                      | Survey creation, publish, archive, and status          |
+| `/studio/[surveyId]`           | Creator autosave with explicit publish                 |
+| `/studio/[surveyId]/responses` | Response summaries and the survey stored with each one |
 
 Fill is mounted at `/api/survey`; editor is mounted separately at
 `/api/admin/survey`.

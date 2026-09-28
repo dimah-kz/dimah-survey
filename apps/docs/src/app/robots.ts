@@ -19,7 +19,7 @@ export default function robots(): MetadataRoute.Robots {
     rules: {
       userAgent: "*",
       allow: "/",
-      disallow: ["/api/", "/og/", "/llms.mdx/"],
+      disallow: ["/api/", "/llms.mdx/"],
     },
     sitemap: `${origin}/sitemap.xml`,
     host: origin,

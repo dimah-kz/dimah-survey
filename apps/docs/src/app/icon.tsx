@@ -1,32 +1,23 @@
-import { ImageResponse } from "next/og";
+import { brandIcon } from "@/lib/brand-mark";
 
-export const size = {
-  width: 64,
-  height: 64,
-};
+/** Browser and Google icons. Rounded tile, same mark as the nav. */
 
-export const contentType = "image/png";
+const sizes = {
+  "192": 192,
+  "512": 512,
+} as const;
 
-export default function Icon() {
-  return new ImageResponse(
-    <div
-      style={{
-        alignItems: "center",
-        background: "#0f766e",
-        borderRadius: "14px",
-        color: "#ffffff",
-        display: "flex",
-        fontFamily: "sans-serif",
-        fontSize: 34,
-        fontWeight: 700,
-        height: "100%",
-        justifyContent: "center",
-        letterSpacing: "-3px",
-        width: "100%",
-      }}
-    >
-      D
-    </div>,
-    size,
-  );
+export function generateImageMetadata() {
+  return (Object.keys(sizes) as (keyof typeof sizes)[]).map((id) => ({
+    contentType: "image/png",
+    id,
+    size: { width: sizes[id], height: sizes[id] },
+  }));
+}
+
+export default async function Icon({ id }: { id: Promise<string> }) {
+  const iconId = await id;
+  const size = sizes[iconId as keyof typeof sizes] ?? sizes["192"];
+
+  return brandIcon(size);
 }

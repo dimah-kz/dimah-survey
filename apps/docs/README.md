@@ -1,6 +1,6 @@
 # Docs
 
-Public documentation for dimah-survey, built with
+Public documentation for the dimah-survey backend, built with
 [Fumadocs](https://fumadocs.dev) and published at
 <https://survey.dimah.dev>. This application is not an npm package.
 

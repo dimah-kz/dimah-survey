@@ -15,7 +15,7 @@ React applications use `server`, `db`, and `react`.
 | ---------------------- | ------------------------------------------------------------- |
 | `@dimah-survey/core`   | Protocol types, browser clients, schemas, and store contracts |
 | `@dimah-survey/server` | Handlers, guards, validation, and runtime adapters            |
-| `@dimah-survey/react`  | SurveyJS `Model` and Creator lifecycle bindings               |
+| `@dimah-survey/react`  | SurveyJS `Model` and Creator bindings                         |
 | `@dimah-survey/db`     | FumaDB-backed SQL store and schema references                 |
 
 ```npm
@@ -75,10 +75,8 @@ files.
 </Callout>
 
 `memoryAdapter()` keeps rows in the process for tests. `@dimah-survey/db` is
-the SQL store. A custom `SurveyStore` is the alternative when those tables
-cannot live in your database. See [Database](/docs/database). Every store
-must preserve immutable response definitions, compare-and-swap inside writes,
-and one open draft per identified respondent.
+the SQL store. Implement `SurveyStore` when those tables cannot live in your
+database. See [Database](/docs/database).
 
 Continue with [Configuration](/docs/configuration) or the
 [HTTP protocol](/docs/protocol).

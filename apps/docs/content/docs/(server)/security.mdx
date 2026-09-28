@@ -11,7 +11,7 @@ request; the returned principal establishes response ownership.
 
 | Audience | Guard contract                                     | Access                                                |
 | -------- | -------------------------------------------------- | ----------------------------------------------------- |
-| Fill     | Return `{ respondentId }` or `{ anonymous: true }` | Published read and response lifecycle                 |
+| Fill     | Return `{ respondentId }` or `{ anonymous: true }` | A published survey and that caller's responses        |
 | Editor   | Return nothing; throw to reject                    | Authoring, publish, settings, and full response reads |
 
 A fill instance requires a principal. An editor guard returns nothing or
@@ -20,10 +20,9 @@ throws. Keep the routes separate even when both use the same store.
 `getPublishedSurvey` is on the fill handler. It does not stamp a respondent and
 does not require a response id. The editor draft is not on that route.
 
-Only editor may request `include: "full"` and read response data plus the
-referenced versions in bulk. Fill owns response mutations. Submit hooks and
-`validateResult`
-therefore belong to fill; publish hooks belong to editor.
+Only the editor may request `include: "full"`, which returns answer data and
+each referenced survey once. Fill handles response writes, so submit hooks and
+`validateResult` belong there. Publish hooks belong to the editor.
 
 ## Stamp an identified respondent
 
@@ -123,11 +122,5 @@ export const editor = dimahSurvey({
 Returning a principal from this guard is an error. Editor authorization either
 allows the request or throws.
 
-`include: "full"` belongs here. It returns `data` and each referenced version
-once. Do not expose that route on the fill path.
-
----
-
-Use the editor audience for analytics reads with `include: "full"`. The fill
-audience can read only the guarded respondent's rows and never mounts authoring
-operations.
+`include: "full"` belongs on this route. It returns `data` and each referenced
+survey once.

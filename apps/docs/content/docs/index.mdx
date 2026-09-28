@@ -1,61 +1,46 @@
 ---
 title: Overview
-description: Understand the server-owned lifecycle around SurveyJS JSON.
+description: A backend for SurveyJS surveys in your own application.
 icon: House
 ---
 
-dimah-survey adds a server-side lifecycle to
-[SurveyJS](https://surveyjs.io/) JSON. It separates authoring from publishing,
-stores the exact version each response starts with, and validates submission
-against that snapshot.
+dimah-survey is the backend for [SurveyJS](https://surveyjs.io/) surveys. It
+stores each survey, publishes it, and collects responses over HTTP. SurveyJS
+draws the form. Your application keeps authentication, the database, and the
+UI.
 
-SurveyJS still owns the schema, Creator, and renderer. Your application owns
-authentication, migrations, files, and UI.
+It is a [Better Auth](https://www.better-auth.com)–like backend: create an
+instance, pass your database, and mount the handler.
 
-<Callout>
-  Publishing again never changes the version an existing response started on.
-</Callout>
+Mount two handlers on one store. They do not share routes.
 
-## The lifecycle
+| Audience | Caller           | Access                                                     |
+| -------- | ---------------- | ---------------------------------------------------------- |
+| Fill     | Respondents      | Read a published survey and work on their own response     |
+| Editor   | Your application | Edit the draft, publish, change settings, and read results |
+
+## What the server does
+
+- Saves the editor draft, and publishes only when you ask
+- Stores progress while someone is answering, then checks the submission
+- Applies collection rules: who may answer again, when the survey is open, and how many submissions it accepts
+- Runs on Next.js, Hono, Express, Fastify, Elysia, SvelteKit, and Node
+
+## From draft to submission
 
 <Flow
-  label="One response"
+  label="A survey"
   steps={[
-    { name: "Author", kind: "data", note: "Creator writes draftJson" },
-    { name: "Publish", kind: "server", note: "Store an immutable version" },
-    {
-      name: "Start",
-      kind: "server",
-      note: "Point the response at that version",
-    },
-    { name: "Fill", kind: "client", note: "SurveyJS renders the snapshot" },
-    { name: "Submit", kind: "server", note: "Validate the same snapshot" },
+    { name: "Draft", kind: "data", note: "Edit in Creator" },
+    { name: "Publish", kind: "server", note: "Respondents can open it" },
+    { name: "Answer", kind: "client", note: "SurveyJS renders the form" },
+    { name: "Submit", kind: "server", note: "The server checks the answers" },
   ]}
 />
 
-`draftJson` is the editor copy. Publishing stores that document as an immutable
-version, or reuses the version when the canonical JSON is unchanged.
-`publishedJson` on a survey read is the current version. Starting a response
-stores that version id; a single-response read joins the document back as
-`definition`.
-
-## Ownership
-
-| Owner            | Responsibility                                                    |
-| ---------------- | ----------------------------------------------------------------- |
-| SurveyJS         | Schema, `Model`, renderer, Creator, and question behavior         |
-| Your application | Authentication, authorization, migrations, file storage, and UI   |
-| dimah-survey     | Publishing, collection policy, response drafts, and submit checks |
-
-The backend exposes two isolated audiences over one shared `SurveyStore`:
-
-| Audience | Caller                   | Access                                                   |
-| -------- | ------------------------ | -------------------------------------------------------- |
-| Fill     | Respondents              | Published surveys and their own response lifecycle       |
-| Editor   | Trusted application code | Drafts, publishing, settings, and complete response data |
-
-The audiences share one `SurveyStore`, but each has its own handler and guard.
-Editor operations are never mounted on the fill route.
+A response keeps the published survey it started with. A later edit or publish
+does not change that copy, and submit is checked against it. See
+[Draft and publish](/docs/surveys) and [Responses](/docs/responses).
 
 ## Start here
 
@@ -63,22 +48,22 @@ Editor operations are never mounted on the fill route.
   <Card
     title="Quickstart"
     href="/docs/quickstart"
-    description="Connect your database, publish a survey, and render a response."
+    description="Add the tables, mount the API, and render a survey."
   />
   <Card
-    title="Response lifecycle"
-    href="/docs/responses"
-    description="Follow snapshot, partial save, submit, and reopen."
+    title="Database"
+    href="/docs/database"
+    description="Add the tables to Drizzle, Prisma, or Kysely."
   />
   <Card
-    title="Server integration"
+    title="Mount the server"
     href="/docs/integration"
-    description="Mount fill and editor handlers in your runtime."
+    description="Create fill and editor handlers in your runtime."
   />
   <Card
-    title="Is it the right fit?"
+    title="Comparison"
     href="/docs/comparison"
-    description="Compare ownership with SurveyJS alone and hosted products."
+    description="What this server adds beside SurveyJS alone."
   />
 </Cards>
 

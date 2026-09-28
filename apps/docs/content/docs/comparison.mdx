@@ -1,54 +1,32 @@
 ---
-title: When to use
-description: Decide whether your SurveyJS application needs a server-owned response lifecycle.
+title: Comparison
+description: What dimah-survey adds beside SurveyJS alone.
 icon: Scale
 ---
 
-Use dimah-survey when SurveyJS remains your schema and UI, but the server must
-control what respondents see and preserve that definition with every response.
+[SurveyJS](https://surveyjs.io/) renders the form either way. Authentication,
+migrations, and Creator stay in your application. dimah-survey is the
+[Better Auth](https://www.better-auth.com)–like server for publish and
+responses.
 
-<Callout>
-  The deciding requirement is a durable response snapshot—not simply rendering a
-  SurveyJS form.
-</Callout>
+| Concern                          | dimah-survey | SurveyJS alone |
+| -------------------------------- | ------------ | -------------- |
+| Publish                          | Included     | You build it   |
+| Survey stored with each response | Included     | You design it  |
+| Save, submit, and reopen         | Included     | You build it   |
+| Fill and editor API              | Included     | You build it   |
 
-## It is a good fit when
+Use SurveyJS alone when the renderer is enough. Skip dimah-survey when you
+want a hosted survey product, or you are not using SurveyJS JSON.
 
-- authors need an editable draft and an explicit publish action
-- responses must remain reproducible after the survey changes
-- partial saves, submit, abandon, and reopen belong to one server protocol
-- submit must validate against the definition that started the response
-- your application must keep ownership of auth, data, and deployment
+## Outside this library
 
-It is not a fit when you only need a renderer, want a hosted survey product,
-or do not use SurveyJS JSON.
+dimah-survey does not render questions, ship Creator, store uploaded files, or
+provide accounts, dashboards, PDF export, or analytics.
 
-## Compare the ownership model
+SurveyJS Analytics or PDF tooling can use one published document together with
+the `data` rows that point at it. Read older answers with the survey stored on
+that response.
 
-| Concern                        | dimah-survey              | SurveyJS alone          | Hosted product   |
-| ------------------------------ | ------------------------- | ----------------------- | ---------------- |
-| Survey renderer                | Your app uses SurveyJS    | Your app uses SurveyJS  | Product or embed |
-| Publish workflow               | Built in                  | Your implementation     | Product workflow |
-| Response definition snapshot   | Built in                  | Your persistence design | Vendor-specific  |
-| Draft, submit, reopen, and CAS | Built in                  | Your implementation     | Product workflow |
-| Authentication                 | Your application          | Your application        | Vendor account   |
-| Data and migrations            | Your application          | Your application        | Vendor storage   |
-| Authoring                      | Creator stays in your app | Survey Creator          | Hosted builder   |
-
-This compares ownership, not performance.
-
----
-
-## Deliberate non-goals
-
-dimah-survey does not render questions, ship Creator, define question types,
-store file bytes, or provide accounts, dashboards, PDF generation, or
-analytics. It has no plugin system. Published documents live in an immutable
-version table; each response stores the version it started on.
-
-SurveyJS Analytics or PDF tooling can consume one version's document and the
-`data` rows that point at it. Never interpret old data against the current
-survey draft.
-
-Next, review the concrete [package boundaries](/docs/packages) or build the
+Next, see the [packages](/docs/packages) or follow the
 [quickstart](/docs/quickstart).

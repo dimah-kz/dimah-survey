@@ -1,16 +1,15 @@
 ---
-title: Response lifecycle
-description: Start from a frozen definition, save drafts, and validate the same snapshot on submit.
+title: Responses
+description: Start a response, save progress, and check the submission.
 icon: Camera
 ---
 
-`startResponse` stores the current `publishedVersionId` on the response. Every
-write and submit check stays tied to that version. `getResponse` joins the
-document as `definition`.
+`startResponse` attaches the current published survey to the response.
+`getResponse` returns that document as `definition`. A later publish does not
+replace it, and submit is checked against it.
 
 <Callout>
-  A response is both the answer data and the SurveyJS definition needed to
-  interpret it.
+  A response stores the answers and the survey needed to read them.
 </Callout>
 
 ```ts
@@ -19,88 +18,84 @@ import type { ResponseRecord } from "@dimah-survey/core";
 
 <AutoTypeTable path="packages/core/src/types.ts" name="ResponseRecord" />
 
-## States and transitions
+## Status
 
-| Status      | Meaning                                 | Allowed next actions             |
-| ----------- | --------------------------------------- | -------------------------------- |
-| `draft`     | Answers may be incomplete               | Partial save, submit, or abandon |
-| `submitted` | The stored definition accepted the data | Reopen or idempotent resubmit    |
-| `abandoned` | Closed without submission               | Reopen                           |
+| Status      | Meaning                                | Next                                  |
+| ----------- | -------------------------------------- | ------------------------------------- |
+| `draft`     | Answers may still be incomplete        | Save, submit, or abandon              |
+| `submitted` | The stored survey accepted the answers | Reopen, or submit the same data again |
+| `abandoned` | Closed without a submission            | Reopen                                |
 
-| Operation         | Effect                                                                |
-| ----------------- | --------------------------------------------------------------------- |
-| `startResponse`   | Create a draft or return the response selected by collection settings |
-| `savePartial`     | Replace `data` on a draft                                             |
-| `submitResponse`  | Validate the snapshot and store the accepted data                     |
-| `abandonResponse` | Close a draft without changing `versionId` or `data`                  |
-| `reopenResponse`  | Move a submitted or abandoned response back to draft                  |
+## Operations
 
-Partial save and abandon require a draft. Reopen requires a submitted or
-abandoned response and `settings.reopen: true`.
+| Operation         | Effect                                                     |
+| ----------------- | ---------------------------------------------------------- |
+| `startResponse`   | Open a draft, or return the one collection settings select |
+| `savePartial`     | Replace `data` on a draft                                  |
+| `submitResponse`  | Check the stored survey and save the accepted answers      |
+| `abandonResponse` | Close a draft. The answers stay as they are                |
+| `reopenResponse`  | Move a submitted or abandoned response back to draft       |
 
-## Save a draft
+Save and abandon require a draft. Reopen requires `settings.reopen: true` and
+a submitted or abandoned response.
 
-Partial save replaces the entire `data` object; it is not a key patch.
+## Save progress
 
-By default, the server loads the stored definition, assigns the posted data,
-runs `clearIncorrectValues(true)`, and persists the resulting `survey.data`.
-Required-question validation waits until submit, so incomplete drafts remain
-valid.
+Partial save replaces the whole `data` object. It does not patch individual
+keys.
+
+By default the server loads the stored survey, assigns the posted answers,
+runs `clearIncorrectValues(true)`, and stores the resulting `survey.data`.
+Required questions are checked on submit, so an incomplete draft can be saved.
 
 Set `sanitizePartial: "replace"` to store the payload as sent.
 
-Questions with `choicesByUrl` keep their posted value during partial cleaning
-and submit validation. The server does not fetch that URL.
+Questions with `choicesByUrl` keep the posted value. The server does not fetch
+that URL.
 
-## Submit against the snapshot
+## Submit
 
-The default `validateResult` loads the response version, removes values that
-cannot be assigned, runs SurveyJS `validate()`, and returns the resulting
-`survey.data` to persist. An invalid result throws `VALIDATION_FAILED` with the
-failing question names in `questions`.
+The default `validateResult` loads the survey stored on the response, drops
+values that cannot be assigned, runs SurveyJS `validate()`, and returns the
+`survey.data` to store. An invalid result throws `VALIDATION_FAILED`.
+`questions` lists the failing question names.
 
-Use `validateResult` for application-specific checks. It always receives the
-stored definition. Return the object to persist, return nothing to keep the
-input, or throw an `APIError` to reject. See
+Replace `validateResult` when the application needs its own checks. It always
+receives the stored survey. Return the object to store, return nothing to keep
+the input, or throw an `APIError` to reject it. See
 [Configuration](/docs/configuration).
 
-A repeated submit of a row that is already `submitted` returns that row when
-the cleaned payload matches stored `data`. Omitting `data` also returns the
-stored row. A different payload fails with `RESPONSE_CLOSED`.
+Submitting a row that is already `submitted` returns that row when the cleaned
+payload matches stored `data`. Omitting `data` does the same. A different
+payload fails with `RESPONSE_CLOSED`.
 
----
-
-## Lifecycle hooks
+## Hooks
 
 `onStart` runs only before a new insert. `onSubmit` runs after validation and
 before the submitted write. Throwing from either callback aborts the write.
 
-`afterStart` and `afterSubmit` run after the row has been stored. A failure
-there leaves the write in place. An idempotent resubmit does not run submit
-hooks again.
+`afterStart` and `afterSubmit` run after the row is stored. A failure there
+leaves the write in place. Submitting the same data again does not run the
+submit hooks a second time.
 
----
-
-## Handle concurrent writes
+## Concurrent writes
 
 Partial save, submit, abandon, and reopen accept `expectedUpdatedAt` from the
 last read. The comparison happens inside the write. A mismatch fails with
 `STALE_UPDATE`.
 
 `useSurveyResponse` sends the token it last read. On `STALE_UPDATE` it sets
-`stale` and leaves the model mounted. Call `reload` to read the stored snapshot
-again.
+`stale` and leaves the model mounted. Call `reload` to read the stored
+response again.
 
-Omit the token only when a last-write-wins update is intentional.
+Omit the token only when the last write should win.
 
----
+## Reading responses
 
-## Read responses
-
-`listResponses` returns summaries by default. `include: "full"` adds `data` and
-returns each referenced version once on `versions`. It is available only to the
-editor audience. Join a row's `versionId` to that list. `getResponse` still
-returns `definition` on the single row.
+`listResponses` returns summaries. `include: "full"` adds `data` and returns
+each referenced survey document once on `versions`. Only the editor audience
+can request it. Join a row's `versionId` to that list. `getResponse` returns
+`definition` on the single row.
 
 ```ts
 import type { ResponseSummary } from "@dimah-survey/core";

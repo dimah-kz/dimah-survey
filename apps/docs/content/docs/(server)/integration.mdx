@@ -62,8 +62,7 @@ export const { GET, POST, PUT, PATCH, DELETE } = toNextJsHandler(fill);
 Mount the editor the same way at `app/api/admin/survey/[[...path]]/route.ts`
 with `toNextJsHandler(editor)`.
 
-Each framework adapter forwards the same Fetch handler; it never interprets
-SurveyJS JSON.
+Each framework adapter forwards the same Fetch handler.
 
 | Runtime   | Export                                                   |
 | --------- | -------------------------------------------------------- |
