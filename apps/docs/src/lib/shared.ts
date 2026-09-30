@@ -1,8 +1,10 @@
 import { createGetUrl } from "fumadocs-core/source";
 
 import { brandLogoPath, brandLogoSize } from "@/lib/brand";
+import corePackage from "../../../../packages/core/package.json";
 
 export const appName = "dimah-survey";
+export const packageVersion = corePackage.version;
 /** Landing H1, browser tab, and Open Graph title — keep these in sync. */
 export const siteHeadline = "The backend for SurveyJS";
 export const siteTitle = `${appName} — ${siteHeadline}`;
@@ -166,6 +168,7 @@ export function siteJsonLd(origin: string) {
         applicationCategory: "DeveloperApplication",
         applicationSubCategory: "Surveys / Developer Tools",
         operatingSystem: "Web",
+        softwareVersion: packageVersion,
         license: "https://opensource.org/licenses/MIT",
         isAccessibleForFree: true,
         keywords: siteKeywords.join(", "),
