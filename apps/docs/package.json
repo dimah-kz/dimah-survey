@@ -12,10 +12,10 @@
   },
   "dependencies": {
     "cn": "^0.4.0",
-    "fumadocs-core": "16.15.14",
+    "fumadocs-core": "16.15.17",
     "fumadocs-mdx": "15.4.5",
     "fumadocs-typescript": "5.4.1",
-    "fumadocs-ui": "npm:@fumadocs/base-ui@16.15.14",
+    "fumadocs-ui": "npm:@fumadocs/base-ui@16.15.17",
     "lucide-react": "^1.48.0",
     "next": "catalog:",
     "react": "catalog:",
