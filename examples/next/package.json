@@ -27,7 +27,7 @@
     "react": "catalog:",
     "react-dom": "catalog:",
     "server-only": "^0.0.1",
-    "shadcn": "^4.21.0",
+    "shadcn": "^4.21.1",
     "survey-core": "catalog:",
     "survey-creator-core": "catalog:",
     "survey-creator-react": "catalog:",
