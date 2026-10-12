@@ -26,7 +26,7 @@ catalog:
   eslint-plugin-pnpm: ^1.9.1
   eslint-plugin-regexp: ^3.3.1
   eslint-plugin-turbo: ^2.11.6
-  eslint-plugin-unicorn: ^76.0.0
+  eslint-plugin-unicorn: ^77.0.0
   globals: ^17.13.0
   lefthook: ^2.1.16
   next: 16.3.8
